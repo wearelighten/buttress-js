@@ -6,12 +6,9 @@ whenjs      = require('when')
 
 ########################################################
 ########################################################
-type = ["server","ios","android","browser"]
+type = ["api"]
 Type =
-  SERVER: type[0]
-  IOS: type[1]
-  ANDROID: type[2]
-  BROWSER: apps[3]
+  API: type[0]
 
 exports.constants =
   Type: Type
@@ -19,17 +16,16 @@ exports.constants =
 ########################################################
 ########################################################
 schema = exports.schema = new mongoose.Schema(
-  name: String
   type:
     type: String
     enum: type
-  domain: String
-  _token:
-    type: mongoose.Schema.Types.ObjectId
-    reg: 'Token'
-#  _permissions: [
-#    Model.Schema.Permission
-#  ]
+  value:
+    type: String
+    index:
+      unique: true
+  allocated:
+    type: Boolean
+    default: false
 ,
   strict: true
 )
