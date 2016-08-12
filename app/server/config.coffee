@@ -29,7 +29,7 @@ config =
     env: (env) -> _env = env
     getEnv: -> _env
   yubaba:
-    mongoUrl: # Only because the mongodb instance is on kamaji
+    mongoUrl:
       dev: 'localhost'
       prod: 'localhost'
       test: 'localhost'
