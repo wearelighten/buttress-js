@@ -3,10 +3,24 @@
   "version": "0.0.1",
   "description": "The API that feeds grass roots growth.",
   "author": "Coders for Corbyn",
+  "license": "MIT",
   "private": true,
   "engines": {
     "node": "~4.4.x",
     "npm": "~2.15.x"
+  },
+  "main": "deploy/app.js",
+  "scripts": {
+    "start": "node deploy/app.js",
+    "dev": "nodemon deploy/app.js",
+    "build": "gulp build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coders-for-corbyn/rhizome.git"
+  },
+  "bugs": {
+    "url": "https://github.com/coders-for-corbyn/rhizome/issues"
   },
   "dependencies": {
     "body-parser": "~1.15.2",
