@@ -21,11 +21,9 @@ config =
       protocol: 'http'
       subdomain: 'rhizome'
       domain: 'codersforcorbyn.com'
-    api:
-      key: "JggY4nlaMHLz"
     auth:
       otp:
-        salt: "rry9Nj3lp5okX01XLmYr4IHvnozFyyo1nz1W3"
+        salt: "Toukq2xBVkRJXuMcZGQ0fI6ZZ2a9eTJnux7d8DJB3565gFo7lZFdpc94Rz8QIcV"
     env: (env) -> _env = env
     getEnv: -> _env
   yubaba:
