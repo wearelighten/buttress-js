@@ -1,7 +1,7 @@
 #######################################################################################################################
 #######################################################################################################################
 
-Config    = require("../config").get(process.env.SERVER_ID)
+Config    = require("../config")
 _         = require("underscore")
 fs        = require("fs")
 whenjs    = require("when")
@@ -13,7 +13,7 @@ OTP       = require("../otp")
 #######################################################################################################################
 class Route
   @app: null
-  @otp: OTP.create({length:12,mode:OTP.Constants.Mode.ALPHANUMERIC,salt:Config.auth.otp.salt,tolerance:3})
+#  @otp: OTP.create({length:12,mode:OTP.Constants.Mode.ALPHANUMERIC,salt:Config.auth.otp.salt,tolerance:3})
 
   @LogLevel:
     NONE: 0,

@@ -1,0 +1,39 @@
+{
+  "global": {
+    "app": {
+      "title": "Rhizome",
+      "description": "The API the supports grassroots movements.",
+      "code": "rhizome",
+      "version": "v0.0.1",
+      "protocol": "http",
+      "subdomain": "rhizome",
+      "domain": "codersforcorbyn.com"
+    }
+  },
+  "environments": {
+    "workstation1": {
+      "mongoUrl": {
+        "dev": "localhost",
+        "prod": "localhost",
+        "test": "localhost"
+      },
+      "listenPort": {
+        "dev": 6001,
+        "prod": 6000,
+        "test": 6002
+      }
+    },
+    "yubaba": {
+      "mongoUrl": {
+        "dev": "localhost",
+        "prod": "localhost",
+        "test": "localhost"
+      },
+      "listenPort": {
+        "dev": 6001,
+        "prod": 6000,
+        "test": 6002
+      }
+    }
+  }
+}
