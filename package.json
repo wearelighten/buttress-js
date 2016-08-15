@@ -27,6 +27,7 @@
     "express": "~4.13.x",
     "express-json": "~1.0.0",
     "express-session": "~1.13.0",
+    "gulp-eslint": "^3.0.1",
     "method-override": "~2.3.5",
     "mongoose": "~4.4.8",
     "morgan": "~1.7.0",
@@ -37,11 +38,14 @@
     "when": "~3.7.7"
   },
   "devDependencies": {
+    "eslint": "^3.3.0",
+    "eslint-config-google": "^0.6.0",
+    "eslint-config-xo": "^0.15.3",
     "gulp": "^3.9.1",
-    "gulp-coffee": "^2.3.1",
-    "gulp-jshint": "^2.0.0",
-    "gulp-rename": "^1.2.2",
     "gulp-clean": "^0.3.2",
-    "gulp-concat": "^2.6.0"
+    "gulp-coffee": "^2.3.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-jshint": "^2.0.0",
+    "gulp-rename": "^1.2.2"
   }
 }
