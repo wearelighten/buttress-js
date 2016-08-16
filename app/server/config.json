@@ -2,7 +2,7 @@
   "global": {
     "app": {
       "title": "Rhizome",
-      "description": "The API the supports grassroots movements.",
+      "description": "The API that supports grassroots movements.",
       "code": "rhizome",
       "version": "v0.0.1",
       "protocol": "http",
@@ -10,7 +10,11 @@
       "domain": "codersforcorbyn.com"
     }
   },
-  "environments": {
+  "local": {
+    "environment": {
+      "RHIZOME_SERVER_ID": "",
+      "RHIZOME_OTP_SALT": ""
+    },
     "workstation1": {
       "mongoUrl": {
         "dev": "localhost",
