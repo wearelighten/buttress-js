@@ -5,7 +5,7 @@
  *
  * @file logging.js
  * @description Logging helpers
- * @module Config
+ * @module System
  * @author Chris Bates-Keegan
  *
  * @todo Centralise this logging across the app

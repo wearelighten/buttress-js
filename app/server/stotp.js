@@ -5,7 +5,7 @@
  *
  * @file stopt.js
  * @description Simple Time One-Time Password tool
- * @module Auth
+ * @module System
  * @author Chris Bates-Keegan
  *
  */

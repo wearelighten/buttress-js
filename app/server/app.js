@@ -81,5 +81,6 @@ app.db.connection.on('connected', () => {
 
   Model.init();
   Routes.init(app);
+
   app.server = app.listen(app.set('port'));
 });
