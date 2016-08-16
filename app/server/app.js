@@ -1,8 +1,14 @@
 'use strict';
 
-//
-// Includes
-//
+/**
+ * Rhizome - The API that feeds grassroots movements
+ *
+ * @file app.js
+ * @description
+ * @module System
+ * @author Chris Bates-Keegan
+ *
+ */
 
 var express = require('express');
 var json = require('express-json');
@@ -13,15 +19,14 @@ var Model = require('./model/index');
 var Routes = require('./routes/index');
 var Config = require('./config');
 
-//
-// Export Express
-//
-
+/**
+ * Express
+ */
 var app = module.exports = express();
 
-//
-// Configuration
-//
+/**
+ * Configuration
+ */
 var configureDevelopment = () => {
   Config.env = 'dev';
   app.set('db-uri', `mongodb://${Config.mongoUrl.dev}/${Config.app.code}-dev`);
@@ -67,9 +72,9 @@ var configureApp = env => {
 
 configureApp(app.get('env'));
 
-//
-// Connect to MongoDb and Init
-//
+/**
+ *
+ */
 app.db = mongoose.connect(app.get('db-uri'));
 app.db.connection.on('connected', () => {
   console.log(`${Config.app.title} listening on port %d in %s mode.`, app.get('port'), app.settings.env);
