@@ -1,3 +1,10 @@
 {
-    "extends": "google"
+  "extends": "google",
+  "rules": {
+    "max-len": [
+      2,
+      120,
+      4
+    ]
+  }
 }
