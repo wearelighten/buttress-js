@@ -5,15 +5,15 @@ Config    = require("../config")
 _         = require("underscore")
 fs        = require("fs")
 whenjs    = require("when")
-Helpers   = require("../helpers")
+Logging   = require("../logging")
 Model     = require("../model/index")
-OTP       = require("../otp")
+OTP       = require("../stotp")
 
 #######################################################################################################################
 #######################################################################################################################
 class Route
   @app: null
-#  @otp: OTP.create({length:12,mode:OTP.Constants.Mode.ALPHANUMERIC,salt:Config.auth.otp.salt,tolerance:3})
+  @otp: OTP.create({length:12,mode:OTP.Constants.Mode.ALPHANUMERIC,salt:Config.RHIZOME_OTP_SALT,tolerance:3})
 
   @LogLevel:
     NONE: 0,
@@ -88,7 +88,7 @@ class Route
   ##################################
   log: (log, level=Route.LogLevel.INFO) ->
     return if level is Route.LogLevel.NONE
-    console.log Helpers.logPrefix() + " - #{log}" if level >= @logLevel
+    console.log Logging.logPrefix() + " - #{log}" if level >= @logLevel
 
   ##################################
   ##################################
