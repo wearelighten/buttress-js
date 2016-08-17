@@ -40,7 +40,12 @@ var _logLevel = LogLevel.INFO;
  */
 function _log(log, level) {
   if (_logLevel >= level) {
-    console.log(log);
+    if (typeof log === 'string') {
+      console.log(`${logPrefix()} - ${log}`);
+    } else {
+      console.log(`${logPrefix()}`);
+      console.log(log);
+    }
   }
 }
 
@@ -58,7 +63,7 @@ module.exports.setLogLevel = level => {
  */
 module.exports.stdLog = (log, level) => {
   level = level || LogLevel.DEFAULT;
-  _log(`${logPrefix()} - ${log}`, level);
+  _log(log, level);
 };
 
 /**
@@ -73,7 +78,7 @@ module.exports.stdLog = (log, level) => {
 module.exports.log = (log, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
-    _log(`${logPrefix()} - ${log}: ${res}`, level);
+    _log(`${log}: ${res}`, level);
     return res;
   };
 };
@@ -88,7 +93,7 @@ module.exports.logIf = (log, val, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     if (val === res) {
-      _log(`${logPrefix()} - ${log}: ${res}`, level);
+      _log(`${log}: ${res}`, level);
     }
     return res;
   };
@@ -104,7 +109,7 @@ module.exports.logIfNot = (log, val, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     if (val !== res) {
-      _log(`${logPrefix()} - ${log}: ${res}`, level);
+      _log(`${log}: ${res}`, level);
     }
     return res;
   };
@@ -123,7 +128,7 @@ module.exports.logIfNot = (log, val, level) => {
 module.exports.logProp = (log, prop, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
-    _log(`${logPrefix()} - ${log}: ${res[prop]}`, level);
+    _log(`${log}: ${res[prop]}`, level);
     return res;
   };
 };
@@ -139,7 +144,7 @@ module.exports.logPropIf = (log, prop, val, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     if (val === res[prop]) {
-      _log(`${logPrefix()} - ${log}: ${res[prop]}`, level);
+      _log(`${log}: ${res[prop]}`, level);
     }
     return res;
   };
@@ -156,7 +161,7 @@ module.exports.logPropIfNot = (log, prop, val, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     if (val !== res[prop]) {
-      _log(`${logPrefix()} - ${log}: ${res[prop]}`, level);
+      _log(`${log}: ${res[prop]}`, level);
     }
     return res;
   };
@@ -174,7 +179,7 @@ module.exports.logPropIfNot = (log, prop, val, level) => {
 module.exports.logArray = (log, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
-    console.log(`${logPrefix()} - ${log}: ${res.length}`, level);
+    _log(`${log}: ${res.length}`, level);
     res.forEach(r => {
       _log(r);
     });
@@ -191,7 +196,7 @@ module.exports.logArray = (log, level) => {
 module.exports.logArrayProp = (log, prop, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
-    console.log(`${logPrefix()} - ${log}: ${res.length}`, level);
+    _log(`${log}: ${res.length}`, level);
     res.forEach(r => {
       _log(r[prop]);
     });
