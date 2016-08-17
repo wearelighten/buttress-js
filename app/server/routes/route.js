@@ -134,6 +134,9 @@ class Route {
   static get Constants() {
     return Constants;
   }
+  static get LogLevel() {
+    return Logging.Constants.LogLevel;
+  }
 }
 
 module.exports = Route;
