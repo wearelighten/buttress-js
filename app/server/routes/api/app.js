@@ -16,24 +16,23 @@ var Route = require('../route');
  * @class GetList
  */
 class GetList extends Route {
-  constructor(req, res) {
-    super(req, res, 'APP GET');
+  constructor() {
+    super('app', 'APP GET LIST');
+    this.auth = Route.Constants.Auth.NONE;
+    this.verb = Route.Constants.Verbs.GET;
+    this.permissions = Route.Constants.Permissions.READ;
   }
 
   _validate() {
-    var d = new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       resolve(true);
     });
-
-    return d;
   }
 
   _exec() {
-    var d = new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       resolve(['a', 'b', 'c']);
     });
-
-    return d;
   }
 }
 
@@ -41,10 +40,6 @@ class GetList extends Route {
  *
  * @type {{routes: {app: {get: GetList}}}}
  */
-module.exports = {
-  routes: {
-    app: {
-      get: GetList
-    }
-  }
-};
+module.exports = [
+  GetList
+];
