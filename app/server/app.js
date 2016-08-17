@@ -11,8 +11,8 @@
  */
 
 var express = require('express');
-var json = require('express-json');
 var methodOverride = require('method-override');
+var bodyParser = require('body-parser');
 var morgan = require('morgan');
 var mongoose = require('mongoose');
 var Model = require('./model/index');
@@ -50,7 +50,8 @@ var configureTest = () => {
 
 var configureApp = env => {
   app.enable('trust proxy', 1);
-  app.use(json());
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({extended: true}));
   app.use(methodOverride());
 
   switch (env) {
