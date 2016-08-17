@@ -11,6 +11,8 @@
  */
 
 var Route = require('../route');
+var Model = require('../../model');
+var Logging = require('../../logging');
 
 /**
  * @class GetList
@@ -37,9 +39,46 @@ class GetList extends Route {
 }
 
 /**
- *
- * @type {{routes: {app: {get: GetList}}}}
+ * @class AddApp
+ */
+class AddApp extends Route {
+  constructor() {
+    super('app', 'APP ADD');
+    this.auth = Route.Constants.Auth.NONE;
+    this.verb = Route.Constants.Verbs.POST;
+    this.permissions = Route.Constants.Permissions.WRITE;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      if (!this.req.body.name || !this.req.body.type) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+      if (this.req.body.type === Model.Constants.App.Type.Browser &&
+          !this.req.body.domain) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return new Promise((resolve, reject) => {
+      Model.App.add(this.req.body)
+        .then(Logging.logProp('Added App', 'details', Route.LogLevel.INFO))
+        .then(resolve, reject);
+    });
+  }
+}
+
+/**
+ * @type {*[]}
  */
 module.exports = [
-  GetList
+  GetList,
+  AddApp
 ];
