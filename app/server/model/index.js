@@ -12,6 +12,7 @@
 
 var path = require('path');
 var fs = require('fs');
+// var Logging = require('../logging');
 require('sugar');
 
 /**
@@ -41,18 +42,9 @@ class Model {
    * @private
    */
   _initModel(model) {
-    this.__defineGetter__(model, () => {
-      this.models[model] = this._require(model);
-      return this.models[model];
-    });
-    this.Schema.__defineGetter__(model, () => {
-      this.models[model] = this._require(model).schema;
-      return this.models[model];
-    });
-    this.Constants.__defineGetter__(model, () => {
-      this.models[model] = this._require(model).constants;
-      return this.models[model];
-    });
+    this.__defineGetter__(model, () => this._require(model).model);
+    this.Schema.__defineGetter__(model, () => this._require(model).schema);
+    this.Constants.__defineGetter__(model, () => this._require(model).constants);
   }
 
   _require(model) {
