@@ -12,7 +12,8 @@
  */
 
 var mongoose = require('mongoose');
-// var Logging = require('../../logging');
+var Model = require('../');
+var Logging = require('../../logging');
 
 /**
  * Constants
@@ -46,7 +47,7 @@ var schema = new mongoose.Schema({
   }
 });
 
-var Model = null;
+var ModelDef = null;
 
 /**
  * Schema Virtual Methods
@@ -69,21 +70,25 @@ schema.virtual('details').get(function() {
  */
 schema.statics.add = body => {
   return new Promise((resolve, reject) => {
-    var app = new Model({
+    var app = new ModelDef({
       name: body.name,
       type: body.type,
       domain: body.domain
     });
 
-    app.save().then(res => resolve(res.details), reject);
+    Model.Token.add(Model.Constants.Token.Type.APP)
+      .then(token => {
+        app._token = token;
+        app.save().then(res => resolve(Object.assign(res.details,{token: token.value})), reject);
+      });
   });
 };
 
-Model = mongoose.model('App', schema);
+ModelDef = mongoose.model('App', schema);
 
 /**
  * Exports
  */
 module.exports.constants = constants;
 module.exports.schema = schema;
-module.exports.model = Model;
+module.exports.model = ModelDef;
