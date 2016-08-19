@@ -13,7 +13,7 @@ Then you'll need to grab the latest modules:
 You need to setup an environment variable: `SERVER_ID`
 Add `export SERVER_ID = 'name'` to your .profile or .bashrc
 
-Then add to config.coffee.
+Then add to config.json.
 ## Building ##
 `npm run build`
 `npm start`; or
