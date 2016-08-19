@@ -56,8 +56,7 @@ class AddApp extends Route {
         reject({statusCode: 400});
         return;
       }
-      if (this.req.body.type === Model.Constants.App.Type.Browser &&
-          !this.req.body.domain) {
+      if (this.req.body.type === Model.Constants.App.Type.Browser && !this.req.body.domain) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
@@ -69,7 +68,7 @@ class AddApp extends Route {
   _exec() {
     return new Promise((resolve, reject) => {
       Model.App.add(this.req.body)
-        .then(Logging.logProp('Added App', 'details', Route.LogLevel.INFO))
+        .then(Logging.Promise.logProp('Added App', 'details', Route.LogLevel.INFO))
         .then(resolve, reject);
     });
   }

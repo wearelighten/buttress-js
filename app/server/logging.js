@@ -61,7 +61,7 @@ module.exports.setLogLevel = level => {
  * @param {string} log - Text to log
  * @param {integer} level - level to log at
  */
-module.exports.stdLog = (log, level) => {
+module.exports.log = (log, level) => {
   level = level || LogLevel.DEFAULT;
   _log(log, level);
 };
@@ -70,12 +70,14 @@ module.exports.stdLog = (log, level) => {
  * PROMISE LOGGING
  */
 
+module.exports.Promise = {};
+
 /**
  * @param {string} log - Text to log
  * @param {integer} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.log = (log, level) => {
+module.exports.Promise.log = (log, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     _log(`${log}: ${res}`, level);
@@ -89,7 +91,7 @@ module.exports.log = (log, level) => {
  * @param {integer} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.logIf = (log, val, level) => {
+module.exports.Promise.logIf = (log, val, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     if (val === res) {
@@ -105,7 +107,7 @@ module.exports.logIf = (log, val, level) => {
  * @param {integer} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.logIfNot = (log, val, level) => {
+module.exports.Promise.logIfNot = (log, val, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     if (val !== res) {
@@ -125,7 +127,7 @@ module.exports.logIfNot = (log, val, level) => {
  * @param {integer} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.logProp = (log, prop, level) => {
+module.exports.Promise.logProp = (log, prop, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     _log(`${log}: ${res[prop]}`, level);
@@ -140,7 +142,7 @@ module.exports.logProp = (log, prop, level) => {
  * @param {integer} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.logPropIf = (log, prop, val, level) => {
+module.exports.Promise.logPropIf = (log, prop, val, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     if (val === res[prop]) {
@@ -157,7 +159,7 @@ module.exports.logPropIf = (log, prop, val, level) => {
  * @param {integer} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.logPropIfNot = (log, prop, val, level) => {
+module.exports.Promise.logPropIfNot = (log, prop, val, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     if (val !== res[prop]) {
@@ -176,7 +178,7 @@ module.exports.logPropIfNot = (log, prop, val, level) => {
  * @param {integer} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.logArray = (log, level) => {
+module.exports.Promise.logArray = (log, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     _log(`${log}: ${res.length}`, level);
@@ -193,7 +195,7 @@ module.exports.logArray = (log, level) => {
  * @param {integer} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.logArrayProp = (log, prop, level) => {
+module.exports.Promise.logArrayProp = (log, prop, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
     _log(`${log}: ${res.length}`, level);
