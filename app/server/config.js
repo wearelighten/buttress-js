@@ -40,7 +40,7 @@ class Config {
       if (!process.env[variable]) {
         throw new Error(`You must specify the ${variable} environment variable`);
       }
-      settings.local.environment[variable] = process.env.RHIZOME_OTP_SALT;
+      settings.local.environment[variable] = process.env[variable];
     }
 
     return Object.assign(settings.global, settings.local.environment, settings.local[process.env.SERVER_ID]);
