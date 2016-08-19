@@ -122,7 +122,7 @@ class Route {
    */
   log(log, level) {
     level = level || Logging.Constants.LogLevel.INFO;
-    Logging.stdLog(log, level);
+    Logging.log(log, level);
   }
 
   static set app(app) {
