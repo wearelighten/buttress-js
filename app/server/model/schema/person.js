@@ -26,10 +26,28 @@ var constants = {
  * Schema
  */
 var schema = new mongoose.Schema({
-  name: String,
+  title: String,
+  forename: String,
+  surname: String,
   email: {
     type: String,
     index: true
+  },
+  address: String,
+  postcode: String,
+  phone: {
+    landline: String,
+    mobile: String
+  },
+  membershipNumber: String,
+  voterId: String,
+  meta: [{
+    key: String,
+    value: String
+  }],
+  _dataOwner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Group'
   },
   _apps: [Model.Schema.AppAuth]
 });
@@ -42,8 +60,19 @@ var ModelDef = null;
 schema.virtual('details').get(function() {
   return {
     id: this._id,
-    name: this.name,
-    type: this.type
+    forename: this.forename,
+    surname: this.surname,
+    name: `${this.forename} ${this.surname}`,
+    address: this.address,
+    postcode: this.postcode,
+    phone: {
+      landline: this.landline,
+      mobile: this.mobile
+    },
+    membershipNumber: this.membershipNumber,
+    voterId: this.voterId,
+    dataOwner: this._dataOwner && this._dataOwner.name ? this._dataOwner.name : false,
+    meta: this.meta
   };
 });
 
@@ -53,14 +82,24 @@ schema.virtual('details').get(function() {
 
 /**
  * @param {Object} body - body passed through from a POST request
+ * @param {Object} owner - Owner group Mongoose object
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-schema.statics.add = body => {
+schema.statics.add = (body, owner) => {
   return new Promise((resolve, reject) => {
     var app = new ModelDef({
-      name: body.name,
-      type: body.type,
-      domain: body.domain
+      forename: body.forename,
+      surname: body.surname,
+      email: body.surname,
+      telephone: {
+        landline: body.landline,
+        mobile: body.mobile
+      },
+      address: body.address,
+      postcode: body.postcode,
+      membershipNumber: body.membershipNumber,
+      voterId: body.voterId,
+      _dataOwner: owner
     });
 
     app.save().then(res => resolve(res.details), reject);
