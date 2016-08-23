@@ -35,7 +35,7 @@ var constants = {
  * @private
  */
 var _createTokenString = () => {
-  const length = 18;
+  const length = 36;
   var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var mask = 0x3d;
   var string = '';
@@ -49,6 +49,8 @@ var _createTokenString = () => {
   } catch (err) {
     throw err;
   }
+
+  Logging.log(`Created Token: ${string}`, Logging.Constants.LogLevel.VERBOSE);
 
   return string;
 };
