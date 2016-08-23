@@ -37,6 +37,10 @@ class Model {
     }
   }
 
+  initModel(modelName) {
+    return this[modelName];
+  }
+
   /**
    * @param {string} model - demand loads the schema
    * @private
