@@ -1,6 +1,6 @@
 upstream rhizome_upstream {
     ip_hash;
-    server localhost:3010;
+    server localhost:6000;
 }
 
 server {
