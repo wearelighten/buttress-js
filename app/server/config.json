@@ -13,14 +13,12 @@
   "local": {
     "environment": {
       "RHIZOME_SERVER_ID": "",
-      "RHIZOME_OTP_SALT": ""
+      "RHIZOME_OTP_SALT": "",
+      "RHIZOME_MONGO_URL_DEV": "",
+      "RHIZOME_MONGO_URL_PROD": "",
+      "RHIZOME_MONGO_URL_TEST": ""
     },
     "workstation1": {
-      "mongoUrl": {
-        "dev": "localhost",
-        "prod": "localhost",
-        "test": "localhost"
-      },
       "listenPort": {
         "dev": 6001,
         "prod": 6000,
@@ -28,11 +26,6 @@
       }
     },
     "yubaba": {
-      "mongoUrl": {
-        "dev": "localhost",
-        "prod": "localhost",
-        "test": "localhost"
-      },
       "listenPort": {
         "dev": 6001,
         "prod": 6000,
