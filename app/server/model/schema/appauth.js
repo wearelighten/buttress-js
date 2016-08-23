@@ -39,7 +39,10 @@ var schema = new mongoose.Schema({
   appId: String,
   username: String,
   profileUrl: String,
-  images: [String],
+  images: {
+    profile: String,
+    banner: String
+  },
   email: String,
   locale: String,
   token: String,
