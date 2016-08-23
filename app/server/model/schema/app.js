@@ -55,6 +55,10 @@ var schema = new mongoose.Schema({
     enum: authLevel
   },
   permissions: [{route: String, permission: String}],
+  _owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Group'
+  },
   _token: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Token'
@@ -63,6 +67,7 @@ var schema = new mongoose.Schema({
 
 var ModelDef = null;
 Model.initModel('Token');
+Model.initModel('Group');
 
 /**
  * Schema Virtual Methods
@@ -73,12 +78,22 @@ schema.virtual('details').get(function() {
     name: this.name,
     type: this.type,
     authLevel: this.authLevel,
+    owner: this._owner && this._owner.name ? this._owner.name : false,
     token: this._token && this._token.value ? this._token.value : false,
     permissions: this.permissions.map(p => {
       return {route: p.route, permission: p.permission};
     })
   };
 });
+
+/**
+ * Schema Methods
+ */
+
+schema.methods.setOwner = group => {
+  this._owner = group;
+  return this.save();
+};
 
 /**
  * Schema Static Methods
@@ -125,7 +140,7 @@ schema.statics.rm = app => {
  */
 schema.statics.findAll = () => {
   return new Promise((resolve, reject) => {
-    ModelDef.find({}).populate('_token')
+    ModelDef.find({}).populate('_token').populate('_owner')
       // .then(Logging.Promise.logArrayProp('App', '_token'))
       .then(res => resolve(res.map(d => Object.assign(d.details, {token: d._token.value}))), reject);
       // .then(Logging.Promise.logArrayProp('tokens', '_token'))
