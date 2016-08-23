@@ -3,51 +3,72 @@
 /**
  * Rhizome - The API that feeds grassroots movements
  *
- * @file logging.js
- * @description Logging helpers
+ * @file route.js
+ * @description Route Class - Route authorisation (against app permissions), validation and execution
  * @module System
  * @author Chris Bates-Keegan
  *
  */
 
-var Config = require('../config');
+// var Config = require('../config');
 var Logging = require('../logging');
-var OTP = require('../stotp');
+// var OTP = require('../stotp');
 var _ = require('underscore');
 
 /**
  */
-var _otp = OTP.create({
-  length: 12,
-  mode: OTP.Constants.Mode.ALPHANUMERIC,
-  salt: Config.RHIZOME_OTP_SALT,
-  tolerance: 3
-});
+// var _otp = OTP.create({
+//   length: 12,
+//   mode: OTP.Constants.Mode.ALPHANUMERIC,
+//   salt: Config.RHIZOME_OTP_SALT,
+//   tolerance: 3
+// });
 
 var _app = null;
 
 /**
- * @type { {Auth: {NONE: string, SUPER: string, ADMIN: string, USER: string},
- *          Permissions: {READ: string, WRITE: string, BOTH: string},
- *          Verbs: {GET: string, POST: string, PUT: string, DEL: string}}}
+ * @type {{Auth: {
+ *          NONE: number,
+ *          USER: number,
+ *          ADMIN: number,
+ *          SUPER: number},
+ *         Permissions: {
+ *          NONE: string,
+ *          ADD: string,
+ *          READ: string,
+ *          WRITE: string,
+ *          LIST: string,
+ *          DELETE: string,
+ *          ALL: string
+*          },
+ *         Verbs: {
+ *          GET: string,
+ *          POST: string,
+ *          PUT: string,
+ *          DEL: string
+*          }}}
  */
 var Constants = {
   Auth: {
-    NONE: '',
-    SUPER: 'super',
-    ADMIN: 'admin',
-    USER: 'user'
+    NONE: 0,
+    USER: 1,
+    ADMIN: 2,
+    SUPER: 3
   },
   Permissions: {
+    NONE: '',
+    ADD: 'add',
     READ: 'read',
     WRITE: 'write',
-    BOTH: 'both'
+    LIST: 'list',
+    DELETE: 'delete',
+    ALL: '*'
   },
   Verbs: {
     GET: 'get',
     POST: 'post',
     PUT: 'put',
-    DEL: 'del'
+    DEL: 'delete'
   }
 };
 
@@ -77,13 +98,14 @@ class Route {
         return;
       }
 
-      this.log(`STARTING: ${this.name}`);
+      this.log(`STARTING: ${this.name}`, Logging.Constants.LogLevel.INFO);
       this._authenticate()
         .then(Logging.log('authenticated', Logging.Constants.LogLevel.VERBOSE))
         .then(_.bind(this._validate, this), reject)
         .then(Logging.log('validated', Logging.Constants.LogLevel.VERBOSE))
         .then(_.bind(this._exec, this), reject)
         .then(Logging.log('exec\'ed', Logging.Constants.LogLevel.VERBOSE))
+        .then(_.bind(this._logAppUsage, this))
         .then(resolve, reject);
     });
   }
@@ -100,19 +122,98 @@ class Route {
         return;
       }
 
-      this.log(`Authenticate: ${this.auth}`);
-      if (!this.req.user) {
-        this.log('EAUTH: No logged in user', Logging.Constants.LogLevel.ERR);
+      if (!this.req.appDetails) {
+        this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR);
         reject({statusCode: 401});
         return;
       }
 
-      if (_otp.test(this.req.query.token) === false) {
-        this.log('EAUTH: Invalid TOTP Token', Logging.Constants.LogLevel.ERR);
-        reject({statusCode: 400});
+      this.log(`AUTHLEVEL: ${this.auth}`, Logging.Constants.LogLevel.VERBOSE);
+      if (this.req.appDetails.authLevel < this.auth) {
+        this.log('EAUTH: INSUFFICIENT AUTHORITY', Logging.Constants.LogLevel.ERR);
+        reject({statusCode: 401});
+        return;
       }
 
-      resolve(this.req.user);
+      /**
+       * @description Route:
+       *                  '*' - all routes (SUPER)
+       *                  'route' - specific route (ALL)
+       *                  'route/subroute' - specific route (ALL)
+       *                  'route/*' name plus all children (ADMIN)
+       * @TODO Improve the pattern matching granularity ie like Glob
+       * @TODO Support Regex in specific ie match routes like app/:id/permission
+       */
+      var authorised = false;
+      Logging.log(this.req.appDetails.permissions, Logging.Constants.LogLevel.VERBOSE);
+      for (var x = 0; x < this.req.appDetails.permissions.length; x++) {
+        var p = this.req.appDetails.permissions[x];
+        // var p = {route: 'app/*', permission: '*'};
+        Logging.log(p, Logging.Constants.LogLevel.VERBOSE);
+        if (this._matchRoute(p.route) && this._matchPermission(p.permission)) {
+          authorised = true;
+          break;
+        }
+      }
+
+      if (authorised === true) {
+        resolve(this.req.appDetails);
+      } else {
+        reject({statusCode: 401});
+      }
+    });
+  }
+
+  /**
+   * @param {string} routeSpec - See above for accepted route specs
+   * @return {boolean} - true if the route is authorised
+   * @private
+   */
+  _matchRoute(routeSpec) {
+    if (routeSpec === '*' &&
+      this.req.appDetails.authLevel >= Constants.Auth.SUPER) {
+      return true;
+    }
+
+    if (routeSpec === this.path) {
+      return true;
+    }
+
+    var wildcard = /(.+)(\/\*)$/;
+    var matches = routeSpec.match(wildcard);
+    if (matches) {
+      Logging.log(matches, Logging.Constants.LogLevel.VERBOSE);
+      if (this.path.match(new RegExp(`^${matches[1]}`)) &&
+        this.req.appDetails.authLevel >= Constants.Auth.ADMIN) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @param {string} permissionSpec -
+   * @return {boolean} - true if authorised
+   * @private
+   */
+  _matchPermission(permissionSpec) {
+    if (permissionSpec === '*' || permissionSpec === this.permission) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * @param {*} res - whatever results are being returned by the API, just passed through
+   * @return {Promise} - passes through the previous results when DB save completes
+   * @private
+   */
+  _logAppUsage(res) {
+    return new Promise((resolve, reject) => {
+      this.req.appDetails._token.uses.push(new Date());
+      this.req.appDetails._token.save().then(() => resolve(res), reject);
     });
   }
 
@@ -134,6 +235,10 @@ class Route {
   static get Constants() {
     return Constants;
   }
+
+  /**
+   * @return {Enum} - returns the LogLevel enum (convenience)
+   */
   static get LogLevel() {
     return Logging.Constants.LogLevel;
   }
