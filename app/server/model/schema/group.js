@@ -59,13 +59,23 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     type: this.type,
-    organisation: this._organisation && !this._organisation.name ? this._organisation : this._organisation,
+    organisation: this.organisationName,
     images: {
       avatar: String,
       banner: String
     },
     website: this.website
   };
+});
+
+schema.virtual('organisationName').get(function() {
+  if (!this._organisation) {
+    return false;
+  }
+  if (!this._organisation.details) {
+    return this._organisation;
+  }
+  return this._organisation.details;
 });
 
 /**

@@ -78,19 +78,39 @@ schema.virtual('details').get(function() {
     name: this.name,
     type: this.type,
     authLevel: this.authLevel,
-    owner: this._owner && this._owner.name ? this._owner.name : false,
-    token: this._token && this._token.value ? this._token.value : false,
+    owner: this.ownerName,
+    token: this.tokenValue,
     permissions: this.permissions.map(p => {
       return {route: p.route, permission: p.permission};
     })
   };
 });
 
+schema.virtual('ownerName').get(function() {
+  if (!this._owner) {
+    return false;
+  }
+  if (!this._owner.details) {
+    return this._owner;
+  }
+  return this._owner.details;
+});
+
+schema.virtual('tokenValue').get(function() {
+  if (!this._token) {
+    return false;
+  }
+  if (!this._token.value) {
+    return this._token;
+  }
+  return this._token.value;
+});
+
 /**
  * Schema Methods
  */
 
-schema.methods.setOwner = group => {
+schema.methods.setOwner = function(group) {
   this._owner = group;
   return this.save();
 };
