@@ -170,7 +170,7 @@ routes.push(DeleteApp);
  */
 class SetAppOwner extends Route {
   constructor() {
-    super('app/:id', 'SET APP OWNER');
+    super('app/:id/owner', 'SET APP OWNER');
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.SUPER;
     this.permissions = Route.Constants.Permissions.WRITE;
@@ -194,7 +194,7 @@ class SetAppOwner extends Route {
           return;
         }
         this._group = group;
-      }).then(
+      }).then(() => {
         Model.App.findById(this.req.params.id).then(app => {
           if (!app) {
             this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
@@ -203,9 +203,8 @@ class SetAppOwner extends Route {
           }
           this._app = app;
           resolve(true);
-        })
-      , reject
-      );
+        });
+      });
     });
   }
 
