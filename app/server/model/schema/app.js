@@ -131,7 +131,8 @@ schema.statics.add = body => {
       type: body.type,
       authLevel: body.authLevel,
       permissions: body.permissions,
-      domain: body.domain
+      domain: body.domain,
+      _owner: body.ownerGroupId
     });
 
     Model.Token.add(Model.Constants.Token.Type.APP)

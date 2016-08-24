@@ -111,8 +111,23 @@ class AddApp extends Route {
         reject({statusCode: 400});
         return;
       }
-
-      resolve(true);
+      if (this.req.body.ownerGroupId) {
+        Model.Group.findById(this.req.body.ownerGroupId)
+          .then(Logging.Promise.log('Group', Route.LogLevel.INFO))
+          .then(group => {
+            if (!group) {
+              Logging.log('Error: Invalid Group ID', Route.LogLevel.WARN);
+              reject({statusCode: 400});
+              return;
+            }
+            resolve(true);
+          }, err => {
+            Logging.log('Error: Malformed Group ID', Route.LogLevel.ERR);
+            reject({statusCode: 400});
+          });
+      } else {
+        resolve(true);
+      }
     });
   }
 
