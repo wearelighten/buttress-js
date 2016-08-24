@@ -43,13 +43,13 @@ var _apps = [];
 function _authenticateApp(req, res, next) {
   Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.VERBOSE);
   if (!req.query.token) {
-    res.sendStatus(401);
+    res.sendStatus(400);
     return;
   }
   if (_apps.length > 0) {
     req.appDetails = _lookupToken(_apps, req.query.token);
     if (!req.appDetails) {
-      res.sendStatus(401);
+      res.sendStatus(403);
       return;
     }
     next();
@@ -58,7 +58,7 @@ function _authenticateApp(req, res, next) {
       _apps = apps;
       req.appDetails = _lookupToken(_apps, req.query.token);
       if (!req.appDetails) {
-        res.sendStatus(401);
+        res.sendStatus(403);
         return;
       }
       next();
@@ -85,10 +85,14 @@ function _lookupToken(apps, token) {
  * @private
  */
 function _configCrossDomain(req, res, next) {
+  if (!req.appDetails.type !== Model.Constants.App.Type.BROWSER) {
+    next();
+    return;
+  }
   // Logging.log(req.header('Origin'));
 
-  res.header('Access-Control-Allow-Origin', 'http://dev.violet.com');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Origin', `http://${req.appDetails.domain}`);
+  res.header('Access-Control-Allow-Methods', 'POST,OPTIONS');
 
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
