@@ -52,6 +52,7 @@ class GetGroup extends Route {
     this.permissions = Route.Constants.Permissions.READ;
 
     this._group = false;
+    this._apps = false;
   }
 
   _validate() {
@@ -70,6 +71,12 @@ class GetGroup extends Route {
             return;
           }
           this._group = group;
+          return group;
+        })
+        .then(group => Model.App.find({_owner: group._id}))
+        .then(Logging.Promise.logArray('Apps', Route.LogLevel.VERBOSE))
+        .then(apps => {
+          this._apps = apps;
           resolve(true);
         });
     });
@@ -77,7 +84,7 @@ class GetGroup extends Route {
 
   _exec() {
     return new Promise((resolve, reject) => {
-      resolve(this._group.details);
+      resolve(Object.assign(this._group.details, {apps: this._apps.map(m => m.details)}));
     });
   }
 }
