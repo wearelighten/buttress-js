@@ -108,6 +108,9 @@ function _configCrossDomain(req, res, next) {
 exports.init = app => {
   Route.app = app;
 
+  app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
+  app.get('/index.html', (req, res, next) => res.send('<html><head><title>Rhizome</title></head></html>'));
+
   app.use(_authenticateApp);
   app.use(_configCrossDomain);
 
