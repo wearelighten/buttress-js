@@ -10,7 +10,6 @@
  *
  */
 
-var express = require('express');
 var fs = require('fs');
 
 /**
@@ -24,8 +23,14 @@ class Config {
         'settings for your environment to config.json');
     }
 
-    this._env = express().get('env');
+    var _map = {
+      development: 'dev',
+      production: 'prod',
+      test: 'test'
+    };
+
     this._settings = this._loadSettings();
+    this._settings.env = _map[process.env.NODE_ENV];
   }
 
   get settings() {
@@ -43,7 +48,7 @@ class Config {
       settings.local.environment[variable] = process.env[variable];
     }
 
-    return Object.assign(settings.global, settings.local.environment, settings.local[process.env.SERVER_ID]);
+    return Object.assign(settings.global, settings.local.environment, settings.local[process.env.RHIZOME_SERVER_ID]);
   }
 }
 
