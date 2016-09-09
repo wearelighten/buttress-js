@@ -12,7 +12,7 @@
 
 var path = require('path');
 var fs = require('fs');
-// var Logging = require('../logging');
+var Logging = require('../logging');
 require('sugar');
 
 /**
@@ -28,10 +28,12 @@ class Model {
     this.models = {};
     this.Schema = {};
     this.Constants = {};
+    this.app = false;
   }
 
   init() {
     var models = _getModels();
+    Logging.log(models, Logging.Constants.LogLevel.DEBUG);
     for (var x = 0; x < models.length; x++) {
       this._initModel(models[x]);
     }
