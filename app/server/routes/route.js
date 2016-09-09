@@ -157,6 +157,7 @@ class Route {
       if (authorised === true) {
         resolve(this.req.appDetails);
       } else {
+        this.log(`EAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
         reject({statusCode: 401});
       }
     });
@@ -180,7 +181,7 @@ class Route {
     var wildcard = /(.+)(\/\*)$/;
     var matches = routeSpec.match(wildcard);
     if (matches) {
-      Logging.log(matches, Logging.Constants.LogLevel.VERBOSE);
+      Logging.log(matches, Logging.Constants.LogLevel.DEBUG);
       if (this.path.match(new RegExp(`^${matches[1]}`)) &&
         this.req.appDetails.authLevel >= Constants.Auth.ADMIN) {
         return true;
