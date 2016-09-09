@@ -302,6 +302,13 @@ class AddAppMetadata extends Route {
           reject({statusCode: 400});
           return;
         }
+        try {
+          JSON.parse(this.req.body.value);
+        } catch (e) {
+          this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
 
         this._app = app;
         resolve(true);
@@ -339,6 +346,13 @@ class UpdateAppMetadata extends Route {
         }
         if (app.findMetadata(this.req.params.key) === false) {
           this.log('ERROR: Metadata does not exist', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        try {
+          JSON.parse(this.req.body.value);
+        } catch (e) {
+          this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }

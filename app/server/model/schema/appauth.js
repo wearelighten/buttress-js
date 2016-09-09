@@ -12,8 +12,6 @@
  */
 
 var mongoose = require('mongoose');
-var Model = require('../model');
-// var Logging = require('../../logging');
 
 /**
  * Constants
@@ -58,30 +56,18 @@ var ModelDef = null;
 schema.virtual('details').get(function() {
   return {
     id: this._id,
-    name: this.name,
-    type: this.type
+    app: this.app,
+    appId: this.appId,
+    username: this.username,
+    profileUrl: this.profileUrl,
+    images: this.images,
+    email: this.email
   };
 });
 
 /**
  * Schema Static Methods
  */
-
-/**
- * @param {Object} body - body passed through from a POST request
- * @return {Promise} - returns a promise that is fulfilled when the database request is completed
- */
-schema.statics.add = body => {
-  return new Promise((resolve, reject) => {
-    var app = new Model({
-      name: body.name,
-      type: body.type,
-      domain: body.domain
-    });
-
-    app.save().then(res => resolve(res.details), reject);
-  });
-};
 
 ModelDef = mongoose.model('AppAuth', schema);
 
