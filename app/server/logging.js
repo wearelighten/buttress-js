@@ -39,16 +39,15 @@ module.exports.Constants = {
   LogLevel: LogLevel
 };
 
-const logFormat = Date.ISO8601_DATETIME;
-
 /**
  *
  */
+
 winston.remove(winston.transports.Console);
 winston.add(winston.transports.Console, {
   colorize: 'all',
-  timestamp: () => Date.create().format(logFormat),
-  level: LogLevel.INFO
+  timestamp: true,
+  level: 'info'
 });
 
 winston.add(winston.transports.Rotate, {
@@ -57,12 +56,14 @@ winston.add(winston.transports.Rotate, {
   file: `${Config.logPath}/log-debug.log`,
   level: 'debug',
   keep: 2,
+  colorize: 'all',
   timestamp: true
 });
 winston.add(winston.transports.Rotate, {
   name: 'verbose-file',
   json: false,
   file: `${Config.logPath}/log-verbose.log`,
+  colorize: 'all',
   level: 'verbose',
   timestamp: true
 });
