@@ -72,10 +72,10 @@ schema.virtual('organisationName').get(function() {
   if (!this._organisation) {
     return false;
   }
-  if (!this._organisation.details) {
+  if (!this._organisation.name) {
     return this._organisation;
   }
-  return this._organisation.details;
+  return this._organisation.name;
 });
 
 /**
