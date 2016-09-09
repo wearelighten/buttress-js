@@ -27,6 +27,7 @@
       }
     },
     "yubaba": {
+      "logPath": "/home/chris/apps/rhizome/logs",
       "listenPort": {
         "dev": 6001,
         "prod": 6000,
