@@ -19,6 +19,7 @@
       "RHIZOME_MONGO_URL_TEST": ""
     },
     "workstation1": {
+      "logPath": "/home/chris/Work/Workspaces/WebStorm/rhizome/logs",
       "listenPort": {
         "dev": 6001,
         "prod": 6000,

@@ -18,6 +18,7 @@ var mongoose = require('mongoose');
 var Model = require('./model/index');
 var Routes = require('./routes/index');
 var Config = require('./config');
+var Logging = require('./logging');
 
 /**
  * Express
@@ -78,9 +79,10 @@ configureApp(app.get('env'));
  */
 app.db = mongoose.connect(app.get('db-uri'));
 app.db.connection.on('connected', () => {
-  console.log(`${Config.app.title} listening on port %d in %s mode.`, app.get('port'), app.settings.env);
+  Logging.log(`${Config.app.title} listening on port ` +
+              `${app.get('port')} in ${app.settings.env} mode.`, Logging.Constants.LogLevel.INFO);
 
-  Model.init();
+  Model.init(app);
   Routes.init(app);
 
   app.server = app.listen(app.set('port'));

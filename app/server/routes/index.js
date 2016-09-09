@@ -26,7 +26,7 @@ function _initRoute(app, Route) {
   app[route.verb](`/api/v1/${route.path}`, (req, res) => {
     route.exec(req, res)
       .then(result => res.json(result), error => {
-        console.log(error.stack);
+        Logging.log(error, Logging.Constants.LogLevel.ERR);
         res.sendStatus(error.statusCode ? error.statusCode : 500);
       });
   });
@@ -43,12 +43,14 @@ var _apps = [];
 function _authenticateApp(req, res, next) {
   Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.VERBOSE);
   if (!req.query.token) {
+    Logging.log('EAUTH: Missing Token', Logging.Constants.LogLevel.ERR);
     res.sendStatus(400);
     return;
   }
   if (_apps.length > 0) {
-    req.appDetails = _lookupToken(_apps, req.query.token);
-    if (!req.appDetails) {
+    Model.app = req.appDetails = _lookupToken(_apps, req.query.token);
+    if (!Model.app) {
+      Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
       res.sendStatus(403);
       return;
     }
@@ -56,8 +58,9 @@ function _authenticateApp(req, res, next) {
   } else {
     Model.App.findAllNative().then(apps => {
       _apps = apps;
-      req.appDetails = _lookupToken(_apps, req.query.token);
-      if (!req.appDetails) {
+      Model.app = req.appDetails = _lookupToken(_apps, req.query.token);
+      if (!Model.app) {
+        Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
         res.sendStatus(403);
         return;
       }
@@ -69,7 +72,7 @@ function _authenticateApp(req, res, next) {
 /**
  * @param {array} apps - apps to check
  * @param {string} token - token string to look for
- * @return {*} - false if not found, App if found
+ * @return {*} - false if not found, App (native) if found
  * @private
  */
 function _lookupToken(apps, token) {

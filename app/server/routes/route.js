@@ -145,11 +145,9 @@ class Route {
        * @TODO Support Regex in specific ie match routes like app/:id/permission
        */
       var authorised = false;
-      Logging.log(this.req.appDetails.permissions, Logging.Constants.LogLevel.VERBOSE);
+      Logging.log(this.req.appDetails.details.permissions, Logging.Constants.LogLevel.DEBUG);
       for (var x = 0; x < this.req.appDetails.permissions.length; x++) {
-        var p = this.req.appDetails.permissions[x];
-        // var p = {route: 'app/*', permission: '*'};
-        Logging.log(p, Logging.Constants.LogLevel.VERBOSE);
+        var p = this.req.appDetails.details.permissions[x];
         if (this._matchRoute(p.route) && this._matchPermission(p.permission)) {
           authorised = true;
           break;

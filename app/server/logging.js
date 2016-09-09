@@ -13,24 +13,73 @@
  *
  */
 
-const logFormat = Date.ISO8601_DATETIME;
-var logPrefix = module.exports.logPrefix = () => {
-  return Date.create().format(logFormat);
-};
+const proxyquire = require('proxyquire');
+const winston = require('winston');
+proxyquire('winston-logrotate', {
+  winston: winston
+});
+const Config = require('./config');
+require('sugar');
 
+/**
+ *
+ * @type {{ERR: string, WARN: string, INFO: string, VERBOSE: string, DEBUG: string, SILLY: string, DEFAULT: string}}
+ */
 var LogLevel = {
-  NONE: 0,
-  ERR: 1,
-  WARN: 2,
-  INFO: 3,
-  VERBOSE: 4,
-  DEFAULT: 3
+  ERR: 'error',
+  WARN: 'warn',
+  INFO: 'info',
+  VERBOSE: 'verbose',
+  DEBUG: 'debug',
+  SILLY: 'silly',
+  DEFAULT: 'info'
 };
 
 module.exports.Constants = {
   LogLevel: LogLevel
 };
-var _logLevel = LogLevel.INFO;
+
+const logFormat = Date.ISO8601_DATETIME;
+
+/**
+ *
+ */
+winston.remove(winston.transports.Console);
+winston.add(winston.transports.Console, {
+  colorize: 'all',
+  timestamp: () => Date.create().format(logFormat),
+  level: LogLevel.INFO
+});
+
+winston.add(winston.transports.Rotate, {
+  name: 'debug-file',
+  json: false,
+  file: `${Config.logPath}/log-debug.log`,
+  level: 'debug',
+  keep: 2,
+  timestamp: true
+});
+winston.add(winston.transports.Rotate, {
+  name: 'verbose-file',
+  json: false,
+  file: `${Config.logPath}/log-verbose.log`,
+  level: 'verbose',
+  timestamp: true
+});
+winston.add(winston.transports.Rotate, {
+  name: 'error-file',
+  json: false,
+  file: `${Config.logPath}/log-err.log`,
+  level: 'err',
+  timestamp: true
+});
+winston.addColors({
+  info: 'white',
+  error: 'red',
+  warn: 'yellow',
+  verbose: 'white',
+  debug: 'white'
+});
 
 /**
  *
@@ -39,14 +88,12 @@ var _logLevel = LogLevel.INFO;
  * @private
  */
 function _log(log, level) {
-  if (_logLevel >= level) {
-    if (typeof log === 'string') {
-      console.log(`${logPrefix()} - ${log}`);
-    } else {
-      console.log(`${logPrefix()}`);
-      console.log(log);
-    }
-  }
+  winston.log(level, log);
+  // if (typeof log === 'string') {
+  //   winston.log(level, log);
+  // } else {
+  //   winston.log(level, '', log);
+  // }
 }
 
 /**
@@ -54,7 +101,8 @@ function _log(log, level) {
  */
 
 module.exports.setLogLevel = level => {
-  _logLevel = level;
+  winston.level = level;
+  // _logLevel = level;
 };
 
 /**
@@ -183,7 +231,7 @@ module.exports.Promise.logArray = (log, level) => {
   return res => {
     _log(`${log}: ${res.length}`, level);
     res.forEach(r => {
-      _log(r, level);
+      _log(r);
     });
     return res;
   };
@@ -200,7 +248,7 @@ module.exports.Promise.logArrayProp = (log, prop, level) => {
   return res => {
     _log(`${log}: ${res.length}`, level);
     res.forEach(r => {
-      _log(r[prop], level);
+      _log(r[prop]);
     });
     return res;
   };
