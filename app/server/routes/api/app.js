@@ -113,7 +113,7 @@ class AddApp extends Route {
       }
       if (this.req.body.ownerGroupId) {
         Model.Group.findById(this.req.body.ownerGroupId)
-          .then(Logging.Promise.log('Group', Route.LogLevel.INFO))
+          .then(Logging.Promise.log('Group', Route.LogLevel.VERBOSE))
           .then(group => {
             if (!group) {
               Logging.log('Error: Invalid Group ID', Route.LogLevel.WARN);
@@ -122,7 +122,7 @@ class AddApp extends Route {
             }
             resolve(true);
           }, err => {
-            Logging.log('Error: Malformed Group ID', Route.LogLevel.ERR);
+            Logging.log(`Error: Malformed Group ID: ${err.message}`, Route.LogLevel.ERR);
             reject({statusCode: 400});
           });
       } else {
@@ -275,6 +275,120 @@ class GetAppPermissionList extends Route {
   }
 }
 routes.push(GetAppPermissionList);
+
+/**
+ * @class AddAppMetadata
+ */
+class AddAppMetadata extends Route {
+  constructor() {
+    super('app/metadata/:key', 'ADD APP METADATA');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._app = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.App.findById(this.req.appDetails._id).then(app => {
+        if (!app) {
+          this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        if (app.findMetadata(this.req.params.key)) {
+          this.log('ERROR: Metadata already exists', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._app = app;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._app.addOrUpdateMetadata(this.req.params.key, this.req.body.value)
+      .then(a => a.details);
+  }
+}
+routes.push(AddAppMetadata);
+
+/**
+ * @class UpdateAppMetadata
+ */
+class UpdateAppMetadata extends Route {
+  constructor() {
+    super('app/metadata/:key', 'UPDATE APP METADATA');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._app = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.App.findById(this.req.appDetails._id).then(app => {
+        if (!app) {
+          this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        if (app.findMetadata(this.req.params.key) === false) {
+          this.log('ERROR: Metadata does not exist', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._app = app;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._app.addOrUpdateMetadata(this.req.params.key, this.req.body.value)
+      .then(a => a.details);
+  }
+}
+routes.push(UpdateAppMetadata);
+
+/**
+ * @class GetAppMetadata
+ */
+class GetAppMetadata extends Route {
+  constructor() {
+    super('app/metadata/:key', 'GET APP METADATA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.GET;
+
+    this._app = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Logging.log(`AppID: ${this.req.appDetails._id}`, Route.LogLevel.DEBUG);
+      Model.App.findById(this.req.appDetails._id).then(app => {
+        if (!app) {
+          this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        this._app = this.req.appDetails;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._app.findMetadata(this.req.params.key);
+  }
+}
+routes.push(GetAppMetadata);
 
 /**
  * @type {*[]}

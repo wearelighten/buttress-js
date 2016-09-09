@@ -55,6 +55,7 @@ var schema = new mongoose.Schema({
     enum: authLevel
   },
   permissions: [{route: String, permission: String}],
+  metadata: [{key: String, value: String}],
   _owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group'
@@ -80,6 +81,7 @@ schema.virtual('details').get(function() {
     authLevel: this.authLevel,
     owner: this.ownerName,
     token: this.tokenValue,
+    metadata: this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})),
     permissions: this.permissions.map(p => {
       return {route: p.route, permission: p.permission};
     })
@@ -144,6 +146,32 @@ schema.statics.add = body => {
 };
 
 /**
+ * @param {string} key - index name of the metadata
+ * @param {*} value - value of the meta data
+ * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
+ */
+schema.methods.addOrUpdateMetadata = function(key, value) {
+  Logging.log(key, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(value, Logging.Constants.LogLevel.DEBUG);
+
+  var exists = this.metadata.find(m => m.key === key);
+  if (exists) {
+    exists.value = value;
+  } else {
+    this.metadata.push({key, value});
+  }
+
+  return this.save();
+};
+
+schema.methods.findMetadata = function(key) {
+  Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
+  // Logging.log(this.metadata, Logging.Constants.LogLevel.DEBUG);
+  var md = this.metadata.find(m => m.key === key);
+  return md ? {key: md.key, value: JSON.parse(md.value)} : false;
+};
+
+/**
  * @param {App} app - App object to be deleted
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
@@ -162,9 +190,9 @@ schema.statics.rm = app => {
 schema.statics.findAll = () => {
   return new Promise((resolve, reject) => {
     ModelDef.find({}).populate('_token').populate('_owner')
-      // .then(Logging.Promise.logArrayProp('App', '_token'))
+      .then(Logging.Promise.logArrayProp('App', '_token', Logging.Constants.LogLevel.DEBUG))
       .then(res => resolve(res.map(d => Object.assign(d.details, {token: d._token.value}))), reject);
-      // .then(Logging.Promise.logArrayProp('tokens', '_token'))
+      // .then(Logging.Promise.logArrayProp('tokens', '_token', Logging.Constants.LogLevel.DEBUG))
       // .then(res => resolve(res.map(d => d.details)), reject);
   });
 };
