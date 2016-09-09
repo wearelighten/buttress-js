@@ -29,10 +29,7 @@ var schema = new mongoose.Schema({
   title: String,
   forename: String,
   surname: String,
-  email: {
-    type: String,
-    index: true
-  },
+  emails: [String],
   address: String,
   postcode: String,
   phone: {
