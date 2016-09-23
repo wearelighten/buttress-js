@@ -67,16 +67,6 @@ schema.virtual('details').get(function() {
   };
 });
 
-schema.virtual('appName').get(function() {
-  if (!this._app) {
-    return false;
-  }
-  if (!this._app.name) {
-    return this._app;
-  }
-  return this._app.name;
-});
-
 schema.virtual('authenticatedMetadata').get(function() {
   return this.metadata
     .filter(m => `${m._app}` === Model.app.id)

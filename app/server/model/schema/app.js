@@ -168,7 +168,7 @@ schema.methods.findMetadata = function(key) {
   Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
   // Logging.log(this.metadata, Logging.Constants.LogLevel.DEBUG);
   var md = this.metadata.find(m => m.key === key);
-  return md ? {key: md.key, value: JSON.parse(md.value)} : false;
+  return md ? {key: md.key, value: JSON.parse(md.value)} : undefined;
 };
 
 /**

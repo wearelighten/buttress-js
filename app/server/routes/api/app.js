@@ -297,15 +297,11 @@ class AddAppMetadata extends Route {
           reject({statusCode: 400});
           return;
         }
-        if (app.findMetadata(this.req.params.key)) {
-          this.log('ERROR: Metadata already exists', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
         try {
           JSON.parse(this.req.body.value);
         } catch (e) {
           this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
+          this.log(this.req.body.value, Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
@@ -364,8 +360,7 @@ class UpdateAppMetadata extends Route {
   }
 
   _exec() {
-    return this._app.addOrUpdateMetadata(this.req.params.key, this.req.body.value)
-      .then(a => a.details);
+    return this._app.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
   }
 }
 routes.push(UpdateAppMetadata);
@@ -380,7 +375,7 @@ class GetAppMetadata extends Route {
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
 
-    this._app = false;
+    this._metadata = null;
   }
 
   _validate() {
@@ -392,14 +387,20 @@ class GetAppMetadata extends Route {
           reject({statusCode: 400});
           return;
         }
-        this._app = this.req.appDetails;
+        this._metadata = app.findMetadata(this.req.params.key);
+        if (this._metadata === undefined) {
+          this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
+          reject({statusCode: 404});
+          return;
+        }
+
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._app.findMetadata(this.req.params.key);
+    return this._metadata.value;
   }
 }
 routes.push(GetAppMetadata);
