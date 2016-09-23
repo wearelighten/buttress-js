@@ -59,6 +59,8 @@ schema.virtual('details').get(function() {
     app: this.app,
     appId: this.appId,
     username: this.username,
+    token: this.token,
+    tokenSecret: this.tokenSecret,
     profileUrl: this.profileUrl,
     images: this.images,
     email: this.email
