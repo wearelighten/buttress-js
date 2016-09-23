@@ -100,11 +100,11 @@ class Route {
 
       this.log(`STARTING: ${this.name}`, Logging.Constants.LogLevel.INFO);
       this._authenticate()
-        .then(Logging.log('authenticated', Logging.Constants.LogLevel.VERBOSE))
+        .then(Logging.log('authenticated', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._validate, this), reject)
-        .then(Logging.log('validated', Logging.Constants.LogLevel.VERBOSE))
+        .then(Logging.log('validated', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._exec, this), reject)
-        .then(Logging.log('exec\'ed', Logging.Constants.LogLevel.VERBOSE))
+        .then(Logging.log('exec\'ed', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._logAppUsage, this))
         .then(resolve, reject);
     });
