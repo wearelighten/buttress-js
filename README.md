@@ -1,5 +1,4 @@
-# Rhizome
-### version: 1.0.0-1
+# rhizome
 The API that feeds grass roots movements.
 ## Prerequisites ##
 You'll need gulp:
@@ -14,7 +13,7 @@ Then you'll need to grab the latest modules:
 You need to setup an environment variable: `SERVER_ID`
 Add `export SERVER_ID = 'name'` to your .profile or .bashrc
 
-Then add to config.json.
+Then add to config.coffee.
 ## Building ##
 `npm run build`
 `npm start`; or
@@ -22,7 +21,7 @@ Then add to config.json.
 ## Testing ##
 Need someone to take ownership of unit tests.
 ## To Do ##
-- ~~Convert to ES6?~~
+- -Convert to ES6-
 - Make it run in a docker instance
 - Dependency on local MongoDB. Need a better solution than that. Docker?
 - Everything!
