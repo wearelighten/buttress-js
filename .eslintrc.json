@@ -1,0 +1,7 @@
+{
+  "extends": "google",
+  "rules": {
+    "max-len": [ 2, 120, 4 ],
+    "max-lines": ["error", {"max": 500, "skipComments": true, "skipBlankLines": true}]
+  }
+}

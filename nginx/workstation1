@@ -1,11 +1,11 @@
 upstream rhizome_upstream {
     ip_hash;
-    server localhost:6000;
+    server localhost:6001;
 }
 
 server {
     listen 80;
-    server_name rhizome.codersforcorbyn.com;
+    server_name dev.rhizome.com;
     root index.html;
     location / {
         proxy_set_header Upgrade $http_upgrade;
