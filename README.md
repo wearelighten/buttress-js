@@ -1,5 +1,5 @@
 # Rhizome
-### version: 1.0.0-1
+### version: 1.0.0-2
 The API that feeds grass roots movements.
 ## Prerequisites ##
 You'll need gulp:
