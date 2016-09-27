@@ -2,10 +2,11 @@
 // Includes
 //
 
-var gulp = require('gulp');
-var coffee = require('gulp-coffee');
-var eslint = require('gulp-eslint');
-var clean = require('gulp-clean');
+const gulp = require('gulp');
+const coffee = require('gulp-coffee');
+const eslint = require('gulp-eslint');
+const clean = require('gulp-clean');
+const bump = require('gulp-bump');
 
 //
 // Scripts
@@ -68,3 +69,28 @@ gulp.task('clean', function() {
 gulp.task('build', ['clean'], function() {
   return gulp.start('scripts', 'resources');
 });
+
+gulp.task('bump-major', function() {
+  return gulp.src(['./bower.json', './package.json', './README.md'])
+    .pipe(bump({type: 'major'}))
+    .pipe(gulp.dest('./'));
+});
+
+gulp.task('bump-minor', function() {
+  return gulp.src(['./bower.json', './package.json', './README.md'])
+    .pipe(bump({type: 'minor'}))
+    .pipe(gulp.dest('./'));
+});
+
+gulp.task('bump-patch', function() {
+  return gulp.src(['./bower.json', './package.json', './README.md'])
+    .pipe(bump({type: 'patch'}))
+    .pipe(gulp.dest('./'));
+});
+
+gulp.task('bump-prerelease', function() {
+  return gulp.src(['./bower.json', './package.json', './README.md'])
+    .pipe(bump({type: 'prerelease'}))
+    .pipe(gulp.dest('./'));
+});
+

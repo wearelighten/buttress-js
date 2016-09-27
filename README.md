@@ -1,4 +1,5 @@
-# rhizome
+# Rhizome
+### version: 1.0.0-1
 The API that feeds grass roots movements.
 ## Prerequisites ##
 You'll need gulp:
@@ -21,7 +22,7 @@ Then add to config.json.
 ## Testing ##
 Need someone to take ownership of unit tests.
 ## To Do ##
-- Convert to EC6?
+- ~~Convert to ES6?~~
 - Make it run in a docker instance
 - Dependency on local MongoDB. Need a better solution than that. Docker?
 - Everything!
