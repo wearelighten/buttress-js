@@ -20,6 +20,7 @@
     },
     "workstation1": {
       "logPath": "/home/chris/Work/Workspaces/WebStorm/rhizome/logs",
+      "appDataPath": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
       "listenPort": {
         "dev": 6001,
         "prod": 6000,
@@ -28,6 +29,7 @@
     },
     "yubaba": {
       "logPath": "/home/chris/apps/rhizome/logs",
+      "appDataPath": "/home/chris/apps/rhizome/app_data",
       "listenPort": {
         "dev": 6001,
         "prod": 6000,
