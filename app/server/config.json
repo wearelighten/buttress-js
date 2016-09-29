@@ -4,7 +4,7 @@
       "title": "Rhizome",
       "description": "The API that supports grassroots movements.",
       "code": "rhizome",
-      "version": "v0.0.1",
+      "version": "v1.0.0-3",
       "protocol": "http",
       "subdomain": "rhizome",
       "domain": "codersforcorbyn.com"
