@@ -11,6 +11,7 @@
  *
  */
 
+var crypto = require('crypto');
 var mongoose = require('mongoose');
 var Model = require('../');
 var Logging = require('../../logging');
@@ -169,6 +170,46 @@ schema.methods.findMetadata = function(key) {
   // Logging.log(this.metadata, Logging.Constants.LogLevel.DEBUG);
   var md = this.metadata.find(m => m.key === key);
   return md ? {key: md.key, value: JSON.parse(md.value)} : undefined;
+};
+
+/**
+ * @param {string} route - route for the permission
+ * @param {*} permission - permission to apply to the route
+ * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
+ */
+schema.methods.addOrUpdatePermission = function(route, permission) {
+  Logging.log(route, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(permission, Logging.Constants.LogLevel.DEBUG);
+
+  var exists = this.permissions.find(p => p.route === route);
+  if (exists) {
+    exists.permission = permission;
+  } else {
+    this.permissions.push({route, permission});
+  }
+
+  return this.save();
+};
+
+/**
+ * @return {String} - UID
+ */
+schema.methods.getPublicUID = function() {
+  var hash = crypto.createHash('sha512');
+  Logging.log(`Creat UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
+  hash.update(`${this.name}.${this.tokenValue}`);
+  var bytes = hash.digest();
+
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var mask = 0x3d;
+  var uid = '';
+
+  for (var byte = 0; byte < 32; byte++) {
+    uid += chars[bytes[byte] & mask];
+  }
+
+  Logging.log(`Created UID: ${uid}`, Logging.Constants.LogLevel.DEBUG);
+  return uid;
 };
 
 /**
