@@ -3,8 +3,8 @@
 /**
  * Rhizome - The API that feeds grassroots movements
  *
- * @file user.js
- * @description USER API specification
+ * @file campaign.js
+ * @description Campaign API specification
  * @module API
  * @author Chris Bates-Keegan
  *
@@ -18,11 +18,11 @@ var Helpers = require('../../helpers');
 var routes = [];
 
 /**
- * @class GetUserList
+ * @class GetCampaignList
  */
-class GetUserList extends Route {
+class GetCampaignList extends Route {
   constructor() {
-    super('user', 'GET USER LIST');
+    super('campaign', 'GET CAMPAIGN LIST');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.LIST;
@@ -33,22 +33,22 @@ class GetUserList extends Route {
   }
 
   _exec() {
-    return Model.User.getAll();
+    return Model.Campaign.getAll();
   }
 }
-routes.push(GetUserList);
+routes.push(GetCampaignList);
 
 /**
- * @class GetUser
+ * @class GetCampaign
  */
-class GetUser extends Route {
+class GetCampaign extends Route {
   constructor() {
-    super('user/:id', 'GET USER');
+    super('campaign/:id', 'GET CAMPAIGN');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.READ;
 
-    this._user = false;
+    this._campaign = false;
   }
 
   _validate() {
@@ -58,102 +58,60 @@ class GetUser extends Route {
         reject({statusCode: 400});
         return;
       }
-      Model.User.findById(this.req.params.id).then(user => {
-        if (!user) {
-          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+      Model.Campaign.findById(this.req.params.id).then(campaign => {
+        if (!campaign) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
 
-        this._user = user;
+        this._campaign = campaign;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return Promise.resolve(this._user.details);
+    return Promise.resolve(this._campaign.details);
   }
 }
-routes.push(GetUser);
+routes.push(GetCampaign);
 
 /**
- * @class FindUser
+ * @class FindCampaign
  */
-class FindUser extends Route {
+class FindCampaign extends Route {
   constructor() {
-    super('user/:app(twitter|facebook|google)/:id', 'FIND USER');
+    super('campaign/:label', 'FIND CAMPAIGN');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.READ;
 
-    this._user = false;
+    this._campaign = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.User.getByAppId(this.req.params.app, this.req.params.id).then(user => {
-        Logging.log(`User: ${user}`, Logging.Constants.LogLevel.DEBUG);
-        this._user = user;
+      Model.Campaign.getByLabel(this.req.params.label).then(campaign => {
+        Logging.log(`Campaign: ${campaign}`, Logging.Constants.LogLevel.DEBUG);
+        this._campaign = campaign;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return Promise.resolve(this._user ? {id: this._user.id} : false);
+    return Promise.resolve(this._campaign ? this._campaign.details : false);
   }
 }
-routes.push(FindUser);
+routes.push(FindCampaign);
 
 /**
- * @class UpdateUserToken
+ * @class AddCampaign
  */
-class UpdateUserToken extends Route {
+class AddCampaign extends Route {
   constructor() {
-    super('user/:id/:app(twitter|facebook|google)/token', 'UPDATE USER APP TOKEN');
-    this.verb = Route.Constants.Verbs.PUT;
-    this.auth = Route.Constants.Auth.ADMIN;
-    this.permissions = Route.Constants.Permissions.READ;
-
-    this._user = false;
-  }
-
-  _validate() {
-    return new Promise((resolve, reject) => {
-      if (!this.req.body ||
-        !this.req.body.token ||
-        !this.req.body.tokenSecret) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-        reject({statusCode: 400});
-        return;
-      }
-
-      Model.User.findById(this.req.params.id).select('-metadata').then(user => {
-        Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
-        this._user = user;
-        if (this._user) {
-          resolve(true);
-        } else {
-          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-          resolve({statusCode: 400});
-        }
-      });
-    });
-  }
-
-  _exec() {
-    return this._user.updateToken(this.req.params.app, this.req.body);
-  }
-}
-routes.push(UpdateUserToken);
-
-/**
- * @class AddUser
- */
-class AddUser extends Route {
-  constructor() {
-    super('user', 'ADD USER');
+    super('campaign', 'ADD CAMPAIGN');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
@@ -163,14 +121,7 @@ class AddUser extends Route {
     return new Promise((resolve, reject) => {
       Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
 
-      if (!this.req.body.username ||
-          !this.req.body.app ||
-          !this.req.body.id ||
-          !this.req.body.token ||
-          !this.req.body.tokenSecret ||
-          !this.req.body.profileUrl ||
-          !this.req.body.profileImgUrl ||
-          !this.req.body.bannerImgUrl) {
+      if (!this.req.body.name || !this.req.body.description || !this.req.body.legals) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
@@ -182,25 +133,25 @@ class AddUser extends Route {
 
   _exec() {
     return new Promise((resolve, reject) => {
-      Model.User.add(this.req.body)
-        .then(Logging.Promise.logProp('Added User', 'username', Route.LogLevel.VERBOSE))
-        .then(Helpers.Promise.prop('details'))
+      Model.Campaign.add(this.req.body)
+        .then(Logging.Promise.logProp('Added Campaign', 'name', Route.LogLevel.VERBOSE))
+        .then(Helpers.Promise.prop('details', Route.LogLevel.DEBUG))
         .then(resolve, reject);
     });
   }
 }
-routes.push(AddUser);
+routes.push(AddCampaign);
 
 /**
- * @class DeleteUser
+ * @class DeleteCampaign
  */
-class DeleteUser extends Route {
+class DeleteCampaign extends Route {
   constructor() {
-    super('user/:id', 'DELETE USER');
+    super('campaign/:id', 'DELETE CAMPAIGN');
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
-    this._user = false;
+    this._campaign = false;
   }
 
   _validate() {
@@ -210,42 +161,42 @@ class DeleteUser extends Route {
         reject({statusCode: 400});
         return;
       }
-      Model.User.findById(this.req.params.id).select('-metadata').then(user => {
-        if (!user) {
-          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+      Model.Campaign.findById(this.req.params.id).select('-metadata').then(campaign => {
+        if (!campaign) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._user = user;
+        this._campaign = campaign;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return Model.User.rm(this._user).then(() => true);
+    return Model.Campaign.rm(this._campaign).then(() => true);
   }
 }
-routes.push(DeleteUser);
+routes.push(DeleteCampaign);
 
 /**
- * @class AddUserMetadata
+ * @class AddCampaignMetadata
  */
-class AddUserMetadata extends Route {
+class AddCampaignMetadata extends Route {
   constructor() {
-    super('user/:id/metadata/:key', 'ADD USER METADATA');
+    super('campaign/:id/metadata/:key', 'ADD CAMPAIGN METADATA');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
 
-    this._user = false;
+    this._campaign = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.User.findById(this.req.params.id).then(user => {
-        if (!user) {
-          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+      Model.Campaign.findById(this.req.params.id).then(campaign => {
+        if (!campaign) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
@@ -258,24 +209,24 @@ class AddUserMetadata extends Route {
           return;
         }
 
-        this._user = user;
+        this._campaign = campaign;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._user.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
+    return this._campaign.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
   }
 }
-routes.push(AddUserMetadata);
+routes.push(AddCampaignMetadata);
 
 /**
- * @class UpdateUserMetadata
+ * @class UpdateCampaignMetadata
  */
-class UpdateUserMetadata extends Route {
+class UpdateCampaignMetadata extends Route {
   constructor() {
-    super('user/:id/metadata/:key', 'UPDATE USER METADATA');
+    super('campaign/:id/metadata/:key', 'UPDATE CAMPAIGN METADATA');
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
@@ -285,13 +236,13 @@ class UpdateUserMetadata extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.User.findById(this.req.params.id).then(user => {
-        if (!user) {
+      Model.Campaign.findById(this.req.params.id).then(campaign => {
+        if (!campaign) {
           this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        if (user.findMetadata(this.req.params.key) === false) {
+        if (campaign.findMetadata(this.req.params.key) === false) {
           this.log('ERROR: Metadata does not exist', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
@@ -304,24 +255,24 @@ class UpdateUserMetadata extends Route {
           return;
         }
 
-        this._user = user;
+        this._campaign = campaign;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._user.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
+    return this._campaign.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
   }
 }
-routes.push(UpdateUserMetadata);
+routes.push(UpdateCampaignMetadata);
 
 /**
- * @class GetUserMetadata
+ * @class GetCampaignMetadata
  */
-class GetUserMetadata extends Route {
+class GetCampaignMetadata extends Route {
   constructor() {
-    super('user/:id/metadata/:key', 'GET USER METADATA');
+    super('campaign/:id/metadata/:key', 'GET CAMPAIGN METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
@@ -331,14 +282,14 @@ class GetUserMetadata extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.User.findById(this.req.params.id).then(user => {
-        if (!user) {
-          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+      Model.Campaign.findById(this.req.params.id).then(campaign => {
+        if (!campaign) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
 
-        this._metadata = user.findMetadata(this.req.params.key);
+        this._metadata = campaign.findMetadata(this.req.params.key);
         if (this._metadata === undefined) {
           this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
           reject({statusCode: 404});
@@ -354,7 +305,7 @@ class GetUserMetadata extends Route {
     return this._metadata.value;
   }
 }
-routes.push(GetUserMetadata);
+routes.push(GetCampaignMetadata);
 
 /**
  * @type {*[]}

@@ -31,6 +31,8 @@ schema.add({
     type: String,
     index: true
   },
+  description: String,
+  legals: String,
   _app: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
@@ -48,9 +50,10 @@ var ModelDef = null;
 schema.virtual('details').get(function() {
   return {
     id: this._id,
-    username: this.username,
-    metadata: this._metadata,
-    auth: this.auth.map(a => a.details)
+    name: this.name,
+    images: this.images.map(i => i.label),
+    templates: this.templates.map(t => t.label),
+    metadata: this._metadata
   };
 });
 
@@ -68,36 +71,25 @@ schema.virtual('_metadata').get(function() {
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
 schema.statics.add = body => {
-  var user = new ModelDef({
+  var campaign = new ModelDef({
+    _app: Model.app,
     name: body.name,
-    _app: Model.app
+    description: body.description,
+    legals: body.legals
   });
 
-  user.auth.push(new Model.Appauth({
-    app: body.app,
-    appId: body.id,
-    username: body.username,
-    profileUrl: body.profileUrl,
-    images: {
-      profile: body.profileImgUrl,
-      banner: body.bannerImgUrl
-    },
-    email: body.email,
-    token: body.token,
-    tokenSecret: body.tokenSecret
-  }));
-
   // Logging.log(body);
-  Logging.log(user.auth[0].username, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(user.auth[0].app, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(user.auth[0].appId, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(campaign.name, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(campaign.description, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(campaign.legals, Logging.Constants.LogLevel.DEBUG);
 
-  return user.save();
+  return campaign.save();
 };
 
 schema.methods.addImage = function(imgData, encoding) {
   encoding = encoding || 'base64';
-}
+  // var buffer = new Buffer(imgData, encoding);
+};
 
 /**
  * @param {string} key - index name of the metadata
@@ -125,6 +117,24 @@ schema.methods.findMetadata = function(key) {
     Logging.Constants.LogLevel.DEBUG);
   var md = this.metadata.find(m => m.key === key);
   return md ? {key: md.key, value: JSON.parse(md.value)} : false;
+};
+
+/**
+ * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+ */
+schema.statics.getAll = () => {
+  Logging.log(`getAll: ${Model.app._id}`, Logging.Constants.LogLevel.DEBUG);
+  return ModelDef.find({_app: Model.app._id});
+};
+
+/**
+ * @param {string} name - Name of the authenticating App (facebook|twitter|google) that owns the user
+ * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+ */
+schema.statics.getByName = name => {
+  Logging.log(`getByName: ${name}`, Logging.Constants.LogLevel.DEBUG);
+
+  return ModelDef.findOne({_app: Model.app._id, name: name});
 };
 
 /**
