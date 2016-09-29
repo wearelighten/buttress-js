@@ -11,9 +11,11 @@
  *
  */
 
+const fs = require('fs');
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
+const Config = require('../../config');
 
 /**
  * Constants
@@ -51,6 +53,8 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
+    description: this.description,
+    legals: this.legals,
     images: this.images.map(i => i.label),
     templates: this.templates.map(t => t.label),
     metadata: this._metadata
@@ -86,9 +90,29 @@ schema.statics.add = body => {
   return campaign.save();
 };
 
-schema.methods.addImage = function(imgData, encoding) {
+schema.methods.addImage = function(label, image, encoding) {
   encoding = encoding || 'base64';
-  // var buffer = new Buffer(imgData, encoding);
+  var buffer = Buffer.from(image, encoding);
+
+  return new Promise((resolve, reject) => {
+    var dirName = `${Config.appDataPath}/public/${Model.app.getPublicUID()}`;
+    var pathName = `${dirName}/${label}.png`;
+    Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
+
+    var dirStats = fs.statSync(dirName);
+    if (dirStats.isDirectory() !== true) {
+      fs.mkDirSync(dirName);
+    }
+
+    fs.writeFile(pathName, buffer, 'binary', err => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      resolve(true);
+    });
+  });
 };
 
 /**
@@ -124,7 +148,7 @@ schema.methods.findMetadata = function(key) {
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.app._id}`, Logging.Constants.LogLevel.DEBUG);
-  return ModelDef.find({_app: Model.app._id});
+  return ModelDef.find({_app: Model.app._id}).then(campaigns => campaigns.map(c => c.details));
 };
 
 /**
@@ -136,6 +160,8 @@ schema.statics.getByName = name => {
 
   return ModelDef.findOne({_app: Model.app._id, name: name});
 };
+
+ModelDef = mongoose.model('Campaign', schema);
 
 /**
  * @type {{constants: {}, schema: {}, model: {}}}

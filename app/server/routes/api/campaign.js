@@ -82,7 +82,7 @@ routes.push(GetCampaign);
  */
 class FindCampaign extends Route {
   constructor() {
-    super('campaign/:label', 'FIND CAMPAIGN');
+    super('campaign/:name', 'FIND CAMPAIGN');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.READ;
@@ -92,7 +92,7 @@ class FindCampaign extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Campaign.getByLabel(this.req.params.label).then(campaign => {
+      Model.Campaign.getByName(this.req.params.name).then(campaign => {
         Logging.log(`Campaign: ${campaign}`, Logging.Constants.LogLevel.DEBUG);
         this._campaign = campaign;
         resolve(true);
@@ -178,6 +178,46 @@ class DeleteCampaign extends Route {
   }
 }
 routes.push(DeleteCampaign);
+
+/**
+ * @class AddCampaignImage
+ */
+class AddCampaignImage extends Route {
+  constructor() {
+    super('campaign/:id/image', 'ADD CAMPAIGN IMAGE');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._campaign = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.Campaign.findById(this.req.params.id).then(campaign => {
+        if (!campaign) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        if (!this.req.body.label || !this.req.body.image) {
+          this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._campaign = campaign;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._campaign.addImage(this.req.body.label, this.req.body.image);
+  }
+}
+routes.push(AddCampaignImage);
 
 /**
  * @class AddCampaignMetadata
