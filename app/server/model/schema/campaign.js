@@ -95,22 +95,25 @@ schema.methods.addImage = function(label, image, encoding) {
   var buffer = Buffer.from(image, encoding);
 
   return new Promise((resolve, reject) => {
-    var dirName = `${Config.appDataPath}/public/${Model.app.getPublicUID()}`;
+    var uid = Model.app.getPublicUID();
+    var dirName = `${Config.appDataPath}/public/${uid}`;
     var pathName = `${dirName}/${label}.png`;
     Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
 
-    var dirStats = fs.statSync(dirName);
-    if (dirStats.isDirectory() !== true) {
-      fs.mkDirSync(dirName);
-    }
-
-    fs.writeFile(pathName, buffer, 'binary', err => {
-      if (err) {
+    fs.mkdir(dirName, err => {
+      if (err && err.code !== 'EEXIST') {
         reject(err);
         return;
       }
 
-      resolve(true);
+      fs.writeFile(pathName, buffer, 'binary', err => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        resolve({label: label, url: `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}/${uid}/${label}.png`});
+      });
     });
   });
 };
