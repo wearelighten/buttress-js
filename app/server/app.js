@@ -55,7 +55,7 @@ var configureApp = env => {
   app.use(bodyParser.urlencoded({extended: true}));
   app.use(methodOverride());
 
-  app.use('static', express.static(`${Config.appDataPath}/public`));
+  app.use(express.static(`${Config.appDataPath}/public`));
 
   switch (env) {
     default:
