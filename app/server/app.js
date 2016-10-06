@@ -10,15 +10,15 @@
  *
  */
 
-var express = require('express');
-var methodOverride = require('method-override');
-var bodyParser = require('body-parser');
-var morgan = require('morgan');
-var mongoose = require('mongoose');
-var Model = require('./model/index');
-var Routes = require('./routes/index');
-var Config = require('./config');
-var Logging = require('./logging');
+const express = require('express');
+const methodOverride = require('method-override');
+const bodyParser = require('body-parser');
+const morgan = require('morgan');
+const mongoose = require('mongoose');
+const Model = require('./model/index');
+const Routes = require('./routes/index');
+const Config = require('./config');
+const Logging = require('./logging');
 
 /**
  * Express
