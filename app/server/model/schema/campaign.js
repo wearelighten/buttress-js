@@ -11,11 +11,14 @@
  *
  */
 
+const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
 const Config = require('../../config');
+const Helpers = require('../../helpers');
+const EmailFactory = require('../../email/factory');
 
 /**
  * Constants
@@ -90,31 +93,146 @@ schema.statics.add = body => {
   return campaign.save();
 };
 
+/**
+ * @param {String} label - unique (to campaign) label for image
+ * @param {String} image - encoded image data
+ * @param {String} encoding - encoding used (defaults to base64)
+ * @return {Promise} - resolves to  {label, url}
+ */
 schema.methods.addImage = function(label, image, encoding) {
   encoding = encoding || 'base64';
   var buffer = Buffer.from(image, encoding);
 
   return new Promise((resolve, reject) => {
     var uid = Model.app.getPublicUID();
-    var dirName = `${Config.appDataPath}/public/${uid}`;
+    var dirName = `${Config.appDataPath}/public/${uid}/campaign-images`;
     var pathName = `${dirName}/${label}.png`;
+    var prefix = `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}`;
+    var url = `${prefix}/${uid}/campaign-images/${label}.png`;
     Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
 
-    fs.mkdir(dirName, err => {
-      if (err && err.code !== 'EEXIST') {
-        reject(err);
-        return;
-      }
+    Model.app.mkDataDir('campaign-images', Model.Constants.App.PUBLIC_DIR)
+      .then(() => {
+        fs.writeFile(pathName, buffer, 'binary', err => {
+          if (err) {
+            reject(err);
+            return;
+          }
 
-      fs.writeFile(pathName, buffer, 'binary', err => {
-        if (err) {
-          reject(err);
-          return;
-        }
+          if (!this.images.find(i => i.label === label)) {
+            this.images.push({
+              label: label,
+              pathname: pathName
+            });
+            this.save()
+              .then(Helpers.Promise.inject({
+                label: label,
+                url: url
+              }))
+              .then(resolve, reject);
+            return;
+          }
 
-        resolve({label: label, url: `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}/${uid}/${label}.png`});
+          resolve({
+            label: label,
+            url: url
+          });
+        });
       });
-    });
+  });
+};
+
+/**
+ * @param {String} label - unique (to campaign) label for image
+ * @param {String} markup - encoded markup data
+ * @param {String} format - format used (defaults to pug)
+ * @param {String} encoding - encoding used (defaults to base64)
+ * @return {Promise} - resolves to  {label, url}
+ */
+schema.methods.addTemplate = function(label, markup, format, encoding) {
+  format = format || 'pug';
+  encoding = encoding || 'base64';
+  var buffer = Buffer.from(markup, encoding);
+
+  return new Promise((resolve, reject) => {
+    var uid = Model.app.getPublicUID();
+    var dirName = `${Config.appDataPath}/private/${uid}/campaign-templates`;
+    var pathName = `${dirName}/${label}.${format}`;
+    Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
+
+    Model.app.mkDataDir('campaign-templates')
+      .then(() => {
+        fs.writeFile(pathName, buffer, err => {
+          if (err) {
+            reject(err);
+            return;
+          }
+
+          if (!this.templates.find(i => i.label === label)) {
+            this.templates.push({
+              label: label,
+              markup: pathName
+            });
+            this.save()
+              .then(Helpers.Promise.inject({
+                label: label
+              }))
+              .then(resolve, reject);
+            return;
+          }
+          EmailFactory.clearTemplate(pathName);
+
+          resolve({
+            label: label
+          });
+        });
+      });
+  });
+};
+
+/**
+ * @param {String} template - template label to be used to create the preview
+ * @param {Object} body - Any parameters required for the email
+ * @return {Promise} - resolves to  {url}
+ */
+schema.methods.createPreviewEmail = function(template, body) {
+  var uid = Model.app.getPublicUID();
+  var prefix = `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}`;
+  var url = `${prefix}/${uid}/campaign-previews/${template}-preview.html`;
+
+  var params = {
+    template: template,
+    subject: body.subject ? `${body.subject} - PREVIEW` : 'Welcome to Blocklist - PREVIEW',
+    headerImgSrc: body.imgHeaderSrc ? body.imgHeaderSrc : '',
+    person: {
+      forename: body.person.forename ? body.person.forename : 'Chris',
+      surname: body.person.surname ? body.person.surname: 'Bates-Keegan',
+      name: body.person.name ? body.person.name : 'Chris Bates-Keegan',
+      email: body.person.email ? body.person.email : 'chris@wearelighten.co.uk'
+    },
+    app: {
+      name: Model.app.name,
+      trackingCode: 'welcome',
+      templatePath: path.join(Config.appDataPath, `/private/${uid}/campaign-templates`)
+    }
+  };
+
+  return new Promise((resolve, reject) => {
+    Model.app.mkDataDir('campaign-previews', Model.Constants.App.PUBLIC_DIR)
+      .then(() => {
+        return EmailFactory.create(params);
+      })
+      .then(email => {
+        var previewPath = path.join(Config.appDataPath, `/public/${uid}/campaign-previews`);
+        fs.writeFile(path.join(previewPath, `${template}-preview.html`), email.html, err => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve({url: url});
+        });
+      })
+      .catch(Logging.Promise.logError());
   });
 };
 

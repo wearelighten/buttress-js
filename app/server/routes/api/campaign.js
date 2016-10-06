@@ -220,6 +220,103 @@ class AddCampaignImage extends Route {
 routes.push(AddCampaignImage);
 
 /**
+ * @class AddCampaignTemplate
+ */
+class AddCampaignTemplate extends Route {
+  constructor() {
+    super('campaign/:id/template', 'ADD CAMPAIGN TEMPLATE');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._campaign = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.Campaign.findById(this.req.params.id).then(campaign => {
+        if (!campaign) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        if (!this.req.body.label || !this.req.body.markup) {
+          this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._campaign = campaign;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._campaign.addTemplate(this.req.body.label, this.req.body.markup, this.req.body.format);
+  }
+}
+routes.push(AddCampaignTemplate);
+
+/**
+ * @class PreviewCampaignEmail
+ */
+class PreviewCampaignEmail extends Route {
+  constructor() {
+    super('campaign/:id/preview/:template', 'PREVIEW CAMPAIGN EMAIL');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._campaign = false;
+    this._params = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.Campaign.findById(this.req.params.id).then(campaign => {
+        if (!campaign) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        var template = campaign.templates.find(t => t.label === this.req.params.template);
+        if (!template) {
+          this.log('ERROR: Unknown template', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        if (!this.req.body.params) {
+          this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        try {
+          this._params = JSON.parse(this.req.body.params);
+        } catch (e) {
+          this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
+          this.log(this.req.body.value, Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._campaign = campaign;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._campaign.createPreviewEmail(this.req.params.template, this._params);
+  }
+}
+routes.push(PreviewCampaignEmail);
+
+/**
  * @class AddCampaignMetadata
  */
 class AddCampaignMetadata extends Route {
