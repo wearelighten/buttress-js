@@ -11,10 +11,12 @@
  *
  */
 
+var fs = require('fs');
 var crypto = require('crypto');
 var mongoose = require('mongoose');
 var Model = require('../');
 var Logging = require('../../logging');
+var Config = require('../../config');
 
 /**
  * Constants
@@ -38,7 +40,8 @@ var AuthLevel = {
 
 var constants = {
   Type: Type,
-  AuthLevel: AuthLevel
+  AuthLevel: AuthLevel,
+  PUBLIC_DIR: true
 };
 
 /**
@@ -82,6 +85,7 @@ schema.virtual('details').get(function() {
     authLevel: this.authLevel,
     owner: this.ownerName,
     token: this.tokenValue,
+    publicUid: this.getPublicUID(),
     metadata: this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})),
     permissions: this.permissions.map(p => {
       return {route: p.route, permission: p.permission};
@@ -192,11 +196,38 @@ schema.methods.addOrUpdatePermission = function(route, permission) {
 };
 
 /**
+ * @param {String} name - name of the data folder to create
+ * @param {Boolean} isPublic - true for /public (which is available via the static middleware) otherwise /private
+ * @return {String} - UID
+ */
+schema.methods.mkDataDir = function(name, isPublic) {
+  var uid = Model.app.getPublicUID();
+  var baseName = `${Config.appDataPath}/${isPublic ? 'public' : 'private'}/${uid}`;
+
+  return new Promise((resolve, reject) => {
+    fs.mkdir(baseName, err => {
+      if (err && err.code !== 'EEXIST') {
+        reject(err);
+        return;
+      }
+      var dirName = `${baseName}/${name}`;
+      fs.mkdir(dirName, err => {
+        if (err && err.code !== 'EEXIST') {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
+  });
+};
+
+/**
  * @return {String} - UID
  */
 schema.methods.getPublicUID = function() {
   var hash = crypto.createHash('sha512');
-  Logging.log(`Creat UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
+  // Logging.log(`Create UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
   hash.update(`${this.name}.${this.tokenValue}`);
   var bytes = hash.digest();
 
@@ -208,7 +239,7 @@ schema.methods.getPublicUID = function() {
     uid += chars[bytes[byte] & mask];
   }
 
-  Logging.log(`Created UID: ${uid}`, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(`Got UID: ${uid}`, Logging.Constants.LogLevel.SILLY);
   return uid;
 };
 
