@@ -259,3 +259,17 @@ module.exports.Promise.logArrayProp = (log, prop, level) => {
     return res;
   };
 };
+
+/**
+ * @param {string} log - Text to log
+ * @param {string} prop - Name of the `res[]` property to log
+ * @param {integer} level - level to log at
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logError = () => {
+  var level = LogLevel.ERR;
+  return err => {
+    _log(err, level);
+    return err;
+  };
+};
