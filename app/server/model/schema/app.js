@@ -83,7 +83,7 @@ schema.virtual('details').get(function() {
     name: this.name,
     type: this.type,
     authLevel: this.authLevel,
-    owner: this.ownerName,
+    owner: this.ownerDetails,
     token: this.tokenValue,
     publicUid: this.getPublicUID(),
     metadata: this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})),
@@ -93,7 +93,7 @@ schema.virtual('details').get(function() {
   };
 });
 
-schema.virtual('ownerName').get(function() {
+schema.virtual('ownerDetails').get(function() {
   if (!this._owner) {
     return false;
   }
