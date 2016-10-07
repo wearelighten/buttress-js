@@ -156,6 +156,134 @@ class DeletePerson extends Route {
 routes.push(DeletePerson);
 
 /**
+ * @class AddPersonMetadata
+ */
+class AddPersonMetadata extends Route {
+  constructor() {
+    super('person/:id/metadata/:key', 'ADD PERSON METADATA');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._person = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.Person.findById(this.req.params.id).then(person => {
+        if (!person) {
+          this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        try {
+          JSON.parse(this.req.body.value);
+        } catch (e) {
+          this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
+          this.log(this.req.body.value, Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._person = person;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._person.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
+  }
+}
+routes.push(AddPersonMetadata);
+
+/**
+ * @class UpdatePersonMetadata
+ */
+class UpdatePersonMetadata extends Route {
+  constructor() {
+    super('person/:id/metadata/:key', 'UPDATE PERSON METADATA');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._app = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.Person.findById(this.req.params.id).then(person => {
+        if (!person) {
+          this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        if (person.findMetadata(this.req.params.key) === false) {
+          this.log('ERROR: Metadata does not exist', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        try {
+          JSON.parse(this.req.body.value);
+        } catch (e) {
+          this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._person = person;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._person.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
+  }
+}
+routes.push(UpdatePersonMetadata);
+
+/**
+ * @class GetPersonMetadata
+ */
+class GetPersonMetadata extends Route {
+  constructor() {
+    super('person/:id/metadata/:key', 'GET PERSON METADATA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.GET;
+
+    this._metadata = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.Person.findById(this.req.params.id).then(person => {
+        if (!person) {
+          this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._metadata = person.findMetadata(this.req.params.key);
+        if (this._metadata === undefined) {
+          this.log('WARN: Person Metadata Not Found', Route.LogLevel.ERR);
+          reject({statusCode: 404});
+          return;
+        }
+
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._metadata.value;
+  }
+}
+routes.push(GetPersonMetadata);
+
+/**
  * @type {*[]}
  */
 module.exports = routes;
