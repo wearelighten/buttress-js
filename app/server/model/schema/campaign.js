@@ -206,7 +206,7 @@ schema.methods.createPreviewEmail = function(template, body) {
     headerImgSrc: body.imgHeaderSrc ? body.imgHeaderSrc : '',
     person: {
       forename: body.person.forename ? body.person.forename : 'Chris',
-      surname: body.person.surname ? body.person.surname: 'Bates-Keegan',
+      surname: body.person.surname ? body.person.surname : 'Bates-Keegan',
       name: body.person.name ? body.person.name : 'Chris Bates-Keegan',
       email: body.person.email ? body.person.email : 'chris@wearelighten.co.uk'
     },
