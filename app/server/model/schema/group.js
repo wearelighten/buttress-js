@@ -32,7 +32,8 @@ var constants = {
 /**
  * Schema
  */
-var schema = new mongoose.Schema({
+var schema = new mongoose.Schema();
+schema.add({
   name: {
     type: String,
     index: true
@@ -88,20 +89,18 @@ schema.virtual('organisationName').get(function() {
  */
 schema.statics.add = body => {
   Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
-  return new Promise((resolve, reject) => {
-    var app = new ModelDef({
-      name: body.name,
-      type: body.type,
-      website: body.website,
-      images: {
-        avatar: body.avatarUrl,
-        banner: body.bannerUrl
-      },
-      _organisation: body.orgId
-    });
-
-    app.save().then(res => resolve(res.details), reject);
+  var app = new ModelDef({
+    name: body.name,
+    type: body.type,
+    website: body.website,
+    images: {
+      avatar: body.avatarUrl,
+      banner: body.bannerUrl
+    },
+    _organisation: body.orgId
   });
+
+  return app.save();
 };
 
 /**
