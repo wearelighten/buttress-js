@@ -162,9 +162,9 @@ class AddUser extends Route {
   _validate() {
     return new Promise((resolve, reject) => {
       Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
+      var app = this.req.body.app ? this.req.body.app : this.req.params.app;
 
-      if (!this.req.body.username ||
-          !this.req.body.app ||
+      if (!this.req.body.username || !app ||
           !this.req.body.id ||
           !this.req.body.token ||
           !this.req.body.tokenSecret ||
