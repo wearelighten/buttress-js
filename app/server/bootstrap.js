@@ -72,10 +72,15 @@ var _installApp = app => {
       Logging.log('APP ADDED', Logging.Constants.LogLevel.DEBUG);
       Logging.log(res.app.id, Logging.Constants.LogLevel.DEBUG);
       return new Promise((resolve, reject) => {
-        fs.writeFile(path.join(Config.appDataPath, 'super.json'), JSON.stringify(res.app.details), err => {
+        var pathName = path.join(Config.appDataPath, 'super.json');
+        var app = Object.assign(res.app.details, {token: res.token.value});
+        fs.writeFile(pathName, JSON.stringify(app), err => {
           if (err) {
             return reject(err);
           }
+          Logging.log(`Written ${pathName}`, Logging.Constants.LogLevel.VERBOSE);
+          Logging.log(app, Logging.Constants.LogLevel.DEBUG);
+
           resolve(true);
         });
       });
