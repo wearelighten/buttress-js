@@ -134,6 +134,9 @@ class AddApp extends Route {
   _exec() {
     return new Promise((resolve, reject) => {
       Model.App.add(this.req.body)
+        .then(res => {
+          return Object.assign(res.app.details, {token: res.token.value});
+        })
         .then(Logging.Promise.logProp('Added App', 'name', Route.LogLevel.INFO))
         .then(resolve, reject);
     });

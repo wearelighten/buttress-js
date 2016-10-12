@@ -47,7 +47,8 @@ var constants = {
 /**
  * Schema
  */
-var schema = new mongoose.Schema({
+var schema = new mongoose.Schema();
+schema.add({
   name: String,
   type: {
     type: String,
@@ -131,23 +132,29 @@ schema.methods.setOwner = function(group) {
  * @return {Promise} - fulfilled with App Object when the database request is completed
  */
 schema.statics.add = body => {
-  Logging.log(body);
-  return new Promise((resolve, reject) => {
-    var app = new ModelDef({
-      name: body.name,
-      type: body.type,
-      authLevel: body.authLevel,
-      permissions: body.permissions,
-      domain: body.domain,
-      _owner: body.ownerGroupId
-    });
+  Logging.log(body, Logging.Constants.LogLevel.DEBUG);
 
-    Model.Token.add(Model.Constants.Token.Type.APP)
-      .then(token => {
-        app._token = token;
-        app.save().then(res => resolve(Object.assign(res.details, {token: token.value})), reject);
-      });
+  var app = new ModelDef({
+    name: body.name,
+    type: body.type,
+    authLevel: body.authLevel,
+    permissions: body.permissions,
+    domain: body.domain,
+    _owner: body.ownerGroupId
   });
+
+  var _token = false;
+  return Model.Token
+    .add(Model.Constants.Token.Type.APP)
+    .then(token => {
+      _token = token;
+      Logging.log(token.value, Logging.Constants.LogLevel.DEBUG);
+      app._token = token.id;
+      return app.save();
+    })
+    .then(app => {
+      return Promise.resolve({app: app, token: _token});
+    });
 };
 
 /**
