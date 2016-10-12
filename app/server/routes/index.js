@@ -24,10 +24,12 @@ var Model = require('../model');
 function _initRoute(app, Route) {
   var route = new Route();
   app[route.verb](`/api/v1/${route.path}`, (req, res) => {
-    route.exec(req, res)
-      .then(result => res.json(result), error => {
-        Logging.log(error, Logging.Constants.LogLevel.ERR);
-        res.sendStatus(error.statusCode ? error.statusCode : 500);
+    route
+      .exec(req, res)
+      .then(result => res.json(result))
+      .catch(err => {
+        Logging.log(err, Logging.Constants.LogLevel.ERR);
+        res.status(err.statusCode ? err.statusCode : 500).json({message: err.message});
       });
   });
 }
