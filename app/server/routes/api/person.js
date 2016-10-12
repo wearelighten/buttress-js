@@ -94,8 +94,7 @@ class AddPerson extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      if (!this.req.body.forename ||
-          !this.req.body.surname ||
+      if (!this.req.body.name ||
           !this.req.body.email) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
@@ -117,6 +116,28 @@ class AddPerson extends Route {
 routes.push(AddPerson);
 
 /**
+ * @class DeleteAllPeople
+ */
+class DeleteAllPeople extends Route {
+  constructor() {
+    super('person', 'DELETE ALL PEOPLE');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.SUPER;
+    this.permissions = Route.Constants.Permissions.DELETE;
+    this._person = false;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Person.rmAll().then(() => true);
+  }
+}
+routes.push(DeleteAllPeople);
+
+/**
  * @class DeletePerson
  */
 class DeletePerson extends Route {
@@ -130,27 +151,22 @@ class DeletePerson extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      if (!this.req.params.id) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-        reject({statusCode: 400});
-        return;
-      }
-      Model.Person.findById(this.req.params.id).then(person => {
-        if (!person) {
-          this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-        this._person = person;
-        resolve(true);
-      });
+      Model.Person
+        .findById(this.req.params.id)
+        .then(person => {
+          if (!person) {
+            this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
+            reject({statusCode: 400, message: `ERROR: Invalid Person ID: ${this.req.params.id}`});
+            return;
+          }
+          this._person = person;
+          resolve(true);
+        }, err => reject({statusCode: 400, message: err.message}));
     });
   }
 
   _exec() {
-    return new Promise((resolve, reject) => {
-      Model.Person.rm(this._person).then(() => true).then(resolve, reject);
-    });
+    return this._person.rm().then(() => true);
   }
 }
 routes.push(DeletePerson);
@@ -266,7 +282,7 @@ class GetPersonMetadata extends Route {
         }
 
         this._metadata = person.findMetadata(this.req.params.key);
-        if (this._metadata === undefined) {
+        if (this._metadata === false) {
           this.log('WARN: Person Metadata Not Found', Route.LogLevel.ERR);
           reject({statusCode: 404});
           return;
@@ -282,6 +298,40 @@ class GetPersonMetadata extends Route {
   }
 }
 routes.push(GetPersonMetadata);
+
+/**
+ * @class DeletePersonMetadata
+ */
+class DeletePersonMetadata extends Route {
+  constructor() {
+    super('person/:id/metadata/:key', 'DELETE PERSON METADATA');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.DELETE;
+    this._person = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.Person
+        .findById(this.req.params.id).select('id')
+        .then(person => {
+          if (!person) {
+            this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
+            reject({statusCode: 400, message: `Invalid Person ID: ${this.req.params.id}`});
+            return;
+          }
+          this._person = person;
+          resolve(true);
+        }, err => reject({statusCode: 400, message: err.message}));
+    });
+  }
+
+  _exec() {
+    return this._person.rmMetadata(this.req.params.key);
+  }
+}
+routes.push(DeletePersonMetadata);
 
 /**
  * @type {*[]}
