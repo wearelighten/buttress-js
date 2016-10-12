@@ -86,7 +86,7 @@ gulp.task('watch', ['clean'], function() {
   gulp.watch(['app/**/*.coffee'], ['coffee']);
   gulp.watch(['app/server/**/*.js'], ['js']);
   // Watch Resources
-  gulp.watch('app/server/nodemon.json', ['nodemon']);
+  gulp.watch('app/server/**/*.json', ['resources']);
 });
 
 gulp.task('clean', function() {
