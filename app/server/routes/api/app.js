@@ -134,6 +134,9 @@ class AddApp extends Route {
   _exec() {
     return new Promise((resolve, reject) => {
       Model.App.add(this.req.body)
+        .then(res => {
+          return Object.assign(res.app.details, {token: res.token.value});
+        })
         .then(Logging.Promise.logProp('Added App', 'name', Route.LogLevel.INFO))
         .then(resolve, reject);
     });
@@ -275,6 +278,47 @@ class GetAppPermissionList extends Route {
   }
 }
 routes.push(GetAppPermissionList);
+
+/**
+ * @class AddAppPermission
+ */
+class AddAppPermission extends Route {
+  constructor() {
+    super('app/:id/permission', 'ADD APP PERMISSION');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.SUPER;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._app = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.App.findById(this.req.params.id).then(app => {
+        if (!app) {
+          this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        if (!this.req.body.route || !this.req.body.permission) {
+          this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._app = app;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._app.addOrUpdatePermission(this.req.body.route, this.req.body.permission)
+      .then(a => a.details);
+  }
+}
+routes.push(AddAppPermission);
 
 /**
  * @class AddAppMetadata

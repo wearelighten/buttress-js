@@ -87,15 +87,13 @@ var schema = new mongoose.Schema({
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
 schema.statics.add = type => {
-  return new Promise((resolve, reject) => {
-    var app = new ModelDef({
-      type: type,
-      value: _createTokenString(),
-      allocated: true
-    });
-
-    app.save().then(resolve, reject);
+  var app = new ModelDef({
+    type: type,
+    value: _createTokenString(),
+    allocated: true
   });
+
+  return app.save();
 };
 
 ModelDef = mongoose.model('Token', schema);

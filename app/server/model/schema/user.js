@@ -22,18 +22,15 @@ var Logging = require('../../logging');
 var constants = {
 };
 
-// Logging.log(Model.initModel('Appauth'));
-// Logging.log(Model.Schema.Appauth);
+Model.initModel('Person');
+// Model.Schema.Person;
 
 /**
  * Schema
  */
 var schema = new mongoose.Schema();
 schema.add({
-  username: {
-    type: String,
-    index: true
-  },
+  username: String,
   metadata: [{
     _app: {
       type: mongoose.Schema.Types.ObjectId,
@@ -63,14 +60,25 @@ schema.virtual('details').get(function() {
     id: this._id,
     username: this.username,
     metadata: this.authenticatedMetadata,
-    auth: this.auth.map(a => a.details)
+    auth: this.auth.map(a => a.details),
+    person: this.tryPerson
   };
 });
 
 schema.virtual('authenticatedMetadata').get(function() {
+  if (!this.metadata) {
+    return [];
+  }
   return this.metadata
     .filter(m => `${m._app}` === Model.app.id)
     .map(m => ({key: m.key, value: JSON.parse(m.value)}));
+});
+
+schema.virtual('tryPerson').get(function() {
+  if (!this._person) {
+    return false;
+  }
+  return this._person.details ? this._person.details : this._person;
 });
 
 /**
@@ -83,7 +91,6 @@ schema.virtual('authenticatedMetadata').get(function() {
  */
 schema.statics.add = body => {
   var user = new ModelDef({
-    username: body.username,
     _apps: [Model.app]
   });
 
@@ -115,7 +122,20 @@ schema.statics.add = body => {
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.app._id}`, Logging.Constants.LogLevel.INFO);
+
+  if (Model.app.authLevel === Model.Constants.App.AuthLevel.SUPER) {
+    return ModelDef.find({});
+  }
+
   return ModelDef.find({_app: Model.app._id});
+};
+
+/**
+ * @param {string} username - username to check for
+ * @return {Promise} - resolves to a User object or null
+ */
+schema.statics.getByUsername = username => {
+  return ModelDef.findOne({username: username}).select('id');
 };
 
 /**
@@ -127,6 +147,24 @@ schema.statics.getByAppId = (appName, appUserId) => {
   Logging.log(`getByAppId: ${appName} - ${appUserId}`, Logging.Constants.LogLevel.VERBOSE);
 
   return ModelDef.findOne({'auth.app': appName, 'auth.appId': appUserId}).select('id');
+};
+
+schema.methods.attachToPerson = function(person, details) {
+  if (person !== null) {
+    this._person = person;
+    return this.save();
+  }
+
+  return new Promise((resolve, reject) => {
+    Model.Person
+      .add(details, Model.app._owner)
+      .then(person => {
+        Logging.log(person, Logging.Constants.LogLevel.DEBUG);
+        this._person = person.id;
+        return this.save();
+      })
+      .then(resolve, reject);
+  });
 };
 
 /**

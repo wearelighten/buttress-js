@@ -1,0 +1,20 @@
+include constants
+
+head
+  title #{subject}
+  style.
+   #{style}
+body
+  #content_body
+    #header
+      block header
+    #content
+      block content
+    #footer
+      block footer
+    #legals
+      #app
+        block legals
+      #rhizome
+        p
+          | #{app.name} was built using Rhizome which was created by Coders for Labour. Copyright 2016.

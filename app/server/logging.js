@@ -134,7 +134,12 @@ module.exports.Promise = {};
 module.exports.Promise.log = (log, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
-    _log(`${log}: ${res}`, level);
+    if (res instanceof Object) {
+      _log(`${log}:`, level);
+      _log(res, level);
+    } else {
+      _log(`${log}: ${res}`, level);
+    }
     return res;
   };
 };
@@ -257,5 +262,19 @@ module.exports.Promise.logArrayProp = (log, prop, level) => {
       _log(r[prop]);
     });
     return res;
+  };
+};
+
+/**
+ * @param {string} log - Text to log
+ * @param {string} prop - Name of the `res[]` property to log
+ * @param {integer} level - level to log at
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logError = () => {
+  var level = LogLevel.ERR;
+  return err => {
+    _log(err, level);
+    return err;
   };
 };

@@ -3,8 +3,8 @@
 /**
  * Rhizome - The API that feeds grassroots movements
  *
- * @file person.js
- * @description Person API specification
+ * @file user.js
+ * @description USER API specification
  * @module API
  * @author Chris Bates-Keegan
  *
@@ -58,7 +58,7 @@ class GetUser extends Route {
         reject({statusCode: 400});
         return;
       }
-      Model.User.findById(this.req.params.id).then(user => {
+      Model.User.findById(this.req.params.id).populate('_person').then(user => {
         if (!user) {
           this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
@@ -153,7 +153,7 @@ routes.push(UpdateUserToken);
  */
 class AddUser extends Route {
   constructor() {
-    super('user', 'ADD USER');
+    super('user/:app?', 'ADD USER');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
@@ -162,31 +162,31 @@ class AddUser extends Route {
   _validate() {
     return new Promise((resolve, reject) => {
       Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
+      var app = this.req.body.app ? this.req.body.app : this.req.params.app;
 
-      if (!this.req.body.username ||
-          !this.req.body.app ||
+      if (!this.req.body.username || !app ||
           !this.req.body.id ||
           !this.req.body.token ||
           !this.req.body.tokenSecret ||
           !this.req.body.profileUrl ||
-          !this.req.body.profileImgUrl ||
-          !this.req.body.bannerImgUrl) {
+          !this.req.body.profileImgUrl) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
 
-      resolve(true);
+      Model.Person.findByDetails(this.req.body)
+        .then(person => {
+          this._person = person;
+          resolve(true);
+        });
     });
   }
 
   _exec() {
-    return new Promise((resolve, reject) => {
-      Model.User.add(this.req.body)
-        .then(Logging.Promise.logProp('Added User', 'username', Route.LogLevel.VERBOSE))
-        .then(Helpers.Promise.prop('details'))
-        .then(resolve, reject);
-    });
+    return Model.User.add(this.req.body)
+      .then(Logging.Promise.logProp('Added User', 'username', Route.LogLevel.VERBOSE))
+      .then(Helpers.Promise.prop('details'));
   }
 }
 routes.push(AddUser);
@@ -227,6 +227,73 @@ class DeleteUser extends Route {
   }
 }
 routes.push(DeleteUser);
+
+class AttachToPerson extends Route {
+  constructor() {
+    super('user/:id/person', 'ATTACH USER TO PERSON');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._user = false;
+    this._person = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.User
+        .findById(this.req.params.id).select('-metadata').then(user => {
+          if (!user) {
+            this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+            reject({statusCode: 400});
+            return;
+          }
+          this._user = user;
+
+          if (this._user._person) {
+            this.log('ERROR: Already attached to a person', Route.LogLevel.ERR);
+            reject({statusCode: 400});
+            return;
+          }
+
+          if (!this.req.body.name || !this.req.body.email) {
+            this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+            reject({statusCode: 400});
+            return;
+          }
+
+          Model.Person
+            .findByDetails(this.req.body)
+            .then(person => {
+              this._person = person;
+              if (person) {
+                return Model.User.findOne({_person: person});
+              }
+              return Promise.resolve(null);
+            })
+            .then(user => {
+              if (user && user._id !== this._user._id) {
+                this.log('ERROR: Person attached to a different user', Route.LogLevel.ERR);
+                reject({statusCode: 400});
+                return;
+              }
+              resolve(true);
+            })
+            .catch(err => {
+              this.log(`ERROR: ${err.message}`, Route.LogLevel.ERR);
+              reject({statusCode: 400});
+            });
+        })
+        .catch(Logging.Promise.logError());
+    });
+  }
+
+  _exec() {
+    return this._user.attachToPerson(this._person, this.req.body)
+      .then(Helpers.Promise.prop('details'));
+  }
+}
+routes.push(AttachToPerson);
 
 /**
  * @class AddUserMetadata

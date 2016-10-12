@@ -11,9 +11,12 @@
  *
  */
 
+var fs = require('fs');
+var crypto = require('crypto');
 var mongoose = require('mongoose');
 var Model = require('../');
 var Logging = require('../../logging');
+var Config = require('../../config');
 
 /**
  * Constants
@@ -37,13 +40,15 @@ var AuthLevel = {
 
 var constants = {
   Type: Type,
-  AuthLevel: AuthLevel
+  AuthLevel: AuthLevel,
+  PUBLIC_DIR: true
 };
 
 /**
  * Schema
  */
-var schema = new mongoose.Schema({
+var schema = new mongoose.Schema();
+schema.add({
   name: String,
   type: {
     type: String,
@@ -79,8 +84,9 @@ schema.virtual('details').get(function() {
     name: this.name,
     type: this.type,
     authLevel: this.authLevel,
-    owner: this.ownerName,
+    owner: this.ownerDetails,
     token: this.tokenValue,
+    publicUid: this.getPublicUID(),
     metadata: this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})),
     permissions: this.permissions.map(p => {
       return {route: p.route, permission: p.permission};
@@ -88,7 +94,7 @@ schema.virtual('details').get(function() {
   };
 });
 
-schema.virtual('ownerName').get(function() {
+schema.virtual('ownerDetails').get(function() {
   if (!this._owner) {
     return false;
   }
@@ -126,23 +132,29 @@ schema.methods.setOwner = function(group) {
  * @return {Promise} - fulfilled with App Object when the database request is completed
  */
 schema.statics.add = body => {
-  Logging.log(body);
-  return new Promise((resolve, reject) => {
-    var app = new ModelDef({
-      name: body.name,
-      type: body.type,
-      authLevel: body.authLevel,
-      permissions: body.permissions,
-      domain: body.domain,
-      _owner: body.ownerGroupId
-    });
+  Logging.log(body, Logging.Constants.LogLevel.DEBUG);
 
-    Model.Token.add(Model.Constants.Token.Type.APP)
-      .then(token => {
-        app._token = token;
-        app.save().then(res => resolve(Object.assign(res.details, {token: token.value})), reject);
-      });
+  var app = new ModelDef({
+    name: body.name,
+    type: body.type,
+    authLevel: body.authLevel,
+    permissions: body.permissions,
+    domain: body.domain,
+    _owner: body.ownerGroupId
   });
+
+  var _token = false;
+  return Model.Token
+    .add(Model.Constants.Token.Type.APP)
+    .then(token => {
+      _token = token;
+      Logging.log(token.value, Logging.Constants.LogLevel.DEBUG);
+      app._token = token.id;
+      return app.save();
+    })
+    .then(app => {
+      return Promise.resolve({app: app, token: _token});
+    });
 };
 
 /**
@@ -169,6 +181,73 @@ schema.methods.findMetadata = function(key) {
   // Logging.log(this.metadata, Logging.Constants.LogLevel.DEBUG);
   var md = this.metadata.find(m => m.key === key);
   return md ? {key: md.key, value: JSON.parse(md.value)} : undefined;
+};
+
+/**
+ * @param {string} route - route for the permission
+ * @param {*} permission - permission to apply to the route
+ * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
+ */
+schema.methods.addOrUpdatePermission = function(route, permission) {
+  Logging.log(route, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(permission, Logging.Constants.LogLevel.DEBUG);
+
+  var exists = this.permissions.find(p => p.route === route);
+  if (exists) {
+    exists.permission = permission;
+  } else {
+    this.permissions.push({route, permission});
+  }
+
+  return this.save();
+};
+
+/**
+ * @param {String} name - name of the data folder to create
+ * @param {Boolean} isPublic - true for /public (which is available via the static middleware) otherwise /private
+ * @return {String} - UID
+ */
+schema.methods.mkDataDir = function(name, isPublic) {
+  var uid = Model.app.getPublicUID();
+  var baseName = `${Config.appDataPath}/${isPublic ? 'public' : 'private'}/${uid}`;
+
+  return new Promise((resolve, reject) => {
+    fs.mkdir(baseName, err => {
+      if (err && err.code !== 'EEXIST') {
+        reject(err);
+        return;
+      }
+      var dirName = `${baseName}/${name}`;
+      fs.mkdir(dirName, err => {
+        if (err && err.code !== 'EEXIST') {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
+  });
+};
+
+/**
+ * @return {String} - UID
+ */
+schema.methods.getPublicUID = function() {
+  var hash = crypto.createHash('sha512');
+  // Logging.log(`Create UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
+  hash.update(`${this.name}.${this.tokenValue}`);
+  var bytes = hash.digest();
+
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var mask = 0x3d;
+  var uid = '';
+
+  for (var byte = 0; byte < 32; byte++) {
+    uid += chars[bytes[byte] & mask];
+  }
+
+  Logging.log(`Got UID: ${uid}`, Logging.Constants.LogLevel.SILLY);
+  return uid;
 };
 
 /**

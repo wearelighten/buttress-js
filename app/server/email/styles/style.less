@@ -1,0 +1,93 @@
+@import "vars";
+
+body {
+  margin: 0px;
+  padding: @padding;
+  outline: 0px;
+  width: @width;
+  //background-color: #fff;
+  background-color: transparent;
+  font-family: 'Helvetica Neue LT Std', Helvetica, sans-serif;
+}
+
+#content_body {
+  width: @width;
+  background-color: #eee;
+}
+
+#header, #footer {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+}
+
+#content {
+  .content_table {
+    margin: 0;
+    outline: 0;
+    border: 0;
+    padding: 0;
+    width: @width;
+    border-spacing: 0px;
+    border-collapse: collapse;
+    td {
+      vertical-align: top;
+    }
+  }
+
+  .content_title {
+    text-align: center;
+  }
+
+  .content_copy {
+    padding: @padding;
+    h1 {
+      color: @primary;
+      margin: 0px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    h2 {
+      color: #000;
+      margin: 5px 0;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    p {
+      color: #000;
+      margin: 10px 0;
+      font-size: 14px;
+      font-weight: normal;
+      line-height: 1.5em;
+    }
+
+    a {
+      color: @primary;
+      font-weight: bold;
+    }
+
+    img {
+      text-align: center;
+    }
+  }
+}
+
+#legals {
+  background-color: #fff;
+  padding: @padding;
+  p {
+    text-align: left;
+    font-size: 11px;
+  }
+  #app {
+
+  }
+  #rhizome {
+
+  }
+}
+
+
