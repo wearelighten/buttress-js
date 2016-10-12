@@ -134,7 +134,12 @@ module.exports.Promise = {};
 module.exports.Promise.log = (log, level) => {
   level = level || LogLevel.DEFAULT;
   return res => {
-    _log(`${log}: ${res}`, level);
+    if (res instanceof Object) {
+      _log(`${log}:`, level);
+      _log(res, level);
+    } else {
+      _log(`${log}: ${res}`, level);
+    }
     return res;
   };
 };
