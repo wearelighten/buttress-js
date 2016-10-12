@@ -19,17 +19,29 @@
       "RHIZOME_MONGO_URL_TEST": ""
     },
     "workstation1": {
-      "logPath": "/home/chris/Work/Workspaces/WebStorm/rhizome/logs",
+      "logPath": {
+        "dev":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/dev",
+        "prod":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/prod",
+        "test":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/test"
+      },
       "appDataPath": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
       "listenPort": {
         "dev": 6001,
         "prod": 6000,
-        "test": 6001
+        "test": 6002
       }
     },
     "yubaba": {
-      "logPath": "/home/chris/apps/rhizome/logs",
-      "appDataPath": "/home/chris/apps/rhizome/app_data",
+      "logPath": {
+        "dev": "/home/chris/apps/rhizome-DEV/logs",
+        "prod": "/home/chris/apps/rhizome/logs",
+        "test": "/home/chris/apps/rhizome/logs"
+      },
+      "appDataPath": {
+       "dev": "/home/chris/apps/rhizome-DEV/app_data",
+       "prod": "/home/chris/apps/rhizome/app_data",
+       "test": "/home/chris/apps/rhizome/app_data"
+      },
       "listenPort": {
         "dev": 6001,
         "prod": 6000,

@@ -13,6 +13,16 @@
 var fs = require('fs');
 
 /**
+ * @type {{development: string, production: string, test: string}}
+ * @private
+ */
+var _map = {
+  development: 'dev',
+  production: 'prod',
+  test: 'test'
+};
+
+/**
  * @class Config
  *
  */
@@ -22,12 +32,6 @@ class Config {
       throw new Error('You need to add config ' +
         'settings for your environment to config.json');
     }
-
-    var _map = {
-      development: 'dev',
-      production: 'prod',
-      test: 'test'
-    };
 
     this._settings = this._loadSettings();
     this._settings.env = _map[process.env.NODE_ENV];
@@ -41,14 +45,22 @@ class Config {
     var json = fs.readFileSync('./config.json');
     var settings = JSON.parse(json);
 
-    for (var variable in settings.local.environment) {
+    var variable;
+    for (variable in settings.local.environment) {
       if (!process.env[variable]) {
         throw new Error(`You must specify the ${variable} environment variable`);
       }
       settings.local.environment[variable] = process.env[variable];
     }
 
-    return Object.assign(settings.global, settings.local.environment, settings.local[process.env.RHIZOME_SERVER_ID]);
+    var local = settings.local[process.env.RHIZOME_SERVER_ID];
+    for (variable in local) {
+      if (local[variable] instanceof Object && local[variable][_map[process.env.NODE_ENV]]) {
+        local[variable] = local[variable][_map[process.env.NODE_ENV]];
+      }
+    }
+
+    return Object.assign(settings.global, settings.local.environment, local);
   }
 }
 

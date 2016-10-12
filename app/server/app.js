@@ -31,21 +31,21 @@ var configureDevelopment = () => {
   Config.env = 'dev';
   app.set('db-uri', `mongodb://${Config.RHIZOME_MONGO_URL_DEV}/${Config.app.code}-dev`);
   app.use(morgan('short'));
-  app.set('port', Config.listenPort.dev);
+  app.set('port', Config.listenPort);
 };
 
 var configureProduction = () => {
   Config.env = 'prod';
   app.set('db-uri', `mongodb://${Config.RHIZOME_MONGO_URL_PROD}/${Config.app.code}-prod`);
   app.use(morgan('short'));
-  app.set('port', Config.listenPort.prod);
+  app.set('port', Config.listenPort);
 };
 
 var configureTest = () => {
   Config.env = 'test';
   app.set('db-uri', `mongodb://${Config.RHIZOME_MONGO_URL_TEST}/${Config.app.code}-test`);
   app.use(morgan('short'));
-  app.set('port', Config.listenPort.test);
+  app.set('port', Config.listenPort);
 };
 
 var configureApp = env => {
