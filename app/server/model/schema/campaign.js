@@ -94,6 +94,20 @@ schema.statics.add = body => {
 };
 
 /**
+ * @return {Promise} - resolves once all have been deleted
+ */
+schema.statics.rmAll = () => {
+  return ModelDef.remove({});
+};
+
+/**
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.methods.rm = function() {
+  return ModelDef.remove({_id: this._id});
+};
+
+/**
  * @param {String} label - unique (to campaign) label for image
  * @param {String} image - encoded image data
  * @param {String} encoding - encoding used (defaults to base64)
@@ -262,6 +276,14 @@ schema.methods.findMetadata = function(key) {
     Logging.Constants.LogLevel.DEBUG);
   var md = this.metadata.find(m => m.key === key);
   return md ? {key: md.key, value: JSON.parse(md.value)} : false;
+};
+
+schema.methods.rmMetadata = function(key) {
+  Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
+  return this
+    .update({$pull: {metadata: {_app: Model.app.id, key: key}}})
+    .then(Logging.Promise.log('removeMetadata'))
+    .then(res => res.nModified !== 0);
 };
 
 /**
