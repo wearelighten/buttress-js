@@ -24,7 +24,11 @@
         "prod":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/prod",
         "test":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/test"
       },
-      "appDataPath": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
+      "appDataPath": {
+        "dev": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
+        "prod": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
+        "test": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data/test"
+      },
       "listenPort": {
         "dev": 6001,
         "prod": 6000,

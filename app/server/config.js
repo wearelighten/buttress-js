@@ -22,6 +22,8 @@ var _map = {
   test: 'test'
 };
 
+var _env = process.env.NODE_ENV ? process.env.NODE_ENV : 'development';
+
 /**
  * @class Config
  *
@@ -55,8 +57,8 @@ class Config {
 
     var local = settings.local[process.env.RHIZOME_SERVER_ID];
     for (variable in local) {
-      if (local[variable] instanceof Object && local[variable][_map[process.env.NODE_ENV]]) {
-        local[variable] = local[variable][_map[process.env.NODE_ENV]];
+      if (local[variable] instanceof Object && local[variable][_map[_env]]) {
+        local[variable] = local[variable][_map[_env]];
       }
     }
 
