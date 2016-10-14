@@ -406,7 +406,7 @@ class GetUserMetadata extends Route {
         }
 
         this._metadata = user.findMetadata(this.req.params.key);
-        if (this._metadata === undefined) {
+        if (this._metadata === false) {
           this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
           reject({statusCode: 404});
           return;

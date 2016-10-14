@@ -432,7 +432,7 @@ class GetAppMetadata extends Route {
           return;
         }
         this._metadata = app.findMetadata(this.req.params.key);
-        if (this._metadata === undefined) {
+        if (this._metadata === false) {
           this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
           reject({statusCode: 404});
           return;
