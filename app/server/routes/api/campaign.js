@@ -143,6 +143,28 @@ class AddCampaign extends Route {
 routes.push(AddCampaign);
 
 /**
+ * @class DeleteAllCampaigns
+ */
+class DeleteAllCampaigns extends Route {
+  constructor() {
+    super('campaign', 'DELETE ALL CAMPAIGNS');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.SUPER;
+    this.permissions = Route.Constants.Permissions.DELETE;
+    this._person = false;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Campaign.rmAll().then(() => true);
+  }
+}
+routes.push(DeleteAllCampaigns);
+
+/**
  * @class DeleteCampaign
  */
 class DeleteCampaign extends Route {
@@ -174,7 +196,7 @@ class DeleteCampaign extends Route {
   }
 
   _exec() {
-    return Model.Campaign.rm(this._campaign).then(() => true);
+    return this._campaign.rm().then(() => true);
   }
 }
 routes.push(DeleteCampaign);
@@ -203,7 +225,7 @@ class AddCampaignImage extends Route {
 
         if (!this.req.body.label || !this.req.body.image) {
           this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-          reject({statusCode: 400});
+          reject({statusCode: 400, message: 'Missing required field'});
           return;
         }
 
@@ -243,7 +265,7 @@ class AddCampaignTemplate extends Route {
 
         if (!this.req.body.label || !this.req.body.markup) {
           this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-          reject({statusCode: 400});
+          reject({statusCode: 400, message: 'Missing required field'});
           return;
         }
 
@@ -427,7 +449,7 @@ class GetCampaignMetadata extends Route {
         }
 
         this._metadata = campaign.findMetadata(this.req.params.key);
-        if (this._metadata === undefined) {
+        if (this._metadata === false) {
           this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
           reject({statusCode: 404});
           return;
@@ -443,6 +465,40 @@ class GetCampaignMetadata extends Route {
   }
 }
 routes.push(GetCampaignMetadata);
+
+/**
+ * @class DeleteCampaignMetadata
+ */
+class DeleteCampaignMetadata extends Route {
+  constructor() {
+    super('campaign/:id/metadata/:key', 'DELETE CAMPAIGN METADATA');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.DELETE;
+    this._campaign = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.Campaign
+        .findById(this.req.params.id).select('id')
+        .then(campaign => {
+          if (!campaign) {
+            this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
+            reject({statusCode: 400, message: `Invalid Campaign ID: ${this.req.params.id}`});
+            return;
+          }
+          this._campaign = campaign;
+          resolve(true);
+        }, err => reject({statusCode: 400, message: err.message}));
+    });
+  }
+
+  _exec() {
+    return this._campaign.rmMetadata(this.req.params.key);
+  }
+}
+routes.push(DeleteCampaignMetadata);
 
 /**
  * @type {*[]}
