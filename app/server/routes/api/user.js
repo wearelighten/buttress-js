@@ -122,8 +122,7 @@ class UpdateUserToken extends Route {
   _validate() {
     return new Promise((resolve, reject) => {
       if (!this.req.body ||
-        !this.req.body.token ||
-        !this.req.body.tokenSecret) {
+        !this.req.body.token) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
@@ -164,10 +163,9 @@ class AddUser extends Route {
       Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
       var app = this.req.body.app ? this.req.body.app : this.req.params.app;
 
-      if (!this.req.body.username || !app ||
+      if (!app ||
           !this.req.body.id ||
           !this.req.body.token ||
-          !this.req.body.tokenSecret ||
           !this.req.body.profileUrl ||
           !this.req.body.profileImgUrl) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
