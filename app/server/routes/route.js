@@ -105,8 +105,8 @@ class Route {
         .then(Logging.log('validated', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._exec, this), reject)
         .then(Logging.log('exec\'ed', Logging.Constants.LogLevel.SILLY))
-        .then(_.bind(this._logAppUsage, this))
-        .then(resolve, reject);
+        .then(resolve, reject)
+        .catch(Logging.Promise.logError());
     });
   }
 
@@ -122,14 +122,14 @@ class Route {
         return;
       }
 
-      if (!this.req.appDetails) {
+      if (!this.req.token) {
         this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR);
         reject({statusCode: 401});
         return;
       }
 
       this.log(`AUTHLEVEL: ${this.auth}`, Logging.Constants.LogLevel.VERBOSE);
-      if (this.req.appDetails.authLevel < this.auth) {
+      if (this.req.token.authLevel < this.auth) {
         this.log('EAUTH: INSUFFICIENT AUTHORITY', Logging.Constants.LogLevel.ERR);
         reject({statusCode: 401});
         return;
@@ -145,9 +145,10 @@ class Route {
        * @TODO Support Regex in specific ie match routes like app/:id/permission
        */
       var authorised = false;
-      Logging.log(this.req.appDetails.details.permissions, Logging.Constants.LogLevel.DEBUG);
-      for (var x = 0; x < this.req.appDetails.permissions.length; x++) {
-        var p = this.req.appDetails.details.permissions[x];
+      let token = this.req.token;
+      Logging.log(token.permissions, Logging.Constants.LogLevel.DEBUG);
+      for (var x = 0; x < token.permissions.length; x++) {
+        var p = token.permissions[x];
         if (this._matchRoute(p.route) && this._matchPermission(p.permission)) {
           authorised = true;
           break;
@@ -155,7 +156,7 @@ class Route {
       }
 
       if (authorised === true) {
-        resolve(this.req.appDetails);
+        resolve(this.req.token);
       } else {
         this.log(`EAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
         reject({statusCode: 401});
@@ -170,7 +171,7 @@ class Route {
    */
   _matchRoute(routeSpec) {
     if (routeSpec === '*' &&
-      this.req.appDetails.authLevel >= Constants.Auth.SUPER) {
+      this.req.token.authLevel >= Constants.Auth.SUPER) {
       return true;
     }
 
@@ -183,7 +184,7 @@ class Route {
     if (matches) {
       Logging.log(matches, Logging.Constants.LogLevel.DEBUG);
       if (this.path.match(new RegExp(`^${matches[1]}`)) &&
-        this.req.appDetails.authLevel >= Constants.Auth.ADMIN) {
+        this.req.token.authLevel >= Constants.Auth.ADMIN) {
         return true;
       }
     }
@@ -202,18 +203,6 @@ class Route {
     }
 
     return false;
-  }
-
-  /**
-   * @param {*} res - whatever results are being returned by the API, just passed through
-   * @return {Promise} - passes through the previous results when DB save completes
-   * @private
-   */
-  _logAppUsage(res) {
-    return new Promise((resolve, reject) => {
-      this.req.appDetails._token.uses.push(new Date());
-      this.req.appDetails._token.save().then(() => resolve(res), reject);
-    });
   }
 
   /**

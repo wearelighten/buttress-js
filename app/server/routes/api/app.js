@@ -28,15 +28,11 @@ class GetAppList extends Route {
   }
 
   _validate() {
-    return new Promise((resolve, reject) => {
-      resolve(true);
-    });
+    return Promise.resolve(true);
   }
 
   _exec() {
-    return new Promise((resolve, reject) => {
-      Model.App.findAll().then(resolve, reject);
-    });
+    return Model.App.findAll();
   }
 }
 routes.push(GetAppList);

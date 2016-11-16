@@ -14,7 +14,7 @@
 var crypto = require('crypto');
 var mongoose = require('mongoose');
 var Logging = require('../../logging');
-// var Model = require('../model');
+var Model = require('../');
 
 /**
  * Constants
@@ -26,8 +26,17 @@ var Type = {
   USER: type[1]
 };
 
+var authLevel = [0, 1, 2, 3];
+var AuthLevel = {
+  NONE: 0,
+  USER: 1,
+  ADMIN: 2,
+  SUPER: 3
+};
+
 var constants = {
-  Type: Type
+  Type: Type,
+  AuthLevel: AuthLevel
 };
 
 /**
@@ -56,6 +65,8 @@ var _createTokenString = () => {
 };
 
 var ModelDef = null;
+Model.initModel('App');
+Model.initModel('User');
 
 /**
  * Schema
@@ -71,6 +82,22 @@ var schema = new mongoose.Schema({
       unique: true
     }
   },
+  _app: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'App'
+  },
+  _user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  authLevel: {
+    type: Number,
+    enum: authLevel
+  },
+  permissions: [{
+    route: String,
+    permission: String
+  }],
   uses: [Date],
   allocated: {
     type: Boolean,
@@ -79,21 +106,94 @@ var schema = new mongoose.Schema({
 });
 
 /**
+ * Schema Virtual Methods
+ */
+schema.virtual('details').get(function() {
+  return {
+    id: this._id,
+    type: this.type,
+    app: this.app,
+    user: this.user,
+    authLevel: this.authLevel,
+    permissions: this.permissions.map(p => {
+      return {route: p.route, permission: p.permission};
+    })
+  };
+});
+
+schema.virtual('app').get(function() {
+  if (!this._app) {
+    return null;
+  }
+  if (!this._app.details) {
+    return this._app;
+  }
+  return this._app.details;
+});
+
+schema.virtual('user').get(function() {
+  if (!this._user) {
+    return null;
+  }
+  if (!this._user.details) {
+    return this._user;
+  }
+  return this._user.details;
+});
+
+/**
  * Schema Static Methods
  */
 
 /**
- * @param {enum} type - type of token to create
+ * @param {Object} details - type, app, user, authLevel, permissions
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-schema.statics.add = type => {
-  var app = new ModelDef({
-    type: type,
+schema.statics.add = details => {
+  var token = new ModelDef({
+    type: details.type,
     value: _createTokenString(),
+    _app: details.app,
+    _user: details.user,
+    authLevel: details.authLevel,
+    permissions: details.permissions,
     allocated: true
   });
 
-  return app.save();
+  return token.save();
+};
+
+/**
+ * Schema Methods
+ */
+
+/**
+ * @param {string} route - route for the permission
+ * @param {*} permission - permission to apply to the route
+ * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
+ */
+schema.methods.addOrUpdatePermission = function(route, permission) {
+  Logging.log(route, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(permission, Logging.Constants.LogLevel.DEBUG);
+
+  var exists = this.permissions.find(p => p.route === route);
+  if (exists) {
+    exists.permission = permission;
+  } else {
+    this.permissions.push({route, permission});
+  }
+  return this.save();
+};
+
+/**
+ * Schema Static Methods
+ */
+
+/**
+ * @return {Promise} - resolves to an array of Tokens (native Mongoose objects)
+ */
+schema.statics.findAllNative = () => {
+  return ModelDef.find({}).populate('_app').populate('_user');
 };
 
 ModelDef = mongoose.model('Token', schema);

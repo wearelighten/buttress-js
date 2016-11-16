@@ -79,7 +79,7 @@ schema.virtual('_metadata').get(function() {
  */
 schema.statics.add = body => {
   var campaign = new ModelDef({
-    _app: Model.app,
+    _app: Model.authApp.id,
     name: body.name,
     description: body.description,
     legals: body.legals
@@ -118,14 +118,14 @@ schema.methods.addImage = function(label, image, encoding) {
   var buffer = Buffer.from(image, encoding);
 
   return new Promise((resolve, reject) => {
-    var uid = Model.app.getPublicUID();
+    var uid = Model.authApp.getPublicUID();
     var dirName = `${Config.appDataPath}/public/${uid}/campaign-images`;
     var pathName = `${dirName}/${label}.png`;
     var prefix = `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}`;
     var url = `${prefix}/${uid}/campaign-images/${label}.png`;
     Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
 
-    Model.app.mkDataDir('campaign-images', Model.Constants.App.PUBLIC_DIR)
+    Model.authApp.mkDataDir('campaign-images', Model.Constants.App.PUBLIC_DIR)
       .then(() => {
         fs.writeFile(pathName, buffer, 'binary', err => {
           if (err) {
@@ -169,12 +169,12 @@ schema.methods.addTemplate = function(label, markup, format, encoding) {
   var buffer = Buffer.from(markup, encoding);
 
   return new Promise((resolve, reject) => {
-    var uid = Model.app.getPublicUID();
+    var uid = Model.authApp.getPublicUID();
     var dirName = `${Config.appDataPath}/private/${uid}/campaign-templates`;
     var pathName = `${dirName}/${label}.${format}`;
     Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
 
-    Model.app.mkDataDir('campaign-templates')
+    Model.authApp.mkDataDir('campaign-templates')
       .then(() => {
         fs.writeFile(pathName, buffer, err => {
           if (err) {
@@ -210,7 +210,7 @@ schema.methods.addTemplate = function(label, markup, format, encoding) {
  * @return {Promise} - resolves to  {url}
  */
 schema.methods.createPreviewEmail = function(template, body) {
-  var uid = Model.app.getPublicUID();
+  var uid = Model.authApp.getPublicUID();
   var prefix = `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}`;
   var url = `${prefix}/${uid}/campaign-previews/${template}-preview.html`;
 
@@ -225,14 +225,14 @@ schema.methods.createPreviewEmail = function(template, body) {
       email: body.person.email ? body.person.email : 'chris@wearelighten.co.uk'
     },
     app: {
-      name: Model.app.name,
+      name: Model.authApp.name,
       trackingCode: 'welcome',
       templatePath: path.join(Config.appDataPath, `/private/${uid}/campaign-templates`)
     }
   };
 
   return new Promise((resolve, reject) => {
-    Model.app.mkDataDir('campaign-previews', Model.Constants.App.PUBLIC_DIR)
+    Model.authApp.mkDataDir('campaign-previews', Model.Constants.App.PUBLIC_DIR)
       .then(() => {
         return EmailFactory.create(params);
       })
@@ -256,7 +256,7 @@ schema.methods.createPreviewEmail = function(template, body) {
  * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
  */
 schema.methods.addOrUpdateMetadata = function(key, value) {
-  Logging.log(`${Model.app.id}`, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(`${Model.authApp.id}`, Logging.Constants.LogLevel.DEBUG);
   Logging.log(key, Logging.Constants.LogLevel.DEBUG);
   Logging.log(value, Logging.Constants.LogLevel.DEBUG);
 
@@ -281,7 +281,7 @@ schema.methods.findMetadata = function(key) {
 schema.methods.rmMetadata = function(key) {
   Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
   return this
-    .update({$pull: {metadata: {_app: Model.app.id, key: key}}})
+    .update({$pull: {metadata: {_app: Model.authApp.id, key: key}}})
     .then(Logging.Promise.log('removeMetadata'))
     .then(res => res.nModified !== 0);
 };
@@ -290,8 +290,8 @@ schema.methods.rmMetadata = function(key) {
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
-  Logging.log(`getAll: ${Model.app._id}`, Logging.Constants.LogLevel.DEBUG);
-  return ModelDef.find({_app: Model.app._id}).then(campaigns => campaigns.map(c => c.details));
+  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+  return ModelDef.find({_app: Model.authApp._id}).then(campaigns => campaigns.map(c => c.details));
 };
 
 /**
@@ -301,7 +301,7 @@ schema.statics.getAll = () => {
 schema.statics.getByName = name => {
   Logging.log(`getByName: ${name}`, Logging.Constants.LogLevel.DEBUG);
 
-  return ModelDef.findOne({_app: Model.app._id, name: name});
+  return ModelDef.findOne({_app: Model.authApp._id, name: name});
 };
 
 ModelDef = mongoose.model('Campaign', schema);

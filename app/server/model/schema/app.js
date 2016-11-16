@@ -30,17 +30,8 @@ var Type = {
   BROWSER: type[3]
 };
 
-var authLevel = [0, 1, 2, 3];
-var AuthLevel = {
-  NONE: 0,
-  USER: 1,
-  ADMIN: 2,
-  SUPER: 3
-};
-
 var constants = {
   Type: Type,
-  AuthLevel: AuthLevel,
   PUBLIC_DIR: true
 };
 
@@ -55,19 +46,10 @@ schema.add({
     enum: type
   },
   domain: String,
-  authLevel: {
-    type: Number,
-    enum: authLevel
-  },
-  permissions: [{route: String, permission: String}],
   metadata: [{key: String, value: String}],
   _owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group'
-  },
-  _token: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Token'
   }
 });
 
@@ -83,14 +65,9 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     type: this.type,
-    authLevel: this.authLevel,
     owner: this.ownerDetails,
-    token: this.tokenValue,
     publicUid: this.getPublicUID(),
-    metadata: this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})),
-    permissions: this.permissions.map(p => {
-      return {route: p.route, permission: p.permission};
-    })
+    metadata: this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)}))
   };
 });
 
@@ -145,7 +122,12 @@ schema.statics.add = body => {
 
   var _token = false;
   return Model.Token
-    .add(Model.Constants.Token.Type.APP)
+    .add({
+      type: Model.Constants.Token.Type.APP,
+      app: app,
+      authLevel: body.authLevel,
+      permissions: body.permissions
+    })
     .then(token => {
       _token = token;
       Logging.log(token.value, Logging.Constants.LogLevel.DEBUG);
@@ -192,14 +174,15 @@ schema.methods.addOrUpdatePermission = function(route, permission) {
   Logging.log(route, Logging.Constants.LogLevel.DEBUG);
   Logging.log(permission, Logging.Constants.LogLevel.DEBUG);
 
-  var exists = this.permissions.find(p => p.route === route);
-  if (exists) {
-    exists.permission = permission;
-  } else {
-    this.permissions.push({route, permission});
-  }
-
-  return this.save();
+  return new Promise((resolve, reject) => {
+    this.getToken()
+    .then(token => {
+      if (!token) {
+        return reject(new Error('No valid authentication token.'));
+      }
+      token.addOrUpdatePermission().then(resolve, reject);
+    });
+  });
 };
 
 /**
@@ -208,7 +191,7 @@ schema.methods.addOrUpdatePermission = function(route, permission) {
  * @return {String} - UID
  */
 schema.methods.mkDataDir = function(name, isPublic) {
-  var uid = Model.app.getPublicUID();
+  var uid = this.getPublicUID();
   var baseName = `${Config.appDataPath}/${isPublic ? 'public' : 'private'}/${uid}`;
 
   return new Promise((resolve, reject) => {
@@ -251,6 +234,13 @@ schema.methods.getPublicUID = function() {
 };
 
 /**
+ * @return {Promise} - resolves to the token
+ */
+schema.methods.getToken = function() {
+  return Model.Token.find({_app: this._id}).populate('_user');
+};
+
+/**
  * @param {App} app - App object to be deleted
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
@@ -268,11 +258,8 @@ schema.statics.rm = app => {
  */
 schema.statics.findAll = () => {
   return new Promise((resolve, reject) => {
-    ModelDef.find({}).populate('_token').populate('_owner')
-      .then(Logging.Promise.logArrayProp('App', '_token', Logging.Constants.LogLevel.DEBUG))
-      .then(res => resolve(res.map(d => Object.assign(d.details, {token: d._token.value}))), reject);
-      // .then(Logging.Promise.logArrayProp('tokens', '_token', Logging.Constants.LogLevel.DEBUG))
-      // .then(res => resolve(res.map(d => d.details)), reject);
+    ModelDef.find({}).populate('_owner')
+    .then(res => resolve(res.map(d => d.details)), reject);
   });
 };
 
@@ -280,13 +267,7 @@ schema.statics.findAll = () => {
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.findAllNative = () => {
-  return new Promise((resolve, reject) => {
-    ModelDef.find({}).populate('_token')
-      .then(Logging.Promise.logArrayProp('App', '_token', Logging.Constants.LogLevel.VERBOSE))
-      .then(resolve, reject);
-      // .then(Logging.Promise.logArrayProp('tokens', '_token'))
-      // .then(res => resolve(res.map(d => d.details)), reject);
-  });
+  return ModelDef.find({});
 };
 
 ModelDef = mongoose.model('App', schema);
