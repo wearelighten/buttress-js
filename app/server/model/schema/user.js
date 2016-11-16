@@ -94,7 +94,7 @@ schema.statics.add = body => {
     _apps: [Model.authApp]
   });
 
-  user.auth.push(new Model.authAppauth({
+  user.auth.push(new Model.App({
     app: body.app,
     appId: body.id,
     username: body.username,
