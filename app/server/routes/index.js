@@ -77,13 +77,16 @@ function _getToken(tokenValue) {
   let token = null;
 
   if (_tokens.length > 0) {
+    token = _lookupToken(_tokens, tokenValue);
     // Logging.log("Using Cached Tokens", Logging.Constants.LogLevel.DEBUG);
-    return Promise.resolve(_lookupToken(_tokens, tokenValue));
+    if (token) {
+      return Promise.resolve(token);
+    }
   }
 
   return new Promise((resolve, reject) => {
     Model.Token.findAllNative()
-    .then(Logging.Promise.logArray("Tokens: ", Logging.Constants.LogLevel.SILLY))
+    .then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
     .then(tokens => {
       _tokens = tokens;
       token = _lookupToken(_tokens, tokenValue);
@@ -111,14 +114,22 @@ function _lookupToken(tokens, value) {
  * @private
  */
 function _configCrossDomain(req, res, next) {
-  if (req.authApp.type !== Model.Constants.App.Type.BROWSER && !req.authUser) {
+  if (req.token.type !== Model.Constants.Token.Type.USER || !req.authUser) {
     next();
     return;
   }
-  Logging.log(req.header('Origin'));
 
-  res.header('Access-Control-Allow-Origin', `http://${req.app.domain}`);
-  res.header('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  Logging.log(req.header('Origin'), Logging.Constants.LogLevel.DEBUG);
+  Logging.log(req.token.domains, Logging.Constants.LogLevel.DEBUG);
+
+  const domainIdx = req.token.domains.indexOf(req.header('Origin'));
+  if (domainIdx === -1) {
+    next();
+    return;
+  }
+
+  res.header('Access-Control-Allow-Origin', `${req.token.domains[domainIdx]}`);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
 
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);

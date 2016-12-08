@@ -87,14 +87,20 @@ schema.virtual('tryPerson').get(function() {
 
 /**
  * @param {Object} body - body passed through from a POST request
+ * @param {Object} personDetails - details of the person to which the user is attached
+ * @param {Object} auth - OPTIONAL authentication details for a user token
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-schema.statics.add = body => {
+schema.statics.add = (body, personDetails, auth) => {
   var user = new ModelDef({
-    _apps: [Model.authApp]
+    _apps: [Model.authApp],
+    _person: personDetails.id
   });
 
-  user.auth.push(new Model.App({
+  // Logging.logDebug(body);
+  // Logging.logDebug(auth);
+
+  user.auth.push(new Model.Appauth({
     app: body.app,
     appId: body.id,
     username: body.username,
@@ -108,12 +114,28 @@ schema.statics.add = body => {
     tokenSecret: body.tokenSecret
   }));
 
-  // Logging.log(body);
-  Logging.log(user.auth[0].username, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(user.auth[0].app, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(user.auth[0].appId, Logging.Constants.LogLevel.DEBUG);
+  Logging.logDebug(personDetails.name);
+  Logging.logDebug(user.auth[0].app);
+  Logging.logDebug(user.auth[0].appId);
 
-  return user.save();
+  let saveUser = user.save().then(u => Object.assign(u.details, {person: personDetails}));
+  let getToken = auth ? Model.Token.add(Object.assign(auth, {user: user})) : Promise.resolve(null);
+
+  return Promise.all([saveUser, getToken]);
+};
+
+/**
+ * @return {Promise} - resolves once all have been deleted
+ */
+schema.statics.rmAll = () => {
+  return ModelDef.remove({});
+};
+
+/**
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.statics.rm = function() {
+  return ModelDef.remove({_id: this._id});
 };
 
 /**
@@ -123,7 +145,7 @@ schema.statics.add = body => {
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
 
-  if (Model.authApp.authLevel === Model.Constants.App.AuthLevel.SUPER) {
+  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
     return ModelDef.find({});
   }
 

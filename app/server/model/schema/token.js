@@ -90,6 +90,7 @@ var schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
+  domains: [String],
   authLevel: {
     type: Number,
     enum: authLevel
@@ -115,6 +116,7 @@ schema.virtual('details').get(function() {
     app: this.app,
     user: this.user,
     authLevel: this.authLevel,
+    domains: this.domains,
     permissions: this.permissions.map(p => {
       return {route: p.route, permission: p.permission};
     })
@@ -150,11 +152,14 @@ schema.virtual('user').get(function() {
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
 schema.statics.add = details => {
+  Logging.logDebug(`Add User Token: ${details.user ? details.user._id : false}`);
+
   var token = new ModelDef({
     type: details.type,
     value: _createTokenString(),
     _app: details.app,
     _user: details.user,
+    domains: details.domains,
     authLevel: details.authLevel,
     permissions: details.permissions,
     allocated: true
@@ -194,6 +199,23 @@ schema.methods.addOrUpdatePermission = function(route, permission) {
  */
 schema.statics.findAllNative = () => {
   return ModelDef.find({}).populate('_app').populate('_user');
+};
+
+/**
+ * @param {String} userId - DB id for the user
+ * @param {String} appId - DB id for the app
+ * @return {Promise} - resolves to an array of Tokens (native Mongoose objects)
+ */
+schema.statics.findUserAuthToken = (userId, appId) => {
+  return ModelDef.findOne({_app: appId, _user: userId});
+};
+
+/**
+ * @param {Enum} type - OPTIONAL 'app' or 'user'
+ * @return {Promise} - resolves when done
+ */
+schema.statics.rmAll = type => {
+  return ModelDef.remove({type: type}).then(r => true);
 };
 
 ModelDef = mongoose.model('Token', schema);

@@ -146,7 +146,7 @@ class Route {
        */
       var authorised = false;
       let token = this.req.token;
-      Logging.log(token.permissions, Logging.Constants.LogLevel.DEBUG);
+      Logging.log(token.permissions, Logging.Constants.LogLevel.SILLY);
       for (var x = 0; x < token.permissions.length; x++) {
         var p = token.permissions[x];
         if (this._matchRoute(p.route) && this._matchPermission(p.permission)) {
