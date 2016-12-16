@@ -87,7 +87,7 @@ schema.virtual('details').get(function() {
 
 schema.virtual('authenticatedMetadata').get(function() {
   return this.metadata
-    .filter(m => `${m._app}` === Model.app.id)
+    .filter(m => `${m._app}` === Model.authApp._id)
     .map(m => ({key: m.key, value: JSON.parse(m.value)}));
 });
 
@@ -177,25 +177,26 @@ schema.methods.rm = function() {
  * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
  */
 schema.methods.addOrUpdateMetadata = function(key, value) {
-  Logging.log(`${Model.app.id}`, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(`${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
   Logging.log(key, Logging.Constants.LogLevel.DEBUG);
   Logging.log(value, Logging.Constants.LogLevel.DEBUG);
 
-  var exists = this.metadata.find(m => `${m._app}` === Model.app.id && m.key === key);
+  var exists = this.metadata.find(m => `${m._app}` === Model.authApp._id && m.key === key);
   if (exists) {
     exists.value = value;
   } else {
-    this.metadata.push({_app: Model.app, key: key, value: value});
+    this.metadata.push({_app: Model.authApp, key: key, value: value});
   }
 
-  return this.save().then(u => ({key: key, value: JSON.parse(value)}));
+  return this.save().then(p => ({key: key, value: JSON.parse(value)}));
 };
 
 schema.methods.findMetadata = function(key) {
   Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
+  Logging.log(`AppId: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
   Logging.log(this.metadata.map(m => ({app: `${m._app}`, key: m.key, value: m.value})),
     Logging.Constants.LogLevel.DEBUG);
-  var md = this.metadata.find(m => `${m._app}` === Model.app.id && m.key === key);
+  var md = this.metadata.find(m => `${m._app}` === `${Model.authApp._id}` && m.key === key);
   return md ? {key: md.key, value: JSON.parse(md.value)} : false;
 };
 
@@ -203,11 +204,11 @@ schema.methods.rmMetadata = function(key) {
   Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
   // Logging.log(this.metadata.map(m => ({app: `${m._app}`, key: m.key, value: m.value})),
   //   Logging.Constants.LogLevel.DEBUG);
-  // var md = this.metadata.find(m => `${m._app}` === Model.app.id && m.key === key);
+  // var md = this.metadata.find(m => `${m._app}` === Model.authApp._id && m.key === key);
   // Logging.log(md.id, Logging.Constants.LogLevel.DEBUG);
 
   return this
-    .update({$pull: {metadata: {_app: Model.app.id, key: key}}})
+    .update({$pull: {metadata: {_app: Model.authApp._id, key: key}}})
     .then(Logging.Promise.log('removeMetadata'))
     .then(res => res.nModified !== 0);
 };

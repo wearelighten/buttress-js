@@ -5,16 +5,17 @@
  *
  * @file index.js
  * @description Model management
- * @module Model
+ * @module Routes
  * @author Chris Bates-Keegan
  *
  */
 
-var fs = require('fs');
-var path = require('path');
-var Route = require('./route');
-var Logging = require('../logging');
-var Model = require('../model');
+const fs = require('fs');
+const path = require('path');
+const Route = require('./route');
+const Logging = require('../logging');
+const Helpers = require('../helpers');
+const Model = require('../model');
 
 /**
  * @param {Object} app - express app object
@@ -34,7 +35,7 @@ function _initRoute(app, Route) {
   });
 }
 
-var _apps = [];
+var _tokens = [];
 
 /**
  * @param {Object} req - Request object
@@ -42,44 +43,67 @@ var _apps = [];
  * @param {Function} next - next handler function
  * @private
  */
-function _authenticateApp(req, res, next) {
+function _authenticateToken(req, res, next) {
   Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.VERBOSE);
   if (!req.query.token) {
     Logging.log('EAUTH: Missing Token', Logging.Constants.LogLevel.ERR);
     res.sendStatus(400);
     return;
   }
-  if (_apps.length > 0) {
-    Model.app = req.appDetails = _lookupToken(_apps, req.query.token);
-    if (!Model.app) {
+  _getToken(req.query.token)
+  .then(token => {
+    if (token === null) {
       Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
-      res.sendStatus(403);
+      res.sendStatus(401);
       return;
     }
-    next();
-  } else {
-    Model.App.findAllNative().then(apps => {
-      _apps = apps;
-      Model.app = req.appDetails = _lookupToken(_apps, req.query.token);
-      if (!Model.app) {
-        Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
-        res.sendStatus(403);
-        return;
-      }
-      next();
-    }, () => res.sendStatus(500));
-  }
+    Model.token = req.token = token.details;
+    Model.authApp = req.authApp = token._app;
+    Model.authUser = req.authUser = token._user;
+
+    token.uses.push(new Date());
+    token.save()
+    .then(Helpers.Promise.inject())
+    .then(next);
+  })
+  .catch(Logging.Promise.logError());
 }
 
 /**
- * @param {array} apps - apps to check
- * @param {string} token - token string to look for
- * @return {*} - false if not found, App (native) if found
+ * @param  {String} tokenValue - token
+ * @return {Promise} - resolves with the matching token if any
+ */
+function _getToken(tokenValue) {
+  let token = null;
+
+  if (_tokens.length > 0) {
+    token = _lookupToken(_tokens, tokenValue);
+    // Logging.log("Using Cached Tokens", Logging.Constants.LogLevel.DEBUG);
+    if (token) {
+      return Promise.resolve(token);
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    Model.Token.findAllNative()
+    .then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
+    .then(tokens => {
+      _tokens = tokens;
+      token = _lookupToken(_tokens, tokenValue);
+      return resolve(token);
+    });
+  });
+}
+
+/**
+ * @param {array} tokens - cached tokens
+ * @param {string} value - token string to look for
+ * @return {*} - false if not found, Token (native) if found
  * @private
  */
-function _lookupToken(apps, token) {
-  var app = apps.filter(a => a._token.value === token);
-  return app.length === 0 ? false : app[0];
+function _lookupToken(tokens, value) {
+  let token = tokens.filter(t => t.value === value);
+  return token.length === 0 ? null : token[0];
 }
 
 /**
@@ -90,14 +114,22 @@ function _lookupToken(apps, token) {
  * @private
  */
 function _configCrossDomain(req, res, next) {
-  if (!req.appDetails.type !== Model.Constants.App.Type.BROWSER) {
+  if (req.token.type !== Model.Constants.Token.Type.USER || !req.authUser) {
     next();
     return;
   }
-  // Logging.log(req.header('Origin'));
 
-  res.header('Access-Control-Allow-Origin', `http://${req.appDetails.domain}`);
-  res.header('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  Logging.log(req.header('Origin'), Logging.Constants.LogLevel.DEBUG);
+  Logging.log(req.token.domains, Logging.Constants.LogLevel.DEBUG);
+
+  const domainIdx = req.token.domains.indexOf(req.header('Origin'));
+  if (domainIdx === -1) {
+    next();
+    return;
+  }
+
+  res.header('Access-Control-Allow-Origin', `${req.token.domains[domainIdx]}`);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
 
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -116,7 +148,7 @@ exports.init = app => {
   app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
   app.get('/index.html', (req, res, next) => res.send('<html><head><title>Rhizome</title></head></html>'));
 
-  app.use(_authenticateApp);
+  app.use(_authenticateToken);
   app.use(_configCrossDomain);
 
   var providers = _getRouteProviders();

@@ -33,7 +33,8 @@ class GetUserList extends Route {
   }
 
   _exec() {
-    return Model.User.getAll();
+    return Model.User.getAll()
+    .then(users => users.map(u => u.details));
   }
 }
 routes.push(GetUserList);
@@ -88,20 +89,33 @@ class FindUser extends Route {
     this.permissions = Route.Constants.Permissions.READ;
 
     this._user = false;
+    this._userAuthToken = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
       Model.User.getByAppId(this.req.params.app, this.req.params.id).then(user => {
-        Logging.log(`User: ${user}`, Logging.Constants.LogLevel.DEBUG);
+        Logging.logDebug(`FindUser: ${user !== null}`);
         this._user = user;
-        resolve(true);
+        if (this._user) {
+          Model.Token.findUserAuthToken(this._user.id, this.req.authApp._id)
+          .then(token => {
+            Logging.logDebug(`FindUserToken: ${token !== null}`);
+            this._userAuthToken = token ? token.value : false;
+            resolve(true);
+          });
+        } else {
+          resolve(true);
+        }
       });
     });
   }
 
   _exec() {
-    return Promise.resolve(this._user ? {id: this._user.id} : false);
+    return Promise.resolve(this._user ? {
+      id: this._user.id,
+      authToken: this._userAuthToken
+    } : false);
   }
 }
 routes.push(FindUser);
@@ -160,34 +174,79 @@ class AddUser extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
-      var app = this.req.body.app ? this.req.body.app : this.req.params.app;
+      Logging.log(this.req.body.user, Logging.Constants.LogLevel.DEBUG);
+      var app = this.req.body.user.app ? this.req.body.user.app : this.req.params.app;
 
       if (!app ||
-          !this.req.body.id ||
-          !this.req.body.token ||
-          !this.req.body.profileUrl ||
-          !this.req.body.profileImgUrl) {
+          !this.req.body.user.id ||
+          !this.req.body.user.token ||
+          !this.req.body.user.profileUrl ||
+          !this.req.body.user.profileImgUrl) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
 
-      Model.Person.findByDetails(this.req.body)
+      if (this.req.body.auth) {
+        this.log(this.req.body.auth);
+        this.log('User Auth Token Reqested');
+        if (!this.req.body.auth.authLevel ||
+            !this.req.body.auth.permissions ||
+            !this.req.body.auth.domains) {
+          this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        this.req.body.auth.type = Model.Constants.Token.Type.USER;
+        this.req.body.auth.app = this.req.authApp;
+      }
+
+      Model.Person.findByDetails(this.req.body.user)
         .then(person => {
-          this._person = person;
-          resolve(true);
-        });
+          Logging.logDebug(`Found Person: ${person !== null}`);
+          if (person === null) {
+            Model.Person.add(this.req.body.user, this.req.authApp)
+            .then(p => {
+              Logging.log(p, Logging.Constants.LogLevel.SILLY);
+              this._person = p;
+              resolve(true);
+            });
+          } else {
+            this._person = person.details;
+            resolve(true);
+          }
+        }, reject);
     });
   }
 
   _exec() {
-    return Model.User.add(this.req.body)
-      .then(Logging.Promise.logProp('Added User', 'username', Route.LogLevel.VERBOSE))
-      .then(Helpers.Promise.prop('details'));
+    return Model.User
+    .add(this.req.body.user, this._person, this.req.body.auth)
+    .then(res => Object.assign(res[0], {authToken: res[1] ? res[1].value : false}));
   }
 }
 routes.push(AddUser);
+
+/**
+ * @class DeleteAllUsers
+ */
+class DeleteAllUsers extends Route {
+  constructor() {
+    super('user', 'DELETE ALL USERS');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.SUPER;
+    this.permissions = Route.Constants.Permissions.DELETE;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.User.rmAll().then(() => true);
+  }
+}
+routes.push(DeleteAllUsers);
 
 /**
  * @class DeleteUser

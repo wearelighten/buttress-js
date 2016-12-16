@@ -102,9 +102,16 @@ schema.statics.add = body => {
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
 schema.statics.rm = org => {
-  Logging.log('DELETING', Logging.Constants.LogLevel.VERBOSE);
-  Logging.log(org.details, Logging.Constants.LogLevel.VERBOSE);
+  // Logging.log('DELETING', Logging.Constants.LogLevel.VERBOSE);
+  // Logging.log(org.details, Logging.Constants.LogLevel.VERBOSE);
   return ModelDef.remove({_id: org._id});
+};
+
+/**
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.statics.rmAll = () => {
+  return ModelDef.remove({});
 };
 
 /**
@@ -128,6 +135,24 @@ schema.statics.findAll = () => {
     // .then(Logging.Promise.logArrayProp('tokens', '_token'))
     // .then(res => resolve(res.map(d => d.details)), reject);
   });
+};
+
+/**
+ * Methods
+ */
+
+/**
+ * @param {Object} body - body passed through from a POST request
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.methods.update = function(body) {
+  Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
+
+  this.name = body.name ? body.name : this.name;
+  this.type = body.type ? body.type : this.type;
+  this.website = body.website ? body.website : this.website;
+
+  return this.save();
 };
 
 ModelDef = mongoose.model('Organisation', schema);

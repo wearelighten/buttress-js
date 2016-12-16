@@ -55,7 +55,6 @@ var ModelDef = null;
  */
 schema.virtual('details').get(function() {
   return {
-    id: this._id,
     app: this.app,
     appId: this.appId,
     username: this.username,

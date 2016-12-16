@@ -39,14 +39,14 @@ schema.add({
     key: String,
     value: String
   }],
-  _apps: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Application'
-  }],
   _person: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Person'
   },
+  _tokens: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Token'
+  }],
   auth: [Model.Schema.Appauth]
 });
 
@@ -70,7 +70,7 @@ schema.virtual('authenticatedMetadata').get(function() {
     return [];
   }
   return this.metadata
-    .filter(m => `${m._app}` === Model.app.id)
+    .filter(m => `${m._app}` === Model.authApp.id)
     .map(m => ({key: m.key, value: JSON.parse(m.value)}));
 });
 
@@ -87,12 +87,18 @@ schema.virtual('tryPerson').get(function() {
 
 /**
  * @param {Object} body - body passed through from a POST request
+ * @param {Object} personDetails - details of the person to which the user is attached
+ * @param {Object} auth - OPTIONAL authentication details for a user token
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-schema.statics.add = body => {
+schema.statics.add = (body, personDetails, auth) => {
   var user = new ModelDef({
-    _apps: [Model.app]
+    _apps: [Model.authApp],
+    _person: personDetails.id
   });
+
+  // Logging.logDebug(body);
+  // Logging.logDebug(auth);
 
   user.auth.push(new Model.Appauth({
     app: body.app,
@@ -108,12 +114,28 @@ schema.statics.add = body => {
     tokenSecret: body.tokenSecret
   }));
 
-  // Logging.log(body);
-  Logging.log(user.auth[0].username, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(user.auth[0].app, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(user.auth[0].appId, Logging.Constants.LogLevel.DEBUG);
+  Logging.logDebug(personDetails.name);
+  Logging.logDebug(user.auth[0].app);
+  Logging.logDebug(user.auth[0].appId);
 
-  return user.save();
+  let saveUser = user.save().then(u => Object.assign(u.details, {person: personDetails}));
+  let getToken = auth ? Model.Token.add(Object.assign(auth, {user: user})) : Promise.resolve(null);
+
+  return Promise.all([saveUser, getToken]);
+};
+
+/**
+ * @return {Promise} - resolves once all have been deleted
+ */
+schema.statics.rmAll = () => {
+  return ModelDef.remove({});
+};
+
+/**
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.statics.rm = function() {
+  return ModelDef.remove({_id: this._id});
 };
 
 /**
@@ -121,13 +143,13 @@ schema.statics.add = body => {
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
-  Logging.log(`getAll: ${Model.app._id}`, Logging.Constants.LogLevel.INFO);
+  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
 
-  if (Model.app.authLevel === Model.Constants.App.AuthLevel.SUPER) {
+  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
     return ModelDef.find({});
   }
 
-  return ModelDef.find({_app: Model.app._id});
+  return ModelDef.find({_app: Model.authApp._id});
 };
 
 /**
@@ -157,7 +179,7 @@ schema.methods.attachToPerson = function(person, details) {
 
   return new Promise((resolve, reject) => {
     Model.Person
-      .add(details, Model.app._owner)
+      .add(details, Model.authApp._owner)
       .then(person => {
         Logging.log(person, Logging.Constants.LogLevel.DEBUG);
         this._person = person.id;
@@ -196,15 +218,15 @@ schema.methods.updateToken = function(app, body) {
  * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
  */
 schema.methods.addOrUpdateMetadata = function(key, value) {
-  Logging.log(`${Model.app.id}`, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(`${Model.authApp.id}`, Logging.Constants.LogLevel.DEBUG);
   Logging.log(key, Logging.Constants.LogLevel.DEBUG);
   Logging.log(value, Logging.Constants.LogLevel.DEBUG);
 
-  var exists = this.metadata.find(m => `${m._app}` === Model.app.id && m.key === key);
+  var exists = this.metadata.find(m => `${m._app}` === Model.authApp.id && m.key === key);
   if (exists) {
     exists.value = value;
   } else {
-    this.metadata.push({_app: Model.app, key: key, value: value});
+    this.metadata.push({_app: Model.authApp, key: key, value: value});
   }
 
   return this.save().then(u => ({key: key, value: JSON.parse(value)}));
@@ -214,7 +236,7 @@ schema.methods.findMetadata = function(key) {
   Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
   Logging.log(this.metadata.map(m => ({app: `${m._app}`, key: m.key, value: m.value})),
               Logging.Constants.LogLevel.DEBUG);
-  var md = this.metadata.find(m => `${m._app}` === Model.app.id && m.key === key);
+  var md = this.metadata.find(m => `${m._app}` === `${Model.authApp._id}` && m.key === key);
   return md ? {key: md.key, value: JSON.parse(md.value)} : false;
 };
 
