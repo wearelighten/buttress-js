@@ -39,6 +39,12 @@ schema.add({
     key: String,
     value: String
   }],
+  _apps: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Application'
+    }
+  ],
   _person: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Person'
@@ -124,6 +130,24 @@ schema.statics.add = (body, personDetails, auth) => {
   return Promise.all([saveUser, getToken]);
 };
 
+schema.methods.updateApps = function(app) {
+  Logging.log(`updateApps: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+  if (!this._apps) {
+    this._apps = [];
+  }
+  let matches = this._apps.filter(function(a) {
+    return a._id === app._id;
+  });
+  if (matches.length > 0) {
+    Logging.log(`present: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+    return Promise.resolve();
+  }
+
+  Logging.log(`not present: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+  this._apps.push(app._id);
+  return this.save();
+};
+
 /**
  * @return {Promise} - resolves once all have been deleted
  */
@@ -149,7 +173,7 @@ schema.statics.getAll = () => {
     return ModelDef.find({});
   }
 
-  return ModelDef.find({_app: Model.authApp._id});
+  return ModelDef.find({_apps: Model.authApp._id}).populate('_person');
 };
 
 /**

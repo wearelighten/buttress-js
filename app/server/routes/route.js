@@ -11,9 +11,11 @@
  */
 
 // var Config = require('../config');
-var Logging = require('../logging');
+const Logging = require('../logging');
+const Model = require('../model');
+const Helpers = require('../helpers');
 // var OTP = require('../stotp');
-var _ = require('underscore');
+const _ = require('underscore');
 
 /**
  */
@@ -25,6 +27,7 @@ var _ = require('underscore');
 // });
 
 var _app = null;
+var _io = null;
 
 /**
  * @type {{Auth: {
@@ -77,6 +80,10 @@ class Route {
     this.verb = Constants.Verbs.GET;
     this.auth = Constants.Auth.SUPER;
     this.permissions = Constants.Permissions.READ;
+    this.activityBroadcast = false;
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityTitle = 'Private Activity';
+    this.activityDescription = '';
 
     this.path = path;
     this.name = name;
@@ -100,14 +107,38 @@ class Route {
 
       this.log(`STARTING: ${this.name}`, Logging.Constants.LogLevel.INFO);
       this._authenticate()
-        .then(Logging.log('authenticated', Logging.Constants.LogLevel.SILLY))
+        .then(Logging.Promise.log('authenticated', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._validate, this), reject)
-        .then(Logging.log('validated', Logging.Constants.LogLevel.SILLY))
+        .then(Logging.Promise.log('validated', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._exec, this), reject)
-        .then(Logging.log('exec\'ed', Logging.Constants.LogLevel.SILLY))
+        .then(Logging.Promise.log('exec\'ed', Logging.Constants.LogLevel.SILLY))
+        .then(_.bind(this._logActivity, this))
         .then(resolve, reject)
         .catch(Logging.Promise.logError());
     });
+  }
+
+  _logActivity(res) {
+    Logging.logDebug(`logging activity: [${this.verb}] ${this.path} (${this.auth}:${this.permissions})`);
+    let broadcast = activity => {
+      if (this.activityBroadcast === false) {
+        return;
+      }
+
+      _io.sockets.emit('db-activity', {
+        path: this.path,
+        permissions: this.permissions,
+        title: this.activityTitle,
+        description: this.activityDescription,
+        timestamp: activity.timestamp,
+        activityId: activity._id,
+        user: activity._user ? activity._user._id : null
+      });
+    };
+
+    return Model.Activity.add(this, res)
+      .then(broadcast)
+      .then(Helpers.Promise.inject(res));
   }
 
   /**
@@ -158,6 +189,7 @@ class Route {
       if (authorised === true) {
         resolve(this.req.token);
       } else {
+        this.log(token.permissions, Logging.Constants.LogLevel.ERR);
         this.log(`EAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
         reject({statusCode: 401});
       }
@@ -179,7 +211,7 @@ class Route {
       return true;
     }
 
-    var wildcard = /(.+)(\/\*)$/;
+    var wildcard = /(.+)(\/\*)/;
     var matches = routeSpec.match(wildcard);
     if (matches) {
       Logging.log(matches, Logging.Constants.LogLevel.DEBUG);
@@ -219,6 +251,12 @@ class Route {
   }
   static get app() {
     return _app;
+  }
+  static set io(io) {
+    _io = io;
+  }
+  static get io() {
+    return _io;
   }
   static get Constants() {
     return Constants;

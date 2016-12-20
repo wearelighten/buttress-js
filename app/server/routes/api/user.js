@@ -26,6 +26,11 @@ class GetUserList extends Route {
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.LIST;
+
+    this.activityTitle = '';
+    this.activityDescription = 'Grabbed a list of users';
+    this.activityVisibility = Model.Constants.Activity.Visibility.PUBLIC;
+    this.activityBroadcast = true;
   }
 
   _validate() {
@@ -102,7 +107,8 @@ class FindUser extends Route {
           .then(token => {
             Logging.logDebug(`FindUserToken: ${token !== null}`);
             this._userAuthToken = token ? token.value : false;
-            resolve(true);
+            this._user.updateApps(this.req.authApp)
+              .then(resolve, reject);
           });
         } else {
           resolve(true);
@@ -121,9 +127,55 @@ class FindUser extends Route {
 routes.push(FindUser);
 
 /**
- * @class UpdateUserToken
+ * @class CreateUserAuthToken
  */
-class UpdateUserToken extends Route {
+class CreateUserAuthToken extends Route {
+  constructor() {
+    super('user/:id/token', 'CREATE USER AUTH TOKEN');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.WRITE;
+
+    this._user = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      if (!this.req.body.auth ||
+        !this.req.body.auth.authLevel ||
+        !this.req.body.auth.permissions ||
+        !this.req.body.auth.domains) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+      this.req.body.auth.type = Model.Constants.Token.Type.USER;
+      this.req.body.auth.app = this.req.authApp;
+
+      Model.User.findById(this.req.params.id).select('-metadata').then(user => {
+        Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
+        this._user = user;
+        if (this._user) {
+          resolve(true);
+        } else {
+          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+          resolve({statusCode: 400});
+        }
+      });
+    });
+  }
+
+  _exec() {
+    return Model.Token.add(Object.assign(this.req.body.auth, {user: this._user}))
+      .then(t => Object.assign(t.details, {value: t.value}));
+  }
+}
+routes.push(CreateUserAuthToken);
+
+/**
+ * @class UpdateUserAppToken
+ */
+class UpdateUserAppToken extends Route {
   constructor() {
     super('user/:id/:app(twitter|facebook|google)/token', 'UPDATE USER APP TOKEN');
     this.verb = Route.Constants.Verbs.PUT;
@@ -159,7 +211,7 @@ class UpdateUserToken extends Route {
     return this._user.updateToken(this.req.params.app, this.req.body);
   }
 }
-routes.push(UpdateUserToken);
+routes.push(UpdateUserAppToken);
 
 /**
  * @class AddUser

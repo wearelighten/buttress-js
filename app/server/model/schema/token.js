@@ -198,7 +198,7 @@ schema.methods.addOrUpdatePermission = function(route, permission) {
  * @return {Promise} - resolves to an array of Tokens (native Mongoose objects)
  */
 schema.statics.findAllNative = () => {
-  return ModelDef.find({}).populate('_app').populate('_user');
+  return ModelDef.find({allocated: true}).populate('_app').populate('_user');
 };
 
 /**
@@ -207,7 +207,7 @@ schema.statics.findAllNative = () => {
  * @return {Promise} - resolves to an array of Tokens (native Mongoose objects)
  */
 schema.statics.findUserAuthToken = (userId, appId) => {
-  return ModelDef.findOne({_app: appId, _user: userId});
+  return ModelDef.findOne({allocated: true, _app: appId, _user: userId});
 };
 
 /**

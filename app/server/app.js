@@ -11,6 +11,10 @@
  */
 
 const express = require('express');
+const app = module.exports = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+
 const methodOverride = require('method-override');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
@@ -18,11 +22,6 @@ const mongoose = require('mongoose');
 const Bootstrap = require('./bootstrap');
 const Config = require('./config');
 const Logging = require('./logging');
-
-/**
- * Express
- */
-var app = module.exports = express();
 
 /**
  * Configuration
@@ -81,11 +80,11 @@ configureApp(app.get('env'));
 app.db = mongoose.connect(app.get('db-uri'));
 app.db.connection.on('connected', () => {
   Bootstrap
-    .app(app)
+    .app(app, io)
     .then(() => {
       Logging.log(`${Config.app.title} listening on port ` +
         `${app.get('port')} in ${app.settings.env} mode.`, Logging.Constants.LogLevel.INFO);
-      app.server = app.listen(app.set('port'));
+      app.server = server.listen(app.set('port'));
     })
     .catch(Logging.Promise.logError());
 });

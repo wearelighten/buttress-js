@@ -50,6 +50,10 @@ schema.add({
   _owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group'
+  },
+  _token: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Token'
   }
 });
 
@@ -65,6 +69,7 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     type: this.type,
+    token: this.tokenValue,
     owner: this.ownerDetails,
     publicUid: this.getPublicUID(),
     metadata: this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)}))
@@ -258,7 +263,7 @@ schema.statics.rm = app => {
  */
 schema.statics.findAll = () => {
   return new Promise((resolve, reject) => {
-    ModelDef.find({}).populate('_owner')
+    ModelDef.find({}).populate('_owner').populate('_token')
     .then(res => resolve(res.map(d => d.details)), reject);
   });
 };

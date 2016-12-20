@@ -63,6 +63,7 @@ class GetApp extends Route {
           reject({statusCode: 400});
           return;
         }
+        // this.log(app._token, Route.LogLevel.DEBUG);
         this._app = app;
         resolve(true);
       });
@@ -90,7 +91,7 @@ class AddApp extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      if (!this.req.body.name || !this.req.body.type || !this.req.body.permissions || !this.req.body.authLevel) {
+      if (!this.req.body.name || !this.req.body.type || !this.req.body.authLevel) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
@@ -100,6 +101,34 @@ class AddApp extends Route {
         reject({statusCode: 400});
         return;
       }
+
+      if (!this.req.body.permissions || this.req.body.permissions.length === 0) {
+        switch (Number(this.req.body.authLevel)) {
+          default: {
+            this.req.body.permissions = JSON.stringify([]);
+            Logging.logDebug('Creating default permissions');
+          } break;
+          case Model.Constants.Token.AuthLevel.SUPER: {
+            let permissions = [
+              {route: '*', permission: '*'}
+            ];
+            this.req.body.permissions = JSON.stringify(permissions);
+            Logging.logDebug('Creating default SUPER permissions');
+          } break;
+          case Model.Constants.Token.AuthLevel.ADMIN: {
+            let permissions = [
+              {route: 'org', permission: '*'},
+              {route: 'group', permission: '*'},
+              {route: 'user', permission: '*'},
+              {route: 'person', permission: '*'},
+              {route: 'campaign', permission: '*'}
+            ];
+            this.req.body.permissions = JSON.stringify(permissions);
+            Logging.logDebug('Creating default ADMIN permissions');
+          } break;
+        }
+      }
+
       try {
         this.req.body.permissions = JSON.parse(this.req.body.permissions);
       } catch (e) {
@@ -109,7 +138,7 @@ class AddApp extends Route {
       }
       if (this.req.body.ownerGroupId) {
         Model.Group.findById(this.req.body.ownerGroupId)
-          .then(Logging.Promise.log('Group', Route.LogLevel.VERBOSE))
+          .then(Logging.Promise.logProp('Group', 'details', Route.LogLevel.SILLY))
           .then(group => {
             if (!group) {
               Logging.log('Error: Invalid Group ID', Route.LogLevel.WARN);
