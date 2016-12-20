@@ -17,9 +17,9 @@ var Model = require('./model');
 var Routes = require('./routes');
 var Logging = require('./logging');
 
-var _installApp = app => {
+var _installApp = (app, io) => {
   Model.init(app);
-  Routes.init(app);
+  Routes.init(app, io);
 
   return Model.Organisation
     .find({})
@@ -58,7 +58,7 @@ var _installApp = app => {
       return Model.App.add({
         name: 'Rhizome ADMIN',
         type: Model.Constants.App.Type.SERVER,
-        authLevel: Model.Constants.App.AuthLevel.SUPER,
+        authLevel: Model.Constants.Token.AuthLevel.SUPER,
         permissions: [{route: '*', permission: '*'}],
         domain: '',
         ownerGroupId: group.id

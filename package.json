@@ -35,6 +35,7 @@
     "proxyquire": "~1.7.x",
     "pug": "~2.0.0-beta6",
     "restler": "~3.4.x",
+    "socket.io": "^1.7.2",
     "sugar": "~1.4.x",
     "underscore": "^1.8.x",
     "when": "~3.7.x",

@@ -42,11 +42,15 @@ schema.add({
     type: String,
     enum: type
   },
+  website: String,
   _organisation: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organisation'
   },
-  website: String
+  _app: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Application'
+  }
 });
 
 var ModelDef = null;
@@ -97,7 +101,8 @@ schema.statics.add = body => {
       avatar: body.avatarUrl,
       banner: body.bannerUrl
     },
-    _organisation: body.orgId
+    _organisation: body.orgId,
+    _app: Model.authApp._id
   });
 
   return app.save();
@@ -126,13 +131,17 @@ schema.statics.isDuplicate = name => {
 /**
  * @return {Promise} - resolves to an array of Organisations (Organisation.details)
  */
+/**
+ * @return {Promise} - resolves to an array of Organisations (Organisation.details)
+ */
 schema.statics.findAll = () => {
-  return new Promise((resolve, reject) => {
-    ModelDef.find({})
-      .then(res => resolve(res.map(d => d.details)), reject);
-    // .then(Logging.Promise.logArrayProp('tokens', '_token'))
-    // .then(res => resolve(res.map(d => d.details)), reject);
-  });
+  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+
+  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    return ModelDef.find({});
+  }
+
+  return ModelDef.find({_app: Model.authApp._id});
 };
 
 ModelDef = mongoose.model('Group', schema);

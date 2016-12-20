@@ -47,7 +47,11 @@ schema.add({
     avatar: String,
     banner: String
   },
-  website: String
+  website: String,
+  _app: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Application'
+  }
 });
 
 var ModelDef = null;
@@ -91,7 +95,8 @@ schema.statics.add = body => {
       avatar: body.avatarUrl,
       banner: body.bannerUrl
     },
-    website: body.website
+    website: body.website,
+    _app: Model.authApp._id
   });
 
   return org.save();
@@ -129,12 +134,27 @@ schema.statics.isDuplicate = name => {
  * @return {Promise} - resolves to an array of Organisations (Organisation.details)
  */
 schema.statics.findAll = () => {
-  return new Promise((resolve, reject) => {
-    ModelDef.find({})
-      .then(res => resolve(res.map(d => d.details)), reject);
-    // .then(Logging.Promise.logArrayProp('tokens', '_token'))
-    // .then(res => resolve(res.map(d => d.details)), reject);
-  });
+  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+
+  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    return ModelDef.find({});
+  }
+
+  return ModelDef.find({_app: Model.authApp._id});
+};
+
+/**
+ * @param {ObjectId} appId - id of the App that owns the user
+ * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+ */
+schema.statics.getAll = () => {
+  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+
+  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    return ModelDef.find({});
+  }
+
+  return ModelDef.find({_app: Model.authApp._id});
 };
 
 /**

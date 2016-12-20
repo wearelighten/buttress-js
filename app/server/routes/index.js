@@ -19,11 +19,11 @@ const Model = require('../model');
 
 /**
  * @param {Object} app - express app object
- * @param {Object} Route - route object
+ * @param {Function} Route - route object
  * @private
  */
 function _initRoute(app, Route) {
-  var route = new Route();
+  let route = new Route();
   app[route.verb](`/api/v1/${route.path}`, (req, res) => {
     route
       .exec(req, res)
@@ -141,9 +141,13 @@ function _configCrossDomain(req, res, next) {
 /**
  *
  * @param {Object} app - express app object
+ * @param {Object} io - socket io object
  */
-exports.init = app => {
+exports.init = (app, io) => {
   Route.app = app;
+  Route.io = io;
+
+  io.origins('*:*');
 
   app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
   app.get('/index.html', (req, res, next) => res.send('<html><head><title>Rhizome</title></head></html>'));
@@ -151,11 +155,11 @@ exports.init = app => {
   app.use(_authenticateToken);
   app.use(_configCrossDomain);
 
-  var providers = _getRouteProviders();
-  for (var x = 0; x < providers.length; x++) {
-    var routes = providers[x];
-    for (var y = 0; y < routes.length; y++) {
-      var route = routes[y];
+  let providers = _getRouteProviders();
+  for (let x = 0; x < providers.length; x++) {
+    let routes = providers[x];
+    for (let y = 0; y < routes.length; y++) {
+      let route = routes[y];
       _initRoute(app, route);
     }
   }
@@ -175,6 +179,5 @@ function _getRouteProviders() {
       files.push(require(`./api/${path.basename(file, '.js')}`));
     }
   }
-
   return files;
 }

@@ -14,6 +14,7 @@ module.exports.Promise = {
   prop: prop => (val => val[prop]),
   func: func => (val => val[func]()),
   nop: () => (() => null),
-  inject: value => (() => value)
+  inject: value => (() => value),
+  arrayProp: prop => (arr => arr.map(a => a[prop]))
 };
 

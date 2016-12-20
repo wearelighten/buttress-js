@@ -13,7 +13,6 @@
   "local": {
     "environment": {
       "RHIZOME_SERVER_ID": "",
-      "RHIZOME_OTP_SALT": "",
       "RHIZOME_MONGO_URL_DEV": "",
       "RHIZOME_MONGO_URL_PROD": "",
       "RHIZOME_MONGO_URL_TEST": ""
