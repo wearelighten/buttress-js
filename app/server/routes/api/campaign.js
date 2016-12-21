@@ -121,7 +121,7 @@ class AddCampaign extends Route {
     return new Promise((resolve, reject) => {
       Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
 
-      if (!this.req.body.name || !this.req.body.description || !this.req.body.legals) {
+      if (!this.req.body.name || !this.req.body.type) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
@@ -135,7 +135,7 @@ class AddCampaign extends Route {
     return new Promise((resolve, reject) => {
       Model.Campaign.add(this.req.body)
         .then(Logging.Promise.logProp('Added Campaign', 'name', Route.LogLevel.VERBOSE))
-        .then(Helpers.Promise.prop('details', Route.LogLevel.DEBUG))
+        .then(Helpers.Promise.prop('details'))
         .then(resolve, reject);
     });
   }

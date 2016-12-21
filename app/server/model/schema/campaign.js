@@ -24,17 +24,33 @@ const EmailFactory = require('../../email/factory');
  * Constants
  */
 
-var constants = {
+const schema = new mongoose.Schema();
+let ModelDef = null;
+const constants = {
 };
+
+const types = ['email', 'phone', 'social', 'combined'];
+const Type = {
+  EMAIL: types[0],
+  PHONE: types[1],
+  SOCIAL: types[2],
+  COMBINED: types[3]
+};
+
+constants.Type = Type;
 
 /**
  * Schema
  */
-var schema = new mongoose.Schema();
+
 schema.add({
   name: {
     type: String,
     index: true
+  },
+  type: {
+    type: String,
+    enum: types
   },
   description: String,
   legals: String,
@@ -47,8 +63,6 @@ schema.add({
   metadata: [{key: String, value: String}]
 });
 
-var ModelDef = null;
-
 /*
   VIRTUALS
  */
@@ -56,6 +70,7 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
+    type: this.type,
     description: this.description,
     legals: this.legals,
     images: this.images.map(i => i.label),
@@ -81,6 +96,7 @@ schema.statics.add = body => {
   var campaign = new ModelDef({
     _app: Model.authApp.id,
     name: body.name,
+    type: body.type,
     description: body.description,
     legals: body.legals
   });

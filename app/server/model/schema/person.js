@@ -111,7 +111,7 @@ schema.statics.add = (body, owner) => {
   var name = humanname.parse(body.name);
 
   return new Promise((resolve, reject) => {
-    var app = new ModelDef({
+    var person = new ModelDef({
       title: name.salutation,
       forename: name.firstName,
       initials: name.initials,
@@ -129,7 +129,7 @@ schema.statics.add = (body, owner) => {
       _dataOwner: owner
     });
 
-    app.save().then(res => resolve(res.details), reject);
+    person.save().then(res => resolve(res.details), reject);
   });
 };
 

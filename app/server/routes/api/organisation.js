@@ -36,7 +36,7 @@ class GetOrgList extends Route {
 
   _exec() {
     return Model.Organisation.findAll()
-      .then(Helpers.Promise.prop('details'));
+      .then(Helpers.Promise.arrayProp('details'));
   }
 }
 routes.push(GetOrgList);

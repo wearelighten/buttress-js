@@ -88,7 +88,7 @@ schema.methods.findGroups = () => {
  */
 schema.statics.add = body => {
   Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
-  var org = new ModelDef({
+  let org = new ModelDef({
     name: body.name,
     type: body.type,
     images: {
@@ -96,7 +96,7 @@ schema.statics.add = body => {
       banner: body.bannerUrl
     },
     website: body.website,
-    _app: Model.authApp._id
+    _app: Model.authApp ? Model.authApp._id : null
   });
 
   return org.save();
