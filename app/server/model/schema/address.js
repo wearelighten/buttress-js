@@ -12,7 +12,7 @@
  */
 
 const mongoose = require('mongoose');
-const Logging = require('../../logging');
+// const Logging = require('../../logging');
 const addressit = require('addressit');
 
 let schema = new mongoose.Schema();
@@ -69,7 +69,7 @@ schema.statics.create = address => {
   let structured = addressit(address, {locale: 'en-GB'});
   let regions = structured.regions;
 
-  Logging.logDebug(structured);
+  // Logging.logDebug(structured);
   return new ModelDef({
     full: address,
     unit: structured.unit,
@@ -89,7 +89,7 @@ schema.statics.create = address => {
  **********************************************************************************/
 
 schema.methods.update = function(address) {
-  let structured = addressit(address, {locale: locale});
+  let structured = addressit(address, {locale: 'en-GB'});
   let regions = structured.regions;
 
   this.full = address;
