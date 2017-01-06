@@ -68,9 +68,9 @@ schema.add({
     type: String,
     enum: status
   },
-  _calllist: {
+  _contactlist: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Calllist'
+    ref: 'Contactlist'
   },
   _company: {
     type: mongoose.Schema.Types.ObjectId,
