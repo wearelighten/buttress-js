@@ -10,7 +10,7 @@ upstream rhizome_test_upstream {
 
 server {
     listen 80;
-    server_name dev.rhizome.com;
+    server_name dev.rhizome.com dev.rhizome.wearelightenclients.co.uk;
     root index.html;
     location / {
         proxy_set_header Upgrade $http_upgrade;
