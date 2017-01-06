@@ -26,11 +26,6 @@ class GetUserList extends Route {
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.LIST;
-
-    this.activityTitle = '';
-    this.activityDescription = 'Grabbed a list of users';
-    this.activityVisibility = Model.Constants.Activity.Visibility.PUBLIC;
-    this.activityBroadcast = true;
   }
 
   _validate() {

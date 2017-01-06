@@ -23,6 +23,7 @@ var constants = {
 };
 
 Model.initModel('Person');
+Model.initModel('Appauth');
 // Model.Schema.Person;
 
 /**
