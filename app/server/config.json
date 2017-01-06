@@ -7,7 +7,8 @@
       "version": "v1.0.0-3",
       "protocol": "http",
       "subdomain": "rhizome",
-      "domain": "codersforcorbyn.com"
+      "domain": "codersforcorbyn.com",
+      "apiPrefix": "/api/v1/"
     }
   },
   "local": {
