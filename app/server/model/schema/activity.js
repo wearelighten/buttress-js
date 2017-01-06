@@ -46,6 +46,7 @@ schema.add({
     enum: visibility
   },
   path: String,
+  verb: String,
   authLevel: Number,
   permissions: String,
   params: Object,
@@ -108,14 +109,26 @@ schema.virtual('tokenValue').get(function() {
 schema.statics.add = (route, response) => {
   Logging.log(route.path, Logging.Constants.LogLevel.DEBUG);
 
+  let user = Model.authUser;
+  let userName = user && user._person ? `${user._person.forename} ${user._person.surname}` : 'System';
+
+  route.activityTitle = route.activityTitle.replace('%USER_NAME%', userName);
+  route.activityDescription = route.activityDescription.replace('%USER_NAME%', userName);
+
+  let q = Object.assign({}, route.req.query);
+  delete q.token;
+  delete q.urq;
+
   const app = new ModelDef({
     title: route.activityTitle,
     description: route.activityDescription,
     visibility: route.activityVisibility,
-    authLevel: route.authLevel,
+    path: route.path,
+    verb: route.verb,
     permissions: route.permissions,
+    authLevel: route.auth,
     params: route.req.params,
-    query: route.req.query,
+    query: q,
     body: route.req.body,
     response: response,
     _token: Model.token.id,
