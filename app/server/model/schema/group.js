@@ -102,7 +102,7 @@ schema.statics.add = body => {
       banner: body.bannerUrl
     },
     _organisation: body.orgId,
-    _app: Model.authApp._id
+    _app: Model.authApp ? Model.authApp._id : null
   });
 
   return app.save();
