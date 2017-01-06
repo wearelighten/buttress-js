@@ -10,7 +10,7 @@
  *
  */
 
-// var Config = require('../config');
+const Config = require('../config');
 const Logging = require('../logging');
 const Model = require('../model');
 const Helpers = require('../helpers');
@@ -125,14 +125,19 @@ class Route {
         return;
       }
 
+      let userId = activity._user ? activity._user._id : null;
+
       _io.sockets.emit('db-activity', {
-        path: this.path,
+        path: this.req.path.replace(Config.app.apiPrefix, ''),
+        pathSpec: this.path,
+        verb: this.verb,
         permissions: this.permissions,
         title: this.activityTitle,
         description: this.activityDescription,
         timestamp: activity.timestamp,
         activityId: activity._id,
-        user: activity._user ? activity._user._id : null
+        response: res,
+        user: userId
       });
     };
 
