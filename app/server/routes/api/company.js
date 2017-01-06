@@ -120,7 +120,7 @@ routes.push(AddCompany);
  */
 class AddCompanies extends Route {
   constructor() {
-    super('company/bulk', 'BULK ADD COMPANIES');
+    super('company/bulk/add', 'BULK ADD COMPANIES');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
@@ -128,7 +128,7 @@ class AddCompanies extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Logging.logDebug(JSON.stringify(this.req.body.companies));
+      // Logging.logDebug(JSON.stringify(this.req.body.companies));
       if (this.req.body.companies instanceof Array === false) {
         this.log(`ERROR: You need to supply an array of companies`, Route.LogLevel.ERR);
         reject({statusCode: 400, message: `Invalid data: send an array`});
@@ -234,12 +234,47 @@ class DeleteCompany extends Route {
   }
 
   _exec() {
-    return new Promise((resolve, reject) => {
-      Model.Company.rm(this._company).then(() => true).then(resolve, reject);
-    });
+    return Model.Company.rm(this._company).then(() => true);
   }
 }
 routes.push(DeleteCompany);
+
+/**
+ * @class BulkDeleteCompanies
+ */
+class BulkDeleteCompanies extends Route {
+  constructor() {
+    super('company/bulk/delete', 'BULK DELETE COMPANIES');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.DELETE;
+    this._ids = [];
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      this._ids = this.req.query.ids;
+      if (!this._ids) {
+        this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+      this._ids = this._ids.split(',');
+      if (!this._ids.length) {
+        this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Company.rmBulk(this._ids).then(() => true);
+  }
+}
+routes.push(BulkDeleteCompanies);
+
 /**
  * @class DeleteAllCompanies
  */
@@ -256,7 +291,6 @@ class DeleteAllCompanies extends Route {
   }
 
   _exec() {
-    this.log(Model.Company.rmAll);
     return Model.Company.rmAll().then(() => true);
   }
 }

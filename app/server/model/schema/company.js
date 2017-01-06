@@ -160,7 +160,7 @@ const __doValidation = body => {
   }
 
   return res;
-}
+};
 
 schema.statics.validate = body => {
   if (body instanceof Array === false) {
@@ -207,7 +207,7 @@ const __addCompany = body => {
     return company.save()
       .then(c => prev.concat([c]));
   };
-}
+};
 
 schema.statics.add = body => {
   if (body instanceof Array === false) {
@@ -238,10 +238,11 @@ schema.virtual('details').get(function() {
     sector: this.sector,
     subsector: this.subsector,
     locations: this.locations.map(l => l.details),
+    contacts: this.contacts.map(c => c.details),
     primaryLocation: this.locations[this.primaryLocation].details,
     primaryContact: this.contacts[this.primaryContact].details,
     website: this.website,
-    metadata: this.metadata ? this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})) : [],
+    metadata: this.metadata ? this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})) : []
   };
 });
 
@@ -297,9 +298,19 @@ schema.statics.isDuplicate = details => {
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
 schema.statics.rm = company => {
-  // Logging.log('DELETING', Logging.Constants.LogLevel.VERBOSE);
+  Logging.log(`DELETING: ${company._id}`, Logging.Constants.LogLevel.DEBUG);
   // Logging.log(org.details, Logging.Constants.LogLevel.VERBOSE);
   return ModelDef.remove({_id: company._id});
+};
+
+/**
+ * @param {Array} ids - Array of company ids to delete
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.statics.rmBulk = ids => {
+  Logging.log(`DELETING: ${ids}`, Logging.Constants.LogLevel.DEBUG);
+  // Logging.log(org.details, Logging.Constants.LogLevel.VERBOSE);
+  return ModelDef.remove({_id: {$in: ids}}).exec();
 };
 
 /*
@@ -363,9 +374,11 @@ schema.methods.rmMetadata = function(key) {
     .then(res => res.nModified !== 0);
 };
 
-/**
+/* ********************************************************************************
+ *
  * EXPORTS
- */
+ *
+ **********************************************************************************/
 ModelDef = mongoose.model('Company', schema);
 
 module.exports.constants = constants;
