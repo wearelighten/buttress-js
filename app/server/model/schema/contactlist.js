@@ -83,6 +83,7 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
+    campaignId: this._campaign,
     companyIds: this._companies,
     userId: this._user
   };
@@ -160,10 +161,10 @@ schema.statics.add = (campaign, body) => {
 
 schema.statics.getAll = () => {
   return ModelDef.find({});
-}
+};
 schema.statics.rmAll = () => {
   return ModelDef.remove({});
-}
+};
 
 /* ********************************************************************************
  *
@@ -180,7 +181,7 @@ schema.methods.addOrUpdateMetadata = function(key, value) {
   Logging.log(key, Logging.Constants.LogLevel.DEBUG);
   Logging.log(value, Logging.Constants.LogLevel.DEBUG);
 
-  var exists = this.metadata.find(m => m.key === key);
+  let exists = this.metadata.find(m => m.key === key);
   if (exists) {
     exists.value = value;
   } else {
@@ -194,7 +195,7 @@ schema.methods.findMetadata = function(key) {
   Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
   Logging.log(this.metadata.map(m => ({key: m.key, value: m.value})),
     Logging.Constants.LogLevel.DEBUG);
-  var md = this.metadata.find(m => m.key === key);
+  let md = this.metadata.find(m => m.key === key);
   return md ? {key: md.key, value: JSON.parse(md.value)} : false;
 };
 

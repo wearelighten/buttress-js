@@ -202,20 +202,18 @@ schema.statics.add = body => {
   }, Promise.resolve([]));
 };
 
-
 schema.methods.addContactList = function(body) {
   return Model.Contactlist.add(this, body)
     .then(cl => {
       Logging.logDebug(cl[0]._id);
       this._contactLists.push(cl[0]);
-      return this.save();
+      return this.save().then(() => cl[0]);
     });
 };
 
 schema.methods.removeContactList = function(contactList) {
   return Promise.resolve(true);
 };
-
 
 // /**
 //  * @param {Object} body - body passed through from a POST request
@@ -260,14 +258,14 @@ schema.methods.rm = function() {
  */
 schema.methods.addImage = function(label, image, encoding) {
   encoding = encoding || 'base64';
-  var buffer = Buffer.from(image, encoding);
+  let buffer = Buffer.from(image, encoding);
 
   return new Promise((resolve, reject) => {
-    var uid = Model.authApp.getPublicUID();
-    var dirName = `${Config.appDataPath}/public/${uid}/campaign-images`;
-    var pathName = `${dirName}/${label}.png`;
-    var prefix = `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}`;
-    var url = `${prefix}/${uid}/campaign-images/${label}.png`;
+    let uid = Model.authApp.getPublicUID();
+    let dirName = `${Config.appDataPath}/public/${uid}/campaign-images`;
+    let pathName = `${dirName}/${label}.png`;
+    let prefix = `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}`;
+    let url = `${prefix}/${uid}/campaign-images/${label}.png`;
     Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
 
     Model.authApp.mkDataDir('campaign-images', Model.Constants.App.PUBLIC_DIR)
@@ -311,12 +309,12 @@ schema.methods.addImage = function(label, image, encoding) {
 schema.methods.addTemplate = function(label, markup, format, encoding) {
   format = format || 'pug';
   encoding = encoding || 'base64';
-  var buffer = Buffer.from(markup, encoding);
+  let buffer = Buffer.from(markup, encoding);
 
   return new Promise((resolve, reject) => {
-    var uid = Model.authApp.getPublicUID();
-    var dirName = `${Config.appDataPath}/private/${uid}/campaign-templates`;
-    var pathName = `${dirName}/${label}.${format}`;
+    let uid = Model.authApp.getPublicUID();
+    let dirName = `${Config.appDataPath}/private/${uid}/campaign-templates`;
+    let pathName = `${dirName}/${label}.${format}`;
     Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
 
     Model.authApp.mkDataDir('campaign-templates')
@@ -355,11 +353,11 @@ schema.methods.addTemplate = function(label, markup, format, encoding) {
  * @return {Promise} - resolves to  {url}
  */
 schema.methods.createPreviewEmail = function(template, body) {
-  var uid = Model.authApp.getPublicUID();
-  var prefix = `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}`;
-  var url = `${prefix}/${uid}/campaign-previews/${template}-preview.html`;
+  let uid = Model.authApp.getPublicUID();
+  let prefix = `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}`;
+  let url = `${prefix}/${uid}/campaign-previews/${template}-preview.html`;
 
-  var params = {
+  let params = {
     template: template,
     subject: body.subject ? `${body.subject} - PREVIEW` : 'Welcome to Blocklist - PREVIEW',
     headerImgSrc: body.imgHeaderSrc ? body.imgHeaderSrc : '',
@@ -382,7 +380,7 @@ schema.methods.createPreviewEmail = function(template, body) {
         return EmailFactory.create(params);
       })
       .then(email => {
-        var previewPath = path.join(Config.appDataPath, `/public/${uid}/campaign-previews`);
+        let previewPath = path.join(Config.appDataPath, `/public/${uid}/campaign-previews`);
         fs.writeFile(path.join(previewPath, `${template}-preview.html`), email.html, err => {
           if (err) {
             reject(err);
@@ -405,7 +403,7 @@ schema.methods.addOrUpdateMetadata = function(key, value) {
   Logging.log(key, Logging.Constants.LogLevel.DEBUG);
   Logging.log(value, Logging.Constants.LogLevel.DEBUG);
 
-  var exists = this.metadata.find(m => m.key === key);
+  let exists = this.metadata.find(m => m.key === key);
   if (exists) {
     exists.value = value;
   } else {
@@ -419,7 +417,7 @@ schema.methods.findMetadata = function(key) {
   Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
   Logging.log(this.metadata.map(m => ({key: m.key, value: m.value})),
     Logging.Constants.LogLevel.DEBUG);
-  var md = this.metadata.find(m => m.key === key);
+  let md = this.metadata.find(m => m.key === key);
   return md ? {key: md.key, value: JSON.parse(md.value)} : false;
 };
 

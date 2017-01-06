@@ -10,10 +10,11 @@
  *
  */
 
-var Route = require('../route');
-var Model = require('../../model');
+const Route = require('../route');
+const Model = require('../../model');
+const Helpers = require('../../helpers');
 
-var routes = [];
+const routes = [];
 
 /**
  * @class GetContactListList
@@ -31,7 +32,8 @@ class GetContactListList extends Route {
   }
 
   _exec() {
-    return Model.Contactlist.getAll();
+    return Model.Contactlist.getAll()
+      .then(Helpers.Promise.arrayProp('details'));
   }
 }
 routes.push(GetContactListList);
@@ -68,7 +70,7 @@ class GetContactList extends Route {
           this._contactList = contactList;
           // this.log(this._contactList.details);
           resolve(true);
-      });
+        });
     });
   }
 
@@ -77,6 +79,99 @@ class GetContactList extends Route {
   }
 }
 routes.push(GetContactList);
+
+/**
+ * @class AddContactlist
+ */
+class AddContactlist extends Route {
+  constructor() {
+    super('contact-list', 'ADD CONTACT LIST');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this.activityTitle = '';
+    this.activityDescription = 'New call list was created by %USER_NAME%';
+    this.activityVisibility = Model.Constants.Activity.Visibility.PUBLIC;
+    this.activityBroadcast = true;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      let validation = Model.Contactlist.validate(this.req.body);
+      if (!validation.isValid) {
+        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
+        return;
+      }
+
+      Model.Campaign.findById(this.req.body.campaign).select('-metadata').then(campaign => {
+        if (!campaign) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        this._campaign = campaign;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._campaign.addContactList(this.req.body)
+      .then(cl => {
+        this.activityTitle = cl.name;
+        return cl;
+      })
+      .then(Helpers.Promise.prop('details'));
+  }
+}
+routes.push(AddContactlist);
+
+/**
+ * @class DeleteContactlist
+ */
+class DeleteContactlist extends Route {
+  constructor() {
+    super('campaign/:id/contact-list/:clid', 'DELETE CAMPAIGN CONTACT LIST');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.DELETE;
+    this._campaign = null;
+    this._contactList = null;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      if (!this.req.params.id || !this.req.params.clid) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      let tasks = [
+        Model.Campaign.findById(this.req.params.id).select('-metadata'),
+        Model.Contactlist.findById(this.req.params.clid).select('-metadata')
+      ];
+
+      Promise.all(tasks).then(results => {
+        if (!results[0] || !results[1]) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        this._campaign = results[0];
+        this._contactList = results[1];
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._campaign.removeContactList(this._contactList);
+  }
+}
+routes.push(DeleteContactlist);
 
 /**
  * @class DeleteAllContactLists
