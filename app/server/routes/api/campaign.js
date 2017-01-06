@@ -115,15 +115,20 @@ class AddCampaign extends Route {
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
+
+    this.activityTitle = '';
+    this.activityDescription = 'New campaign was created by %USER_NAME%';
+    this.activityVisibility = Model.Constants.Activity.Visibility.PUBLIC;
+    this.activityBroadcast = true;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
       Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
-
-      if (!this.req.body.name || !this.req.body.type) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-        reject({statusCode: 400});
+      let validation = Model.Campaign.validate(this.req.body);
+      if (!validation.isValid) {
+        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
         return;
       }
 
@@ -134,13 +139,101 @@ class AddCampaign extends Route {
   _exec() {
     return new Promise((resolve, reject) => {
       Model.Campaign.add(this.req.body)
-        .then(Logging.Promise.logProp('Added Campaign', 'name', Route.LogLevel.VERBOSE))
+        .then(c => {
+          this.activityTitle = c[0].name;
+          return c[0];
+        })
         .then(Helpers.Promise.prop('details'))
         .then(resolve, reject);
     });
   }
 }
 routes.push(AddCampaign);
+
+/**
+ * @class AddContactlist
+ */
+class AddContactlist extends Route {
+  constructor() {
+    super('campaign/:id/contact-list', 'ADD CAMPAIGN CONTACT LIST');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
+      let validation = Model.Contactlist.validate(this.req.body);
+      if (!validation.isValid) {
+        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
+        return;
+      }
+
+      Model.Campaign.findById(this.req.params.id).select('-metadata').then(campaign => {
+        if (!campaign) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        this._campaign = campaign;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._campaign.addContactList(this.req.body)
+      .then(Helpers.Promise.prop('details'));
+  }
+}
+routes.push(AddContactlist);
+
+/**
+ * @class DeleteContactlist
+ */
+class DeleteContactlist extends Route {
+  constructor() {
+    super('campaign/:id/contact-list/:clid', 'DELETE CAMPAIGN CONTACT LIST');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.DELETE;
+    this._campaign = null;
+    this._contactList = null;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      if (!this.req.params.id || !this.req.params.clid) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      let tasks = [
+        Model.Campaign.findById(this.req.params.id).select('-metadata'),
+        Model.Contactlist.findById(this.req.params.clid).select('-metadata')
+      ];
+
+      Promise.all(tasks).then(results => {
+        if (!results[0] || !results[1]) {
+          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        this._campaign = results[0];
+        this._contactList = results[1];
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._campaign.removeContactList(this._contactList);
+  }
+}
+routes.push(DeleteContactlist);
 
 /**
  * @class DeleteAllCampaigns
@@ -151,7 +244,6 @@ class DeleteAllCampaigns extends Route {
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.SUPER;
     this.permissions = Route.Constants.Permissions.DELETE;
-    this._person = false;
   }
 
   _validate() {
@@ -174,6 +266,11 @@ class DeleteCampaign extends Route {
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
     this._campaign = false;
+
+    this.activityTitle = '';
+    this.activityDescription = 'A campaign was deleted by %USER_NAME%';
+    this.activityVisibility = Model.Constants.Activity.Visibility.PUBLIC;
+    this.activityBroadcast = true;
   }
 
   _validate() {
@@ -190,6 +287,7 @@ class DeleteCampaign extends Route {
           return;
         }
         this._campaign = campaign;
+        this.activityTitle = campaign.name;
         resolve(true);
       });
     });

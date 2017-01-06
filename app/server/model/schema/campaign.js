@@ -20,12 +20,26 @@ const Config = require('../../config');
 const Helpers = require('../../helpers');
 const EmailFactory = require('../../email/factory');
 
-/**
- * Constants
- */
+/* ********************************************************************************
+ *
+ * LOCALS
+ *
+ **********************************************************************************/
 
-const schema = new mongoose.Schema();
+const schema = new mongoose.Schema({strict: false});
 let ModelDef = null;
+
+/* ********************************************************************************
+ *
+ * EMBEDDED DEPENDENCIES
+ *
+ **********************************************************************************/
+
+/* ********************************************************************************
+ *
+ * CONSTANTS
+ *
+ **********************************************************************************/
 const constants = {
 };
 
@@ -58,6 +72,19 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
   },
+  filters: [{name: String, value: String}],
+  _companies: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company'
+  }],
+  _people: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Person'
+  }],
+  _contactLists: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Contactlist'
+  }],
   images: [{label: String, pathname: String}],
   templates: [{label: String, markup: String}],
   metadata: [{key: String, value: String}]
@@ -73,41 +100,143 @@ schema.virtual('details').get(function() {
     type: this.type,
     description: this.description,
     legals: this.legals,
+    filters: this.filters.map(f => ({name: f.name, value: f.value})),
+    companies: this._companies,
+    people: this._people,
+    contactLists: this.contactLists,
     images: this.images.map(i => i.label),
     templates: this.templates.map(t => t.label),
     metadata: this._metadata
   };
 });
 
-schema.virtual('_metadata').get(function() {
-  return this.metadata
-    .map(m => ({key: m.key, value: JSON.parse(m.value)}));
+schema.virtual('contactLists').get(function() {
+  if (!this._contactLists) {
+    return [];
+  }
+
+  return this._contactLists.map(cl => cl && cl._id ? cl._id : cl);
 });
 
-/**
- * Schema Static Methods
- */
+schema.virtual('_metadata').get(function() {
+  return this.metadata ? this.metadata
+    .map(m => ({key: m.key, value: JSON.parse(m.value)})) : [];
+});
 
+/* ********************************************************************************
+ *
+ * SCHEMA STATIC METHODS
+ *
+ **********************************************************************************/
 /**
+ * @param {Object} body - body passed through from a POST request to be validated
+ * @return {Object} - returns an object with validation context
+ */
+const __doValidation = body => {
+  let res = {
+    isValid: true,
+    missing: [],
+    invalid: []
+  };
+
+  if (!body.name) {
+    res.isValid = false;
+    res.missing.push('name');
+  }
+  if (!body.type) {
+    res.isValid = false;
+    res.missing.push('type');
+  }
+  if (!body.filters) {
+    res.isValid = false;
+    res.missing.push('filters');
+  }
+  if (!body.companies && !body.people) {
+    res.isValid = false;
+    res.missing.push('data');
+  }
+
+  return res;
+};
+
+schema.statics.validate = body => {
+  if (body instanceof Array === false) {
+    body = [body];
+  }
+  let validation = body.map(__doValidation).filter(v => v.isValid === false);
+
+  return validation.length >= 1 ? validation[0] : {isValid: true};
+};
+
+/*
  * @param {Object} body - body passed through from a POST request
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-schema.statics.add = body => {
-  var campaign = new ModelDef({
-    _app: Model.authApp.id,
-    name: body.name,
-    type: body.type,
-    description: body.description,
-    legals: body.legals
-  });
+const __addCampaign = body => {
+  return prev => {
+    const campaign = new ModelDef({
+      _app: Model.authApp._id,
+      name: body.name,
+      type: body.type,
+      filters: body.filters,
+      _companies: body.companies,
+      _people: body.people,
+      description: body.description,
+      legals: body.legals
+    });
 
-  // Logging.log(body);
-  Logging.log(campaign.name, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(campaign.description, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(campaign.legals, Logging.Constants.LogLevel.DEBUG);
-
-  return campaign.save();
+    return campaign.save()
+      .then(c => prev.concat([c]));
+  };
 };
+
+schema.statics.add = body => {
+  if (body instanceof Array === false) {
+    body = [body];
+  }
+
+  return body.reduce((promise, item) => {
+    return promise
+      .then(__addCampaign(item))
+      .catch(Logging.Promise.logError());
+  }, Promise.resolve([]));
+};
+
+
+schema.methods.addContactList = function(body) {
+  return Model.Contactlist.add(this, body)
+    .then(cl => {
+      Logging.logDebug(cl[0]._id);
+      this._contactLists.push(cl[0]);
+      return this.save();
+    });
+};
+
+schema.methods.removeContactList = function(contactList) {
+  return Promise.resolve(true);
+};
+
+
+// /**
+//  * @param {Object} body - body passed through from a POST request
+//  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+//  */
+// schema.statics.add = body => {
+//   var campaign = new ModelDef({
+//     _app: Model.authApp.id,
+//     name: body.name,
+//     type: body.type,
+//     description: body.description,
+//     legals: body.legals
+//   });
+//
+//   // Logging.log(body);
+//   Logging.log(campaign.name, Logging.Constants.LogLevel.DEBUG);
+//   Logging.log(campaign.description, Logging.Constants.LogLevel.DEBUG);
+//   Logging.log(campaign.legals, Logging.Constants.LogLevel.DEBUG);
+//
+//   return campaign.save();
+// };
 
 /**
  * @return {Promise} - resolves once all have been deleted
