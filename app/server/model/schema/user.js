@@ -157,10 +157,11 @@ schema.statics.rmAll = () => {
 };
 
 /**
+ * @param {Object} user - User object to remove
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-schema.statics.rm = function() {
-  return ModelDef.remove({_id: this._id});
+schema.statics.rm = function(user) {
+  return ModelDef.remove({_id: user._id});
 };
 
 /**
