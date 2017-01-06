@@ -28,6 +28,7 @@ schema.add({
   email: String,
   landline: String,
   mobile: String,
+  role: String,
   active: {
     type: Boolean,
     default: true
@@ -61,6 +62,7 @@ schema.virtual('details').get(function() {
       surname: name.lastName,
       suffix: name.suffix
     },
+    role: this.role,
     email: this.email,
     landline: this.landline,
     mobile: this.mobile,
