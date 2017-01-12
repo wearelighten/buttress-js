@@ -83,7 +83,7 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
-    campaignId: this._campaign,
+    campaignId: this._campaign && this._campaign._id ? this._campaign._id : this._campaign,
     companyIds: this._companies,
     userId: this._user
   };
@@ -106,11 +106,15 @@ const __doValidation = body => {
     invalid: []
   };
 
-  if (!body.companies && !body.people) {
+  if (!body.campaignId) {
+    res.isValid = false;
+    res.missing.push('campaign');
+  }
+  if (!body.companyIds && !body.personIds) {
     res.isValid = false;
     res.missing.push('data');
   }
-  if (!body.user) {
+  if (!body.userId) {
     res.isValid = false;
     res.missing.push('user');
   }
@@ -137,9 +141,9 @@ const __addContactlist = (campaign, body) => {
       name: body.name,
       _app: Model.authApp._id,
       _campaign: campaign,
-      _companies: body.companies,
+      _companies: body.companyIds,
       _people: body.people,
-      _user: body.user
+      _user: body.userId
     });
 
     return cl.save()
@@ -209,6 +213,11 @@ schema.methods.rmMetadata = function(key) {
 
 ModelDef = mongoose.model('Contactlist', schema);
 
+/* ********************************************************************************
+ *
+ * EXPORTS
+ *
+ **********************************************************************************/
 module.exports.constants = constants;
 module.exports.schema = schema;
 module.exports.model = ModelDef;
