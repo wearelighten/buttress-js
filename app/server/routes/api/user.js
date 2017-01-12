@@ -227,7 +227,6 @@ class AddUser extends Route {
       if (!app ||
           !this.req.body.user.id ||
           !this.req.body.user.token ||
-          !this.req.body.user.profileUrl ||
           !this.req.body.user.profileImgUrl) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
