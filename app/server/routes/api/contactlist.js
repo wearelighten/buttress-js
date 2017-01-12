@@ -105,7 +105,7 @@ class AddContactlist extends Route {
         return;
       }
 
-      Model.Campaign.findById(this.req.body.campaign).select('-metadata').then(campaign => {
+      Model.Campaign.findById(this.req.body.campaignId).select('-metadata').then(campaign => {
         if (!campaign) {
           this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
