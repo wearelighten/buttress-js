@@ -55,7 +55,7 @@ constants.Type = Type;
  **********************************************************************************/
 schema.add({
   name: String,
-  type: {
+  taskType: {
     type: String,
     enum: types
   },
@@ -90,7 +90,7 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
-    type: this.type,
+    type: this.taskType,
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
     entityId: this.entityId,
     dueDate: this.dueDate
@@ -160,13 +160,14 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
+    Logging.logDebug(body);
     const cl = new ModelDef({
       _app: Model.authApp._id,
       _owner: body.ownerId,
       name: body.name,
-      type: body.type,
+      taskType: body.type,
       entityId: body.entityId,
-      dueDate: body.dueDate
+      dueDate: Date.create(body.dueDate)
     });
 
     return cl.save()
@@ -174,7 +175,7 @@ const __add = body => {
   };
 };
 
-schema.statics.add = (body) => {
+schema.statics.add = body => {
   if (body instanceof Array === false) {
     body = [body];
   }
@@ -252,6 +253,11 @@ schema.methods.rmMetadata = function(key) {
     .then(res => res.nModified !== 0);
 };
 
+/* ********************************************************************************
+ *
+ * EXPORTS
+ *
+ **********************************************************************************/
 ModelDef = mongoose.model('Task', schema);
 
 module.exports.constants = constants;

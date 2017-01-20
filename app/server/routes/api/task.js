@@ -62,7 +62,7 @@ class GetTask extends Route {
             return;
           }
           this._task = task;
-          return true;
+          resolve(true);
         });
     });
   }
