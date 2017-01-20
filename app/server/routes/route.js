@@ -128,6 +128,7 @@ class Route {
       let userId = activity._user ? activity._user._id : null;
 
       _io.sockets.emit('db-activity', {
+        visibility: this.activityVisibility,
         path: this.req.path.replace(Config.app.apiPrefix, ''),
         pathSpec: this.path,
         verb: this.verb,
