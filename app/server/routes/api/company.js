@@ -63,7 +63,7 @@ class GetCompany extends Route {
             return;
           }
           this._company = company;
-          return true;
+          resolve(true);
         });
     });
   }
@@ -200,7 +200,7 @@ class UpdateCompany extends Route {
   }
 
   _exec() {
-    return this._company.update(this.req.body)
+    return this._company.updateByObject(this.req.body)
         .then(Helpers.Promise.prop('details'));
   }
 }
@@ -349,7 +349,7 @@ routes.push(AddMetadata);
  */
 class GetMetadata extends Route {
   constructor() {
-    super('company/:id/metadata/:key', 'GET COMPANY METADATA');
+    super('company/:id/metadata/:key?', 'GET COMPANY METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
@@ -359,7 +359,7 @@ class GetMetadata extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
+      Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.SILLY);
       Model.Company.findById(this.req.params.id).then(company => {
         if (!company) {
           this.log('ERROR: Invalid Company ID', Route.LogLevel.ERR);
@@ -384,7 +384,7 @@ class GetMetadata extends Route {
   }
 
   _exec() {
-    return this._metadata.value;
+    return this._metadata.value ? this._metadata.value : this._metadata;
   }
 }
 routes.push(GetMetadata);

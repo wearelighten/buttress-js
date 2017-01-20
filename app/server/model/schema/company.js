@@ -256,7 +256,7 @@ schema.virtual('details').get(function() {
  * @param {Object} body - body passed through from a POST request
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-schema.methods.update = function(body) {
+schema.methods.updateByObject = function(body) {
   Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
 
   this.name = body.name ? body.name : this.name;
@@ -359,6 +359,12 @@ schema.methods.addOrUpdateMetadata = function(key, value) {
 };
 
 schema.methods.findMetadata = function(key) {
+  if (!key) {
+    return this.metadata.reduce((prev, m) => {
+      prev[m.key] = JSON.parse(m.value);
+      return prev;
+    }, {});
+  }
   Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
   Logging.log(this.metadata.map(m => ({key: m.key, value: m.value})),
     Logging.Constants.LogLevel.DEBUG);
