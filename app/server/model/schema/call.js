@@ -53,7 +53,7 @@ const connectionOutcome = [
 const ConnectionOutcome = {
   NO_ANSWER: connectionOutcome[0],
   ENGAGED: connectionOutcome[1],
-  INVALID: connectionOutcome[2],
+  INVALID_NUMBER: connectionOutcome[2],
   CONNECTED_WRONG_NUMBER: connectionOutcome[3],
   CONNECTED_NOT_AVAILABLE: connectionOutcome[4],
   CONNECTED: connectionOutcome[5]
@@ -63,13 +63,17 @@ const outcome = [
   'call-back',
   'not-interested',
   'appointment-made',
-  'successful-transaction'
+  'successful-transaction',
+  'invalid-number',
+  'wrong-number'
 ];
 const Outcome = {
   CALL_BACK: outcome[0],
   NOT_INTERESTED: outcome[1],
   APPOINTMENT_MADE: outcome[2],
-  SUCCESSFUL_TRANSACTION: outcome[3]
+  SUCCESSFUL_TRANSACTION: outcome[3],
+  INVALID_NUMBER: outcome[4],
+  WRONG_NUMBER: outcome[5]
 };
 
 constants.Status = Status;
@@ -213,7 +217,6 @@ schema.statics.add = (contactList, body) => {
       .catch(Logging.Promise.logError());
   }, Promise.resolve([]));
 };
-
 
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)

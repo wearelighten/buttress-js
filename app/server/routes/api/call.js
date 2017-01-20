@@ -62,7 +62,7 @@ class GetCall extends Route {
             return;
           }
           this._call = call;
-          return true;
+          resolve(true);
         });
     });
   }
