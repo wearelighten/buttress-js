@@ -61,7 +61,7 @@ class GetNotification extends Route {
             return;
           }
           this._notification = notification;
-          return true;
+          resolve(true);
         });
     });
   }
@@ -81,6 +81,9 @@ class AddNotification extends Route {
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
   }
 
   _validate() {
@@ -88,7 +91,7 @@ class AddNotification extends Route {
       let validation = Model.Notification.validate(this.req.body);
       if (!validation.isValid) {
         this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
+        reject({statusCode: 400, message: `NOTIFICATION: Missing required fields: ${validation.missing}`});
         return;
       }
 
@@ -118,6 +121,25 @@ class UpdateNotification extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
+      let validation = Model.Notification.validateUpdate(this.req.body);
+      if (validation.isValid !== true) {
+        if (validation.missingRequired) {
+          this.log(`ERROR: Missing required field: ${validation.missingRequired}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `NOTIFICATION: Missing required field: ${validation.missingRequired}`});
+          return;
+        }
+        if (validation.isPathValid !== true) {
+          this.log(`ERROR: Invalid update path: ${validation.invalidPath}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `NOTIFICATION: Invalid update path: ${validation.invalidPath}`});
+          return;
+        }
+        if (validation.isValueValid !== true) {
+          this.log(`ERROR: Invalid update value: ${validation.invalidValue}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `NOTIFICATION: Invalid update value: ${validation.invalidValue}`});
+          return;
+        }
+      }
+
       Model.Notification.findById(this.req.params.id)
       .then(notification => {
         if (!notification) {
@@ -125,6 +147,17 @@ class UpdateNotification extends Route {
           reject({statusCode: 400});
           return;
         }
+        if (!this.req.body.path) {
+          this.log('ERROR: Missing required field: path', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        if (!this.req.body.value) {
+          this.log('ERROR: Missing required field: value', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
         this._notification = notification;
         resolve(true);
       });
@@ -132,8 +165,7 @@ class UpdateNotification extends Route {
   }
 
   _exec() {
-    return this._notification.update(this.req.body)
-        .then(Helpers.Promise.prop('details'));
+    return this._notification.update(this.req.body);
   }
 }
 routes.push(UpdateNotification);
