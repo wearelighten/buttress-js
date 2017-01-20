@@ -124,7 +124,7 @@ module.exports.log = (log, level) => {
  * @param {string} log - Text to log
  */
 module.exports.logDebug = log => {
-  module.exports.log(log);
+  module.exports.log(log, LogLevel.DEBUG);
 };
 
 /**
