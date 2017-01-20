@@ -19,10 +19,12 @@ var Logging = require('./logging');
 
 var _installApp = (app, io) => {
   Model.init(app);
-  Routes.init(app, io);
-
-  return Model.Organisation
-    .find({})
+  return Routes
+    .init(app, io)
+    .then(() => {
+      return Model.Organisation
+        .find({});
+    })
     .then(orgs => {
       if (orgs.length > 0) {
         return Promise.resolve(true); // If any organisations, assume we've got a Super Admin app
@@ -79,7 +81,7 @@ var _installApp = (app, io) => {
             return reject(err);
           }
           Logging.log(`Written ${pathName}`, Logging.Constants.LogLevel.VERBOSE);
-          Logging.log(app, Logging.Constants.LogLevel.DEBUG);
+          Logging.log(app, Logging.Constants.LogLevel.SILLY);
 
           resolve(true);
         });

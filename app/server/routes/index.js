@@ -35,7 +35,25 @@ function _initRoute(app, Route) {
   });
 }
 
-var _tokens = [];
+let _tokens = [];
+// let _timers = {};
+
+// class Timer {
+//   constructor() {
+//     this._start = 0;
+//   }
+//
+//   start() {
+//     let hrTime = process.hrtime();
+//     this._start = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
+//   }
+//
+//   get interval() {
+//     let hrTime = process.hrtime();
+//     let time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
+//     return ((time - this._start) / 1000000);
+//   }
+// }
 
 /**
  * @param {Object} req - Request object
@@ -44,7 +62,10 @@ var _tokens = [];
  * @private
  */
 function _authenticateToken(req, res, next) {
-  Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.VERBOSE);
+  // _timers[req.path] = new Timer();
+  // _timers[req.path].start();
+
+  Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.SILLY);
   if (!req.query.token) {
     Logging.log('EAUTH: Missing Token', Logging.Constants.LogLevel.ERR);
     res.sendStatus(400);
@@ -57,37 +78,53 @@ function _authenticateToken(req, res, next) {
       res.sendStatus(401);
       return;
     }
+    // console.log(`_authenticateToken (pre-save): ${_timers[req.path].interval.toFixed(3)}`);
+
     Model.token = req.token = token.details;
     Model.authApp = req.authApp = token._app;
     Model.authUser = req.authUser = token._user;
 
-    token.uses.push(new Date());
-    token.save()
-    .then(Helpers.Promise.inject())
-    .then(next);
+    Model.Token.update({_id: token.id}, {$push: {
+      uses: new Date()
+    }});
+    // .then((res) => {
+    //   console.log(token.id);
+    //   console.log(res);
+    // });
+
+    // console.log(`_authenticateToken (post-save): ${_timers[req.path].interval.toFixed(3)}`);
   })
+  .then(Helpers.Promise.inject())
+  .then(next)
   .catch(Logging.Promise.logError());
 }
 
 /**
  * @param  {String} tokenValue - token
+ * @param  {Object=} timer - optional Timer
  * @return {Promise} - resolves with the matching token if any
  */
-function _getToken(tokenValue) {
+function _getToken(tokenValue, timer) {
   let token = null;
 
   if (_tokens.length > 0) {
     token = _lookupToken(_tokens, tokenValue);
     // Logging.log("Using Cached Tokens", Logging.Constants.LogLevel.DEBUG);
     if (token) {
+      if (timer) {
+        console.log(`_getToken:Lookup: ${timer.interval.toFixed(3)}`);
+      }
       return Promise.resolve(token);
     }
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     Model.Token.findAllNative()
     .then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
     .then(tokens => {
+      if (timer) {
+        console.log(`_getToken:Load: ${timer.interval.toFixed(3)}`);
+      }
       _tokens = tokens;
       token = _lookupToken(_tokens, tokenValue);
       return resolve(token);
@@ -104,6 +141,17 @@ function _getToken(tokenValue) {
 function _lookupToken(tokens, value) {
   let token = tokens.filter(t => t.value === value);
   return token.length === 0 ? null : token[0];
+}
+
+/**
+ * @return {Promise} - resolves with tokens
+ * @private
+ */
+function _loadTokens() {
+  return Model.Token.findAllNative()
+    .then(tokens => {
+      _tokens = tokens;
+    });
 }
 
 /**
@@ -140,9 +188,9 @@ function _configCrossDomain(req, res, next) {
 }
 
 /**
- *
  * @param {Object} app - express app object
  * @param {Object} io - socket io object
+ * @return {Promise} - resolves once the tokens have been pre-cached
  */
 exports.init = (app, io) => {
   Route.app = app;
@@ -164,6 +212,8 @@ exports.init = (app, io) => {
       _initRoute(app, route);
     }
   }
+
+  return _loadTokens();
 };
 
 /**
@@ -171,11 +221,11 @@ exports.init = (app, io) => {
  * @private
  */
 function _getRouteProviders() {
-  var filenames = fs.readdirSync(`${__dirname}/api`);
+  let filenames = fs.readdirSync(`${__dirname}/api`);
 
-  var files = [];
-  for (var x = 0; x < filenames.length; x++) {
-    var file = filenames[x];
+  let files = [];
+  for (let x = 0; x < filenames.length; x++) {
+    let file = filenames[x];
     if (path.extname(file) === '.js') {
       files.push(require(`./api/${path.basename(file, '.js')}`));
     }
