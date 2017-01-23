@@ -75,6 +75,23 @@ var Constants = {
   }
 };
 
+class Timer {
+  constructor() {
+    this._start = 0;
+  }
+
+  start() {
+    let hrTime = process.hrtime();
+    this._start = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
+  }
+
+  get interval() {
+    let hrTime = process.hrtime();
+    let time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
+    return ((time - this._start) / 1000000);
+  }
+}
+
 class Route {
   constructor(path, name) {
     this.verb = Constants.Verbs.GET;
@@ -84,6 +101,8 @@ class Route {
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityTitle = 'Private Activity';
     this.activityDescription = '';
+
+    this._timer = new Timer();
 
     this.path = path;
     this.name = name;
@@ -105,13 +124,14 @@ class Route {
         return;
       }
 
+      this._timer.start();
       this.log(`STARTING: ${this.name}`, Logging.Constants.LogLevel.INFO);
       this._authenticate()
         .then(Logging.Promise.log('authenticated', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._validate, this), reject)
         .then(Logging.Promise.log('validated', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._exec, this), reject)
-        .then(Logging.Promise.log('exec\'ed', Logging.Constants.LogLevel.SILLY))
+        .then(Logging.Promise.logTimer(`DONE: ${this.name}`, this._timer))
         .then(_.bind(this._logActivity, this))
         .then(resolve, reject)
         .catch(Logging.Promise.logError());
