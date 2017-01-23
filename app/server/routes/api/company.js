@@ -75,6 +75,42 @@ class GetCompany extends Route {
 routes.push(GetCompany);
 
 /**
+ * @class BulkGetCompanies
+ */
+class BulkGetCompanies extends Route {
+  constructor() {
+    super('company/bulk/load', 'BULK GET COMPANIES');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.READ;
+    this._ids = [];
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      this._ids = this.req.query.ids;
+      if (!this._ids) {
+        this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+      this._ids = this._ids.split(',');
+      if (!this._ids.length) {
+        this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Company.findAllById(this._ids).then(companies => companies.map(c => c.details));
+  }
+}
+routes.push(BulkGetCompanies);
+
+/**
  * @class AddCompany
  */
 class AddCompany extends Route {
@@ -108,9 +144,7 @@ class AddCompany extends Route {
 
   _exec() {
     return Model.Company.add(this.req.body)
-      .then(arr => arr[0])
-      .then(Logging.Promise.logProp('Added Company', 'name', Route.LogLevel.VERBOSE))
-      .then(Helpers.Promise.prop('details'));
+      .then(arr => arr[0]);
   }
 }
 routes.push(AddCompany);
@@ -139,9 +173,9 @@ class AddCompanies extends Route {
         reject({statusCode: 400, message: `Invalid data: send more than one`});
         return;
       }
-      if (this.req.body.companies.length > 500) {
-        this.log(`ERROR: No more than 500`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Invalid data: send no more than 500 companies at a time`});
+      if (this.req.body.companies.length > 301) {
+        this.log(`ERROR: No more than 300`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send no more than 300 companies at a time`});
         return;
       }
 
@@ -166,8 +200,7 @@ class AddCompanies extends Route {
 
   _exec() {
     return Model.Company.add(this.req.body.companies)
-        .then(Logging.Promise.logProp('Added Companies', 'length', Route.LogLevel.VERBOSE))
-        .then(Helpers.Promise.arrayProp('details'));
+        .then(Logging.Promise.logProp('Added Companies', 'length', Route.LogLevel.VERBOSE));
   }
 }
 routes.push(AddCompanies);
@@ -256,13 +289,18 @@ class BulkDeleteCompanies extends Route {
       this._ids = this.req.query.ids;
       if (!this._ids) {
         this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
-        reject({statusCode: 400});
+        reject({statusCode: 400, message: 'ERROR: No company IDs provided'});
         return;
       }
       this._ids = this._ids.split(',');
       if (!this._ids.length) {
         this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
-        reject({statusCode: 400});
+        reject({statusCode: 400, message: 'ERROR: No company IDs provided'});
+        return;
+      }
+      if (this._ids.length > 300) {
+        this.log('ERROR: No more than 300 company IDs are supported', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'ERROR: No more than 300 company IDs are supported'});
         return;
       }
       resolve(true);

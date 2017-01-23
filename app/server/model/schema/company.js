@@ -204,8 +204,7 @@ const __addCompany = body => {
       _app: Model.authApp._id
     });
 
-    return company.save()
-      .then(c => prev.concat([c]));
+    return Promise.resolve(prev.concat([company.toObject()]));
   };
 };
 
@@ -218,7 +217,19 @@ schema.statics.add = body => {
     return promise
       .then(__addCompany(item))
       .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
+  }, Promise.resolve([]))
+  .then(companies => {
+    return new Promise((resolve, reject) => {
+      ModelDef.collection.insert(companies, (err, res) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        resolve(res.ops.map(c => c._id));
+      });
+    });
+  });
 };
 
 /* ********************************************************************************
@@ -308,8 +319,7 @@ schema.statics.rm = company => {
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
 schema.statics.rmBulk = ids => {
-  Logging.log(`DELETING: ${ids}`, Logging.Constants.LogLevel.DEBUG);
-  // Logging.log(org.details, Logging.Constants.LogLevel.VERBOSE);
+  Logging.log(`DELETING: ${ids}`, Logging.Constants.LogLevel.SILLY);
   return ModelDef.remove({_id: {$in: ids}}).exec();
 };
 
@@ -331,6 +341,16 @@ schema.statics.findAll = () => {
   }
 
   return ModelDef.find({_app: Model.authApp._id});
+};
+
+/**
+ * @param {Array} ids - Array of company ids to get
+ * @return {Promise} - resolves to an array of Companies
+ */
+schema.statics.findAllById = ids => {
+  Logging.log(`findAllById: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+
+  return ModelDef.find({_id: {$in: ids}, _app: Model.authApp._id});
 };
 
 /* ********************************************************************************
