@@ -32,14 +32,17 @@ let constants = {};
  **********************************************************************************/
 
 const status = [
-  'unallocated',
-  'allocated',
-  'completed'
+  'pending',
+  'in-progress',
+  'deferred',
+  'done'
 ];
 const Status = {
-  UNALLOCATED: status[0],
-  ALLOCATED: status[1],
-  COMPLETED: status[2]
+  PENDING: status[0],
+  IN_PROGRESS: status[1],
+  DEFERRED: status[2],
+  SUCCEEDED: status[3],
+  FAILED: status[4]
 };
 
 const connectionOutcome = [
@@ -60,6 +63,7 @@ const ConnectionOutcome = {
 };
 
 const outcome = [
+  'no-outcome',
   'call-back',
   'not-interested',
   'appointment-made',
@@ -68,12 +72,13 @@ const outcome = [
   'wrong-number'
 ];
 const Outcome = {
-  CALL_BACK: outcome[0],
-  NOT_INTERESTED: outcome[1],
-  APPOINTMENT_MADE: outcome[2],
-  SUCCESSFUL_TRANSACTION: outcome[3],
-  INVALID_NUMBER: outcome[4],
-  WRONG_NUMBER: outcome[5]
+  NO_OUTCOME: outcome[0],
+  CALL_BACK: outcome[1],
+  NOT_INTERESTED: outcome[2],
+  APPOINTMENT_MADE: outcome[3],
+  SUCCESSFUL_TRANSACTION: outcome[4],
+  INVALID_NUMBER: outcome[5],
+  WRONG_NUMBER: outcome[6]
 };
 
 constants.Status = Status;
@@ -89,13 +94,14 @@ constants.Outcome = Outcome;
 schema.add({
   status: {
     type: String,
-    enum: status
+    enum: status,
+    default: Status.PENDING
   },
   _app: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
   },
-  _contactlist: {
+  _contactList: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Contactlist'
   },
@@ -127,9 +133,16 @@ schema.add({
   }],
   outcome: {
     type: String,
-    enum: outcome
+    enum: outcome,
+    default: Outcome.NO_OUTCOME
   },
-  metadata: [{key: String, value: String}]
+  metadata: [{key: String, value: String}],
+  notes: [{
+    text: String,
+    timestamp: {
+      type: Date,
+      default: Date.create
+    }}]
 });
 
 /* ********************************************************************************
@@ -140,12 +153,14 @@ schema.add({
 schema.virtual('details').get(function() {
   return {
     id: this._id,
+    status: this.status,
+    outcome: this.outcome,
     contactListId: this._contactList && this._contactList._id ? this._contactList._id : this._contactList,
     companyId: this._company && this._company._id ? this._company._id : this._company,
     personId: this._person && this._person._id ? this._person._id : this._person,
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
     connections: this.connections,
-    outcome: this.outcome
+    notes: this.notes
   };
 });
 
@@ -235,6 +250,90 @@ schema.statics.rmAll = () => {
  * METHODS
  *
  **********************************************************************************/
+
+/**
+ * @param {Object} body - body passed through from a POST request to be validated
+ * @return {Object} - returns an object with validation context
+ */
+let _doValidateUpdate = body => {
+  Logging.logDebug(`_doValidateUpdate: path: ${body.path}, value: ${body.value}`);
+  let res = {
+    isValid: false,
+    isMissingRequired: true,
+    missingRequired: '',
+    isPathValid: false,
+    invalidPath: '',
+    isValueValid: false,
+    invalidValid: ''
+  };
+
+  if (!body.path) {
+    res.missingRequired = 'path';
+    return res;
+  }
+  if (!body.value) {
+    res.missingRequired = 'value';
+    return res;
+  }
+
+  res.missingRequired = false;
+  const validPaths = {
+    'status': status,
+    'connections': [],
+    'notes.([0-9]{1,3}).text': [],
+    'notes': [],
+    'outcome': outcome
+  };
+  if (!validPaths[body.path]) {
+    res.invalidPath = `${body.path} <> ${Object.getOwnPropertyNames(validPaths).join('|')}`;
+    return res;
+  }
+
+  res.isPathValid = true;
+  if (validPaths[body.path].length > 0 && validPaths[body.path].indexOf(body.value) === -1) {
+    res.invalidValue = `${body.value} <> ${validPaths[body.path]}`;
+    return res;
+  }
+
+  res.isValueValid = true;
+  res.isValid = true;
+  return res;
+};
+
+schema.statics.validateUpdate = body => {
+  Logging.logDebug(body instanceof Array);
+  if (body instanceof Array === false) {
+    body = [body];
+  }
+
+  let validation = body.map(_doValidateUpdate).filter(v => v.isValid === false);
+
+  return validation.length >= 1 ? validation[0] : {isValid: true};
+};
+
+let _doUpdate = (appointment, body) => {
+  return prev => {
+    if (body.path === 'notes') {
+      appointment.notes.push(body.value);
+    } else if (body.path === 'connections') {
+      appointment.connections.push(body.value);
+    } else {
+      appointment.set(body.path, body.value);
+    }
+    return appointment.save().then(() => prev.concat([true]));
+  };
+};
+
+schema.methods.updateByPath = function(body) {
+  if (body instanceof Array === false) {
+    body = [body];
+  }
+  return body.reduce((promise, update) => {
+    return promise
+      .then(_doUpdate(this, update))
+      .catch(Logging.Promise.logError());
+  }, Promise.resolve([]));
+};
 
 /**
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed

@@ -82,6 +82,9 @@ class AddCall extends Route {
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
   }
 
   _validate() {
@@ -114,11 +117,28 @@ class UpdateCall extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
+
     this._call = null;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
+      let validation = Model.Call.validateUpdate(this.req.body);
+      if (!validation.isValid) {
+        if (validation.isPathValid === false) {
+          this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CALL: Update path is invalid: ${validation.invalidPath}`});
+          return;
+        }
+        if (validation.isValueValid === false) {
+          this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CALL: Update value is invalid: ${validation.invalidValue}`});
+          return;
+        }
+      }
+
       Model.Call.findById(this.req.params.id)
       .then(call => {
         if (!call) {
@@ -133,8 +153,7 @@ class UpdateCall extends Route {
   }
 
   _exec() {
-    return this._call.update(this.req.body)
-        .then(Helpers.Promise.prop('details'));
+    return this._call.updateByPath(this.req.body);
   }
 }
 routes.push(UpdateCall);
