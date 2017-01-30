@@ -119,7 +119,6 @@ class UpdateAppointment extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      console.log('Hello', this.req.body);
       let validation = Model.Appointment.validateUpdate(this.req.body);
       if (!validation.isValid) {
         if (validation.isPathValid === false) {
