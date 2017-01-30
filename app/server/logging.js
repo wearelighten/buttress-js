@@ -293,9 +293,9 @@ module.exports.Promise.logError = () => {
  * @return {function(*)} - returns a function for chaining into a promise
  */
 module.exports.Promise.logTimer = (log, timer, level) => {
-  level = level || LogLevel.DEFAULT;
+  level = level || LogLevel.INFO;
   return res => {
-    _log(`${log} (${timer.interval.toFixed(6)}s)`, level);
+    _log(`${log} [${timer.lapTime.toFixed(6)}s] [${timer.interval.toFixed(6)}s]`, level);
     return res;
   };
 };
