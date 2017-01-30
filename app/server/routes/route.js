@@ -82,9 +82,16 @@ class Timer {
 
   start() {
     let hrTime = process.hrtime();
-    this._start = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
+    this._last = this._start = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
   }
 
+  get lapTime() {
+    let hrTime = process.hrtime();
+    let time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
+    let lapTime = time - this._last;
+    this._last = time;
+    return (lapTime / 1000000);
+  }
   get interval() {
     let hrTime = process.hrtime();
     let time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
@@ -127,12 +134,15 @@ class Route {
       this._timer.start();
       this.log(`STARTING: ${this.name}`, Logging.Constants.LogLevel.INFO);
       this._authenticate()
+        .then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.DEBUG))
         .then(Logging.Promise.log('authenticated', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._validate, this), reject)
+        .then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.DEBUG))
         .then(Logging.Promise.log('validated', Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._exec, this), reject)
-        .then(Logging.Promise.logTimer(`DONE: ${this.name}`, this._timer))
+        .then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.DEBUG))
         .then(_.bind(this._logActivity, this))
+        .then(Logging.Promise.logTimer(`DONE: ${this.name}`, this._timer, Logging.Constants.LogLevel.INFO))
         .then(resolve, reject)
         .catch(Logging.Promise.logError());
     });
