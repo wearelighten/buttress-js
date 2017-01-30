@@ -13,7 +13,7 @@
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
-const Helpers = require('../../helpers');
+// const Helpers = require('../../helpers');
 // var Config = require('../../config');
 
 /**
@@ -43,7 +43,8 @@ schema.add({
   description: String,
   visibility: {
     type: String,
-    enum: visibility
+    enum: visibility,
+    index: true
   },
   path: String,
   verb: String,
@@ -60,7 +61,8 @@ schema.add({
   },
   _app: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Application'
+    ref: 'Application',
+    index: true
   },
   _user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -169,14 +171,13 @@ schema.methods.findMetadata = function(key) {
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.findAll = () => {
-  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
     return ModelDef.find({});
   }
 
-  return ModelDef.find({_app: Model.authApp._id, visibility: constants.Visibility.PUBLIC})
-    .then(Helpers.Promise.arrayProp('details'));
+  return ModelDef.find({_app: Model.authApp._id, visibility: constants.Visibility.PUBLIC});
 };
 
 ModelDef = mongoose.model('Activity', schema);
