@@ -85,6 +85,10 @@ constants.TurnoverBands = {
  *
  **********************************************************************************/
 schema.add({
+  _parent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company'
+  },
   name: String,
   number: Number,
   employeeBand: {
@@ -334,7 +338,7 @@ schema.statics.rmAll = () => {
  * @return {Promise} - resolves to an array of Companies
  */
 schema.statics.findAll = () => {
-  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
     return ModelDef.find({});
