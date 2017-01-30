@@ -35,6 +35,23 @@
         "test": 6002
       }
     },
+    "workstation2": {
+      "logPath": {
+        "dev":"/home/c(Logging.Constants.LogLevel.INFOhris/Work/Workspaces/WebStorm/rhizome/logs/dev",
+        "prod":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/prod",
+        "test":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/test"
+      },
+      "appDataPath": {
+        "dev": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
+        "prod": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
+        "test": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data/test"
+      },
+      "listenPort": {
+        "dev": 6001,
+        "prod": 6000,
+        "test": 6002
+      }
+    },
     "yubaba": {
       "logPath": {
         "dev": "/home/chris/apps/rhizome-DEV/logs",
