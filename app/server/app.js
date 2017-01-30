@@ -26,28 +26,28 @@ const Logging = require('./logging');
 /**
  * Configuration
  */
-var configureDevelopment = () => {
+const configureDevelopment = () => {
   Config.env = 'dev';
   app.set('db-uri', `mongodb://${Config.RHIZOME_MONGO_URL_DEV}/${Config.app.code}-dev`);
   app.use(morgan('short'));
   app.set('port', Config.listenPort);
 };
 
-var configureProduction = () => {
+const configureProduction = () => {
   Config.env = 'prod';
   app.set('db-uri', `mongodb://${Config.RHIZOME_MONGO_URL_PROD}/${Config.app.code}-prod`);
   app.use(morgan('short'));
   app.set('port', Config.listenPort);
 };
 
-var configureTest = () => {
+const configureTest = () => {
   Config.env = 'test';
   app.set('db-uri', `mongodb://${Config.RHIZOME_MONGO_URL_TEST}/${Config.app.code}-test`);
   app.use(morgan('short'));
   app.set('port', Config.listenPort);
 };
 
-var configureApp = env => {
+const configureApp = env => {
   app.enable('trust proxy', 1);
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({extended: true}));
