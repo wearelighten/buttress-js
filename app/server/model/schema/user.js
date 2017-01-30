@@ -169,7 +169,7 @@ schema.statics.rm = function(user) {
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
-  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
     return ModelDef.find({});
