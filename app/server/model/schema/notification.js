@@ -223,7 +223,7 @@ schema.statics.validateUpdate = body => {
   }
 
   res.isPathValid = true;
-  if (body.value !== 'true' && body.value !== 'false') {
+  if (body.value !== true && body.value !== false) {
     res.invalidValue = `${body.value} <> true|false`;
     return res;
   }
