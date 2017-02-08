@@ -82,6 +82,9 @@ class AddTask extends Route {
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
   }
 
   _validate() {
@@ -115,10 +118,27 @@ class UpdateTask extends Route {
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
     this._task = null;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
+      let validation = Model.Task.validateUpdate(this.req.body);
+      if (!validation.isValid) {
+        if (validation.isPathValid === false) {
+          this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `APPOINTMENT: Update path is invalid: ${validation.invalidPath}`});
+          return;
+        }
+        if (validation.isValueValid === false) {
+          this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `APPOINTMENT: Update value is invalid: ${validation.invalidValue}`});
+          return;
+        }
+      }
+
       Model.Task.findById(this.req.params.id)
       .then(task => {
         if (!task) {
@@ -133,8 +153,7 @@ class UpdateTask extends Route {
   }
 
   _exec() {
-    return this._task.update(this.req.body)
-        .then(Helpers.Promise.prop('details'));
+    return this._task.updateByPath(this.req.body);
   }
 }
 routes.push(UpdateTask);
@@ -246,16 +265,18 @@ routes.push(AddMetadata);
  */
 class GetMetadata extends Route {
   constructor() {
-    super('task/:id/metadata/:key', 'GET TASK METADATA');
+    super('task/:id/metadata/:key?', 'GET TASK METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
 
-    this._metadata = null;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
+      this._metadata = null;
+      this._allMetadata = null;
+
       Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
       Model.Task.findById(this.req.params.id).then(task => {
         if (!task) {
@@ -268,11 +289,19 @@ class GetMetadata extends Route {
           reject({statusCode: 401});
           return;
         }
-        this._metadata = task.findMetadata(this.req.params.key);
-        if (this._metadata === false) {
-          this.log('WARN: Task Metadata Not Found', Route.LogLevel.ERR);
-          reject({statusCode: 404});
-          return;
+        // Logging.log(this._metadata.value, Route.LogLevel.INFO);
+        if (this.req.params.key) {
+          this._metadata = task.findMetadata(this.req.params.key);
+          if (this._metadata === false) {
+            this.log('WARN: Task Metadata Not Found', Route.LogLevel.ERR);
+            reject({statusCode: 404});
+            return;
+          }
+        } else {
+          this._allMetadata = task.metadata.reduce((prev, curr) => {
+            prev[curr.key] = JSON.parse(curr.value);
+            return prev;
+          }, {});
         }
 
         resolve(true);
@@ -281,7 +310,7 @@ class GetMetadata extends Route {
   }
 
   _exec() {
-    return this._metadata.value;
+    return this._metadata ? this._metadata.value : this._allMetadata;
   }
 }
 routes.push(GetMetadata);

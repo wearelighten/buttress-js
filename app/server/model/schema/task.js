@@ -12,6 +12,7 @@
  */
 
 const mongoose = require('mongoose');
+const Shared = require('../shared');
 const Model = require('../');
 const Logging = require('../../logging');
 require('sugar');
@@ -36,17 +37,34 @@ const types = [
   'company',
   'campaign',
   'contact-list',
-  'call'
+  'call',
+  'appointment'
 ];
 const Type = {
   FREE: types[0],
   COMPANY: types[1],
   CAMPAIGN: types[2],
   CONTACT_LIST: types[3],
-  CALL: types[4]
+  CALL: types[4],
+  APPOINTMENT: types[5]
 };
 
 constants.Type = Type;
+
+const status = [
+  'pending',
+  'in-progress',
+  'deferred',
+  'done'
+];
+const Status = {
+  PENDING: status[0],
+  IN_PROGRESS: status[1],
+  DEFERRED: status[2],
+  DONE: status[3]
+};
+
+constants.Status = Status;
 
 /* ********************************************************************************
  *
@@ -59,11 +77,20 @@ schema.add({
     type: String,
     enum: types
   },
+  status: {
+    type: String,
+    enum: status,
+    default: Status.PENDING
+  },
   _app: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
   },
   _owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  _assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
@@ -78,7 +105,14 @@ schema.add({
     type: Date,
     default: Date.create
   },
-  metadata: [{key: String, value: String}]
+  metadata: [{key: String, value: String}],
+  notes: [{
+    text: String,
+    timestamp: {
+      type: Date,
+      default: Date.create
+    }
+  }]
 });
 
 /* ********************************************************************************
@@ -93,7 +127,8 @@ schema.virtual('details').get(function() {
     type: this.taskType,
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
     entityId: this.entityId,
-    dueDate: this.dueDate
+    dueDate: this.dueDate,
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
   };
 });
 
@@ -201,6 +236,22 @@ schema.statics.rmAll = () => {
 
 /* ********************************************************************************
  *
+ * UPDATE BY PATH
+ *
+ **********************************************************************************/
+
+const PATH_CONTEXT = {
+  'status': {type: 'scalar', values: status},
+  'notes': {type: 'vector-add', values: []},
+  'notes.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
+  'notes.([0-9]{1,3}).text': {type: 'scalar', values: []}
+};
+
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+
+/* ********************************************************************************
+ *
  * METHODS
  *
  **********************************************************************************/
@@ -218,40 +269,9 @@ schema.methods.rm = function() {
  *
  **********************************************************************************/
 
-/**
- * @param {string} key - index name of the metadata
- * @param {*} value - value of the meta data
- * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
- */
-schema.methods.addOrUpdateMetadata = function(key, value) {
-  Logging.log(key, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(value, Logging.Constants.LogLevel.DEBUG);
-
-  let exists = this.metadata.find(m => m.key === key);
-  if (exists) {
-    exists.value = value;
-  } else {
-    this.metadata.push({key: key, value: value});
-  }
-
-  return this.save().then(u => ({key: key, value: JSON.parse(value)}));
-};
-
-schema.methods.findMetadata = function(key) {
-  Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-  Logging.log(this.metadata.map(m => ({key: m.key, value: m.value})),
-    Logging.Constants.LogLevel.DEBUG);
-  let md = this.metadata.find(m => m.key === key);
-  return md ? {key: md.key, value: JSON.parse(md.value)} : false;
-};
-
-schema.methods.rmMetadata = function(key) {
-  Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-
-  return this
-    .update({$pull: {metadata: {key: key}}})
-    .then(res => res.nModified !== 0);
-};
+schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
+schema.methods.findMetadata = Shared.findMetadata;
+schema.methods.rmMetadata = Shared.rmMetadata;
 
 /* ********************************************************************************
  *

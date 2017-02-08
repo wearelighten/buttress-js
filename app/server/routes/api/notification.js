@@ -117,6 +117,9 @@ class UpdateNotification extends Route {
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
     this._notification = null;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
   }
 
   _validate() {
@@ -165,7 +168,7 @@ class UpdateNotification extends Route {
   }
 
   _exec() {
-    return this._notification.update(this.req.body);
+    return this._notification.updateByPath(this.req.body);
   }
 }
 routes.push(UpdateNotification);

@@ -16,6 +16,7 @@ const fs = require('fs');
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
+const Shared = require('../shared');
 const Config = require('../../config');
 const Helpers = require('../../helpers');
 const EmailFactory = require('../../email/factory');
@@ -87,7 +88,14 @@ schema.add({
   }],
   images: [{label: String, pathname: String}],
   templates: [{label: String, markup: String}],
-  metadata: [{key: String, value: String}]
+  metadata: [{key: String, value: String}],
+  notes: [{
+    text: String,
+    timestamp: {
+      type: Date,
+      default: Date.create
+    }
+  }]
 });
 
 /*
@@ -106,7 +114,8 @@ schema.virtual('details').get(function() {
     contactLists: this.contactLists,
     images: this.images.map(i => i.label),
     templates: this.templates.map(t => t.label),
-    metadata: this._metadata
+    metadata: this._metadata,
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
   };
 });
 
@@ -242,6 +251,28 @@ schema.methods.removeContactList = function(contactList) {
 schema.statics.rmAll = () => {
   return ModelDef.remove({});
 };
+
+/* ********************************************************************************
+ *
+ * UPDATE BY PATH
+ *
+ **********************************************************************************/
+
+const PATH_CONTEXT = {
+  'notes': {type: 'vector-add', values: []},
+  'notes.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
+  'notes.([0-9]{1,3}).text': {type: 'scalar', values: []}
+};
+
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+
+
+/* ********************************************************************************
+ *
+ * METHODS
+ *
+ **********************************************************************************/
 
 /**
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
@@ -393,41 +424,15 @@ schema.methods.createPreviewEmail = function(template, body) {
   });
 };
 
-/**
- * @param {string} key - index name of the metadata
- * @param {*} value - value of the meta data
- * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
- */
-schema.methods.addOrUpdateMetadata = function(key, value) {
-  Logging.log(`${Model.authApp.id}`, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(key, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(value, Logging.Constants.LogLevel.DEBUG);
+/* ********************************************************************************
+ *
+ * METADATA
+ *
+ **********************************************************************************/
 
-  let exists = this.metadata.find(m => m.key === key);
-  if (exists) {
-    exists.value = value;
-  } else {
-    this.metadata.push({key: key, value: value});
-  }
-
-  return this.save().then(u => ({key: key, value: JSON.parse(value)}));
-};
-
-schema.methods.findMetadata = function(key) {
-  Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-  Logging.log(this.metadata.map(m => ({key: m.key, value: m.value})),
-    Logging.Constants.LogLevel.DEBUG);
-  let md = this.metadata.find(m => m.key === key);
-  return md ? {key: md.key, value: JSON.parse(md.value)} : false;
-};
-
-schema.methods.rmMetadata = function(key) {
-  Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-  return this
-    .update({$pull: {metadata: {_app: Model.authApp.id, key: key}}})
-    .then(Logging.Promise.log('removeMetadata'))
-    .then(res => res.nModified !== 0);
-};
+schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
+schema.methods.findMetadata = Shared.findMetadata;
+schema.methods.rmMetadata = Shared.rmMetadata;
 
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)

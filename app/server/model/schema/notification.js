@@ -14,6 +14,7 @@
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
+const Shared = require('../shared');
 
 /* ********************************************************************************
  *
@@ -34,14 +35,18 @@ const types = [
   'company',
   'campaign',
   'contact-list',
-  'call'
+  'call',
+  'appointment',
+  'task'
 ];
 const Type = {
   CHAT: types[0],
   COMPANY: types[1],
   CAMPAIGN: types[2],
   CONTACT_LIST: types[3],
-  CALL: types[4]
+  CALL: types[4],
+  APPOINTMENT: types[5],
+  TASK: types[5]
 };
 
 constants.Type = Type;
@@ -189,54 +194,16 @@ schema.statics.rmAll = () => {
 
 /* ********************************************************************************
  *
- * METHODS
+ * UPDATE BY PATH
  *
  **********************************************************************************/
-/**
- * @param {Object} body - body passed through from a POST request to be validated
- * @return {Object} - returns an object with validation context
- */
-schema.statics.validateUpdate = body => {
-  let res = {
-    isValid: false,
-    isMissingRequired: true,
-    missingRequired: '',
-    isPathValid: false,
-    invalidPath: '',
-    isValueValid: false,
-    invalidValue: ''
-  };
 
-  if (!body.path) {
-    res.missingRequired = 'path';
-    return res;
-  }
-  if (!body.value) {
-    res.missingRequired = 'value';
-    return res;
-  }
-
-  res.missingRequired = false;
-  if (body.path !== 'read') {
-    res.invalidPath = `${body.path} <> read`;
-    return res;
-  }
-
-  res.isPathValid = true;
-  if (body.value !== true && body.value !== false) {
-    res.invalidValue = `${body.value} <> true|false`;
-    return res;
-  }
-
-  res.isValueValid = true;
-  res.isValid = true;
-  return res;
+const PATH_CONTEXT = {
+  read: {type: 'scalar', values: [true, false]}
 };
 
-schema.methods.update = function(body) {
-  this[body.path] = body.value;
-  return this.save().then(() => true);
-};
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
 
 /**
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed

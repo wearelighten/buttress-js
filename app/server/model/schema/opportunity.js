@@ -14,6 +14,7 @@
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
+const Shared = require('../shared');
 
 /* ********************************************************************************
  *
@@ -133,7 +134,14 @@ schema.add({
       type: Date
     }
   },
-  metadata: [{key: String, value: String}]
+  metadata: [{key: String, value: String}],
+  notes: [{
+    text: String,
+    timestamp: {
+      type: Date,
+      default: Date.create
+    }
+  }]
 });
 
 /* ********************************************************************************
@@ -149,7 +157,7 @@ schema.virtual('details').get(function() {
     userId: this._user && this._user._id ? this._user._id : this._user,
     entityId: this.entityId,
     dateCreated: this.dateCreated,
-    read: this.read
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
   };
 });
 
@@ -247,56 +255,24 @@ schema.statics.rmAll = () => {
 
 /* ********************************************************************************
  *
+ * UPDATE BY PATH
+ *
+ **********************************************************************************/
+
+const PATH_CONTEXT = {
+  'notes': {type: 'vector-add', values: []},
+  'notes.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
+  'notes.([0-9]{1,3}).text': {type: 'scalar', values: []}
+};
+
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+
+/* ********************************************************************************
+ *
  * METHODS
  *
  **********************************************************************************/
-/**
- * @param {Object} body - body passed through from a POST request to be validated
- * @return {Object} - returns an object with validation context
- */
-schema.statics.validateUpdate = body => {
-  let res = {
-    isValid: false,
-    isMissingRequired: true,
-    missingRequired: '',
-    isPathValid: false,
-    invalidPath: '',
-    isValueValid: false,
-    invalidValue: ''
-  };
-
-  console.log(body);
-
-  if (!body.path) {
-    res.missingRequired = 'path';
-    return res;
-  }
-  if (!body.value) {
-    res.missingRequired = 'value';
-    return res;
-  }
-
-  res.missingRequired = false;
-  if (body.path !== 'read') {
-    res.invalidPath = `${body.path} <> read`;
-    return res;
-  }
-
-  res.isPathValid = true;
-  if (body.value !== true && body.value !== false) {
-    res.invalidValue = `${body.value} <> true|false`;
-    return res;
-  }
-
-  res.isValueValid = true;
-  res.isValid = true;
-  return res;
-};
-
-schema.methods.update = function(body) {
-  this[body.path] = body.value;
-  return this.save().then(() => true);
-};
 
 /**
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
@@ -305,7 +281,18 @@ schema.methods.rm = function() {
   return ModelDef.remove({_id: this._id});
 };
 
-ModelDef = mongoose.model('Notification', schema);
+/* ********************************************************************************
+ *
+ * METADATA
+ *
+ **********************************************************************************/
+
+schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
+schema.methods.findMetadata = Shared.findMetadata;
+schema.methods.rmMetadata = Shared.rmMetadata;
+
+
+ModelDef = mongoose.model('Opportunity', schema);
 
 module.exports.constants = constants;
 module.exports.schema = schema;

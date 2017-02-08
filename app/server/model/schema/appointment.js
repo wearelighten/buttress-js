@@ -14,6 +14,7 @@
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
+const Shared = require('../shared');
 
 /* ********************************************************************************
  *
@@ -85,7 +86,14 @@ schema.add({
   reason: {
     type: String
   },
-  metadata: [{key: String, value: String}]
+  metadata: [{key: String, value: String}],
+  notes: [{
+    text: String,
+    timestamp: {
+      type: Date,
+      default: Date.create
+    }
+  }]
 });
 
 /* ********************************************************************************
@@ -103,7 +111,8 @@ schema.virtual('details').get(function() {
     contact: this.contact,
     date: this.date,
     outcome: this.outcome,
-    reason: this.reason
+    reason: this.reason,
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
   };
 });
 
@@ -140,11 +149,11 @@ const __doValidation = body => {
     return res;
   }
   if (!body.contact.name) {
-    res.missing.push('companyId');
+    res.missing.push('contact.name');
     return res;
   }
-  if (!body.contact.email) {
-    res.missing.push('email');
+  if (!body.contact.email && !body.contact.landline && !body.contact.mobile) {
+    res.missing.push('contact.details');
     return res;
   }
   if (!body.date) {
@@ -213,86 +222,28 @@ schema.statics.rmAll = () => {
 
 /* ********************************************************************************
  *
- * METHODS
+ * UPDATE BY PATH
  *
  **********************************************************************************/
 
-/**
- * @param {Object} body - body passed through from a POST request to be validated
- * @return {Object} - returns an object with validation context
- */
-let _doValidateUpdate = body => {
-  Logging.logDebug(`_doValidateUpdate: path: ${body.path}, value: ${body.value}`);
-  let res = {
-    isValid: false,
-    isMissingRequired: true,
-    missingRequired: '',
-    isPathValid: false,
-    invalidPath: '',
-    isValueValid: false,
-    invalidValid: ''
-  };
-
-  if (!body.path) {
-    res.missingRequired = 'path';
-    return res;
-  }
-  if (!body.value) {
-    res.missingRequired = 'path';
-    return res;
-  }
-
-  res.missingRequired = false;
-  const validPaths = {
-    'outcome': [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL],
-    'reason': [],
-    'contact.name': [],
-    'contact.email': []
-  };
-  if (!validPaths[body.path]) {
-    res.invalidPath = `${body.path} <> ${Object.getOwnPropertyNames(validPaths)}`;
-    return res;
-  }
-
-  res.isPathValid = true;
-  if (validPaths[body.path].length > 0 && validPaths[body.path].indexOf(body.value) === -1) {
-    res.invalidValue = `${body.value} <> ${validPaths[body.path]}`;
-    return res;
-  }
-
-  res.isValueValid = true;
-  res.isValid = true;
-  return res;
+const PATH_CONTEXT = {
+  'outcome': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL]},
+  'reason': {type: 'scalar', values: []},
+  'contact.name': {type: 'scalar', values: []},
+  'contact.email': {type: 'scalar', values: []},
+  'notes': {type: 'vector-add', values: []},
+  'notes.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
+  'notes.([0-9]{1,3}).text': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = body => {
-  Logging.logDebug(body instanceof Array);
-  if (body instanceof Array === false) {
-    body = [body];
-  }
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
 
-  let validation = body.map(_doValidateUpdate).filter(v => v.isValid === false);
-
-  return validation.length >= 1 ? validation[0] : {isValid: true};
-};
-
-let _doUpdate = (appointment, body) => {
-  return prev => {
-    appointment.set(body.path, body.value);
-    return appointment.save().then(() => prev.concat([true]));
-  };
-};
-
-schema.methods.updateByPath = function(body) {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-  return body.reduce((promise, update) => {
-    return promise
-      .then(_doUpdate(this, update))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
-};
+/* ********************************************************************************
+ *
+ * METHODS
+ *
+ **********************************************************************************/
 
 /**
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
@@ -307,46 +258,9 @@ schema.methods.rm = function() {
  *
  **********************************************************************************/
 
-/**
- * @param {string} key - index name of the metadata
- * @param {*} value - value of the meta data
- * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
- */
-schema.methods.addOrUpdateMetadata = function(key, value) {
-  Logging.log(key, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(value, Logging.Constants.LogLevel.DEBUG);
-
-  let exists = this.metadata.find(m => m.key === key);
-  if (exists) {
-    exists.value = value;
-  } else {
-    this.metadata.push({key: key, value: value});
-  }
-
-  return this.save().then(u => ({key: key, value: JSON.parse(value)}));
-};
-
-schema.methods.findMetadata = function(key) {
-  if (!key) {
-    return this.metadata.reduce((prev, m) => {
-      prev[m.key] = JSON.parse(m.value);
-      return prev;
-    }, {});
-  }
-  Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-  Logging.logDebug(this.metadata.map(m => ({key: m.key, value: m.value})));
-  let md = this.metadata.find(m => m.key === key);
-  return md ? {key: md.key, value: JSON.parse(md.value)} : false;
-};
-
-schema.methods.rmMetadata = function(key) {
-  Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-
-  // return Promise.resolve(true);
-  return this
-    .update({$pull: {metadata: {key: key}}})
-    .then(res => res.nModified !== 0);
-};
+schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
+schema.methods.findMetadata = Shared.findMetadata;
+schema.methods.rmMetadata = Shared.rmMetadata;
 
 /* ********************************************************************************
  *

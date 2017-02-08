@@ -129,6 +129,56 @@ class AddContactlist extends Route {
 routes.push(AddContactlist);
 
 /**
+ * @class UpdateContactList
+ */
+class UpdateContactList extends Route {
+  constructor() {
+    super('contact-list/:id', 'UPDATE CONTACT LIST');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.WRITE;
+    this._contactList = null;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      let validation = Model.Contactlist.validateUpdate(this.req.body);
+      if (!validation.isValid) {
+        if (validation.isPathValid === false) {
+          this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CONTACT LIST: Update path is invalid: ${validation.invalidPath}`});
+          return;
+        }
+        if (validation.isValueValid === false) {
+          this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CONTACT LIST: Update value is invalid: ${validation.invalidValue}`});
+          return;
+        }
+      }
+
+      Model.Contactlist.findById(this.req.params.id)
+        .then(contactList => {
+          if (!contactList) {
+            this.log('ERROR: Invalid Contact List ID', Route.LogLevel.ERR);
+            reject({statusCode: 400});
+            return;
+          }
+          this._contactList = contactList;
+          resolve(true);
+        });
+    });
+  }
+
+  _exec() {
+    return this._contactList.updateByPath(this.req.body);
+  }
+}
+routes.push(UpdateContactList);
+
+/**
  * @class DeleteContactlist
  */
 class DeleteContactlist extends Route {
@@ -326,32 +376,47 @@ class UpdateContactListMetadata extends Route {
 routes.push(UpdateContactListMetadata);
 
 /**
- * @class GetContactListMetadata
+ * @class GetMetadata
  */
-class GetContactListMetadata extends Route {
+class GetMetadata extends Route {
   constructor() {
-    super('contact-list/:id/metadata/:key', 'GET CONTACT LIST METADATA');
+    super('contact-list/:id/metadata/:key?', 'GET CONTACT LIST METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
 
-    this._metadata = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.ContactList.findById(this.req.params.id).then(contactList => {
+      this._metadata = null;
+      this._allMetadata = null;
+
+      Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
+      Model.Contactlist.findById(this.req.params.id).then(contactList => {
         if (!contactList) {
-          this.log('ERROR: Invalid ContactList ID', Route.LogLevel.ERR);
+          this.log('ERROR: Invalid Contact List ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-
-        this._metadata = contactList.findMetadata(this.req.params.key);
-        if (this._metadata === false) {
-          this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
-          reject({statusCode: 404});
+        if (`${contactList._app}` !== `${this.req.authApp._id}`) {
+          this.log('ERROR: Not authorised', Route.LogLevel.ERR);
+          reject({statusCode: 401});
           return;
+        }
+        // Logging.log(this._metadata.value, Route.LogLevel.INFO);
+        if (this.req.params.key) {
+          this._metadata = contactList.findMetadata(this.req.params.key);
+          if (this._metadata === false) {
+            this.log('WARN: Contact List Metadata Not Found', Route.LogLevel.ERR);
+            reject({statusCode: 404});
+            return;
+          }
+        } else {
+          this._allMetadata = contactList.metadata.reduce((prev, curr) => {
+            prev[curr.key] = JSON.parse(curr.value);
+            return prev;
+          }, {});
         }
 
         resolve(true);
@@ -360,10 +425,10 @@ class GetContactListMetadata extends Route {
   }
 
   _exec() {
-    return this._metadata.value;
+    return this._metadata ? this._metadata.value : this._allMetadata;
   }
 }
-routes.push(GetContactListMetadata);
+routes.push(GetMetadata);
 
 /**
  * @class DeleteContactListMetadata

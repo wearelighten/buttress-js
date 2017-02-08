@@ -215,29 +215,79 @@ class UpdateCompany extends Route {
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
     this._company = null;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Company.findById(this.req.params.id)
-      .then(company => {
-        if (!company) {
-          this.log('ERROR: Invalid Company ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
+      let validation = Model.Company.validateUpdate(this.req.body);
+      if (!validation.isValid) {
+        if (validation.isPathValid === false) {
+          this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `COMPANY: Update path is invalid: ${validation.invalidPath}`});
           return;
         }
-        this._company = company;
-        resolve(true);
-      });
+        if (validation.isValueValid === false) {
+          this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `COMPANY: Update value is invalid: ${validation.invalidValue}`});
+          return;
+        }
+      }
+
+      Model.Company.findById(this.req.params.id)
+        .then(company => {
+          if (!company) {
+            this.log('ERROR: Invalid Company ID', Route.LogLevel.ERR);
+            reject({statusCode: 400});
+            return;
+          }
+          this._company = company;
+          resolve(true);
+        });
     });
   }
 
   _exec() {
-    return this._company.updateByObject(this.req.body)
-        .then(Helpers.Promise.prop('details'));
+    return this._company.updateByPath(this.req.body);
   }
 }
 routes.push(UpdateCompany);
+
+/**
+ * @class UpdateCompany
+ */
+// class UpdateCompany extends Route {
+//   constructor() {
+//     super('company/:id', 'UPDATE COMPANY');
+//     this.verb = Route.Constants.Verbs.PUT;
+//     this.auth = Route.Constants.Auth.ADMIN;
+//     this.permissions = Route.Constants.Permissions.WRITE;
+//     this._company = null;
+//   }
+//
+//   _validate() {
+//     return new Promise((resolve, reject) => {
+//       Model.Company.findById(this.req.params.id)
+//       .then(company => {
+//         if (!company) {
+//           this.log('ERROR: Invalid Company ID', Route.LogLevel.ERR);
+//           reject({statusCode: 400});
+//           return;
+//         }
+//         this._company = company;
+//         resolve(true);
+//       });
+//     });
+//   }
+//
+//   _exec() {
+//     return this._company.updateByObject(this.req.body)
+//         .then(Helpers.Promise.prop('details'));
+//   }
+// }
+// routes.push(UpdateCompany);
 
 /**
  * @class DeleteCompany
@@ -397,7 +447,10 @@ class GetMetadata extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.SILLY);
+      this._metadata = null;
+      this._allMetadata = null;
+
+      Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
       Model.Company.findById(this.req.params.id).then(company => {
         if (!company) {
           this.log('ERROR: Invalid Company ID', Route.LogLevel.ERR);
@@ -409,11 +462,19 @@ class GetMetadata extends Route {
           reject({statusCode: 401});
           return;
         }
-        this._metadata = company.findMetadata(this.req.params.key);
-        if (this._metadata === false) {
-          this.log('WARN: Company Metadata Not Found', Route.LogLevel.ERR);
-          reject({statusCode: 404});
-          return;
+        // Logging.log(this._metadata.value, Route.LogLevel.INFO);
+        if (this.req.params.key) {
+          this._metadata = company.findMetadata(this.req.params.key);
+          if (this._metadata === false) {
+            this.log('WARN: Company Metadata Not Found', Route.LogLevel.ERR);
+            reject({statusCode: 404});
+            return;
+          }
+        } else {
+          this._allMetadata = company.metadata.reduce((prev, curr) => {
+            prev[curr.key] = JSON.parse(curr.value);
+            return prev;
+          }, {});
         }
 
         resolve(true);
@@ -422,7 +483,7 @@ class GetMetadata extends Route {
   }
 
   _exec() {
-    return this._metadata.value ? this._metadata.value : this._metadata;
+    return this._metadata ? this._metadata.value : this._allMetadata;
   }
 }
 routes.push(GetMetadata);

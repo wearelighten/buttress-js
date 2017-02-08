@@ -115,6 +115,9 @@ class UpdateAppointment extends Route {
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
     this._appointment = null;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
   }
 
   _validate() {
@@ -264,11 +267,13 @@ class GetMetadata extends Route {
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
 
-    this._metadata = null;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
+      this._metadata = null;
+      this._allMetadata = null;
+
       Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
       Model.Appointment.findById(this.req.params.id).then(appointment => {
         if (!appointment) {
@@ -281,11 +286,19 @@ class GetMetadata extends Route {
           reject({statusCode: 401});
           return;
         }
-        this._metadata = appointment.findMetadata(this.req.params.key);
-        if (this._metadata === false) {
-          this.log('WARN: Appointment Metadata Not Found', Route.LogLevel.ERR);
-          reject({statusCode: 404});
-          return;
+        // Logging.log(this._metadata.value, Route.LogLevel.INFO);
+        if (this.req.params.key) {
+          this._metadata = appointment.findMetadata(this.req.params.key);
+          if (this._metadata === false) {
+            this.log('WARN: Appointment Metadata Not Found', Route.LogLevel.ERR);
+            reject({statusCode: 404});
+            return;
+          }
+        } else {
+          this._allMetadata = appointment.metadata.reduce((prev, curr) => {
+            prev[curr.key] = JSON.parse(curr.value);
+            return prev;
+            }, {});
         }
 
         resolve(true);
@@ -294,7 +307,7 @@ class GetMetadata extends Route {
   }
 
   _exec() {
-    return this._metadata.value ? this._metadata.value : this._metadata;
+    return this._metadata ? this._metadata.value : this._allMetadata;
   }
 }
 routes.push(GetMetadata);

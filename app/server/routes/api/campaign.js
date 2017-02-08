@@ -151,6 +151,56 @@ class AddCampaign extends Route {
 routes.push(AddCampaign);
 
 /**
+ * @class UpdateCampaign
+ */
+class UpdateCampaign extends Route {
+  constructor() {
+    super('campaign/:id', 'UPDATE CAMPAIGN');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.WRITE;
+    this._campaign = null;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      let validation = Model.Campaign.validateUpdate(this.req.body);
+      if (!validation.isValid) {
+        if (validation.isPathValid === false) {
+          this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CAMPAIGN: Update path is invalid: ${validation.invalidPath}`});
+          return;
+        }
+        if (validation.isValueValid === false) {
+          this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CAMPAIGN: Update value is invalid: ${validation.invalidValue}`});
+          return;
+        }
+      }
+
+      Model.Campaign.findById(this.req.params.id)
+        .then(campaign => {
+          if (!campaign) {
+            this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
+            reject({statusCode: 400});
+            return;
+          }
+          this._campaign = campaign;
+          resolve(true);
+        });
+    });
+  }
+
+  _exec() {
+    return this._campaign.updateByPath(this.req.body);
+  }
+}
+routes.push(UpdateCampaign);
+
+/**
  * @class AddContactlist
  */
 class AddContactlist extends Route {
@@ -525,32 +575,47 @@ class UpdateCampaignMetadata extends Route {
 routes.push(UpdateCampaignMetadata);
 
 /**
- * @class GetCampaignMetadata
+ * @class GetMetadata
  */
-class GetCampaignMetadata extends Route {
+class GetMetadata extends Route {
   constructor() {
-    super('campaign/:id/metadata/:key', 'GET CAMPAIGN METADATA');
+    super('campaign/:id/metadata/:key?', 'GET CAMPAIGN METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
 
-    this._metadata = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
+      this._metadata = null;
+      this._allMetadata = null;
+
+      Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
       Model.Campaign.findById(this.req.params.id).then(campaign => {
         if (!campaign) {
           this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-
-        this._metadata = campaign.findMetadata(this.req.params.key);
-        if (this._metadata === false) {
-          this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
-          reject({statusCode: 404});
+        if (`${campaign._app}` !== `${this.req.authApp._id}`) {
+          this.log('ERROR: Not authorised', Route.LogLevel.ERR);
+          reject({statusCode: 401});
           return;
+        }
+        // Logging.log(this._metadata.value, Route.LogLevel.INFO);
+        if (this.req.params.key) {
+          this._metadata = campaign.findMetadata(this.req.params.key);
+          if (this._metadata === false) {
+            this.log('WARN: Campaign Metadata Not Found', Route.LogLevel.ERR);
+            reject({statusCode: 404});
+            return;
+          }
+        } else {
+          this._allMetadata = campaign.metadata.reduce((prev, curr) => {
+            prev[curr.key] = JSON.parse(curr.value);
+            return prev;
+          }, {});
         }
 
         resolve(true);
@@ -559,10 +624,10 @@ class GetCampaignMetadata extends Route {
   }
 
   _exec() {
-    return this._metadata.value;
+    return this._metadata ? this._metadata.value : this._allMetadata;
   }
 }
-routes.push(GetCampaignMetadata);
+routes.push(GetMetadata);
 
 /**
  * @class DeleteCampaignMetadata

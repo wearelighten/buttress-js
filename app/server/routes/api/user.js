@@ -487,32 +487,46 @@ class UpdateUserMetadata extends Route {
 routes.push(UpdateUserMetadata);
 
 /**
- * @class GetUserMetadata
+ * @class GetMetadata
  */
-class GetUserMetadata extends Route {
+class GetMetadata extends Route {
   constructor() {
-    super('user/:id/metadata/:key', 'GET USER METADATA');
+    super('user/:id/metadata/:key?', 'GET USER METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
-
-    this._metadata = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
+      this._metadata = null;
+      this._allMetadata = null;
+
+      Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
       Model.User.findById(this.req.params.id).then(user => {
         if (!user) {
           this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-
-        this._metadata = user.findMetadata(this.req.params.key);
-        if (this._metadata === false) {
-          this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
-          reject({statusCode: 404});
+        if (`${user._app}` !== `${this.req.authApp._id}`) {
+          this.log('ERROR: Not authorised', Route.LogLevel.ERR);
+          reject({statusCode: 401});
           return;
+        }
+        // Logging.log(this._metadata.value, Route.LogLevel.INFO);
+        if (this.req.params.key) {
+          this._metadata = user.findMetadata(this.req.params.key);
+          if (this._metadata === false) {
+            this.log('WARN: User Metadata Not Found', Route.LogLevel.ERR);
+            reject({statusCode: 404});
+            return;
+          }
+        } else {
+          this._allMetadata = user.metadata.reduce((prev, curr) => {
+            prev[curr.key] = JSON.parse(curr.value);
+            return prev;
+          }, {});
         }
 
         resolve(true);
@@ -521,10 +535,10 @@ class GetUserMetadata extends Route {
   }
 
   _exec() {
-    return this._metadata.value;
+    return this._metadata ? this._metadata.value : this._allMetadata;
   }
 }
-routes.push(GetUserMetadata);
+routes.push(GetMetadata);
 
 /**
  * @type {*[]}

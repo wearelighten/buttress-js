@@ -14,6 +14,7 @@
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
+const Shared = require('../shared');
 
 /* ********************************************************************************
  *
@@ -160,7 +161,7 @@ schema.virtual('details').get(function() {
     personId: this._person && this._person._id ? this._person._id : this._person,
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
     connections: this.connections,
-    notes: this.notes
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
   };
 });
 
@@ -251,89 +252,23 @@ schema.statics.rmAll = () => {
  *
  **********************************************************************************/
 
-/**
- * @param {Object} body - body passed through from a POST request to be validated
- * @return {Object} - returns an object with validation context
- */
-let _doValidateUpdate = body => {
-  Logging.logDebug(`_doValidateUpdate: path: ${body.path}, value: ${body.value}`);
-  let res = {
-    isValid: false,
-    isMissingRequired: true,
-    missingRequired: '',
-    isPathValid: false,
-    invalidPath: '',
-    isValueValid: false,
-    invalidValid: ''
-  };
+/* ********************************************************************************
+ *
+ * UPDATE BY PATH
+ *
+ **********************************************************************************/
 
-  if (!body.path) {
-    res.missingRequired = 'path';
-    return res;
-  }
-  if (!body.value) {
-    res.missingRequired = 'value';
-    return res;
-  }
-
-  res.missingRequired = false;
-  const validPaths = {
-    'status': status,
-    'connections': [],
-    'notes.([0-9]{1,3}).text': [],
-    'notes': [],
-    'outcome': outcome
-  };
-  if (!validPaths[body.path]) {
-    res.invalidPath = `${body.path} <> ${Object.getOwnPropertyNames(validPaths).join('|')}`;
-    return res;
-  }
-
-  res.isPathValid = true;
-  if (validPaths[body.path].length > 0 && validPaths[body.path].indexOf(body.value) === -1) {
-    res.invalidValue = `${body.value} <> ${validPaths[body.path]}`;
-    return res;
-  }
-
-  res.isValueValid = true;
-  res.isValid = true;
-  return res;
+const PATH_CONTEXT = {
+  'status': {type: 'scalar', values: status},
+  'outcome': {type: 'scalar', values: outcome},
+  'connections': {type: 'vector-add', values: []},
+  'notes': {type: 'vector-add', values: []},
+  'notes.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
+  'notes.([0-9]{1,3}).text': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = body => {
-  Logging.logDebug(body instanceof Array);
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-
-  let validation = body.map(_doValidateUpdate).filter(v => v.isValid === false);
-
-  return validation.length >= 1 ? validation[0] : {isValid: true};
-};
-
-let _doUpdate = (appointment, body) => {
-  return prev => {
-    if (body.path === 'notes') {
-      appointment.notes.push(body.value);
-    } else if (body.path === 'connections') {
-      appointment.connections.push(body.value);
-    } else {
-      appointment.set(body.path, body.value);
-    }
-    return appointment.save().then(() => prev.concat([true]));
-  };
-};
-
-schema.methods.updateByPath = function(body) {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-  return body.reduce((promise, update) => {
-    return promise
-      .then(_doUpdate(this, update))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
-};
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
 
 /**
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
@@ -342,46 +277,16 @@ schema.methods.rm = function() {
   return ModelDef.remove({_id: this._id});
 };
 
+
 /* ********************************************************************************
  *
  * METADATA
  *
  **********************************************************************************/
 
-/**
- * @param {string} key - index name of the metadata
- * @param {*} value - value of the meta data
- * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
- */
-schema.methods.addOrUpdateMetadata = function(key, value) {
-  Logging.log(key, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(value, Logging.Constants.LogLevel.DEBUG);
-
-  let exists = this.metadata.find(m => m.key === key);
-  if (exists) {
-    exists.value = value;
-  } else {
-    this.metadata.push({key: key, value: value});
-  }
-
-  return this.save().then(u => ({key: key, value: JSON.parse(value)}));
-};
-
-schema.methods.findMetadata = function(key) {
-  Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-  Logging.log(this.metadata.map(m => ({key: m.key, value: m.value})),
-    Logging.Constants.LogLevel.DEBUG);
-  let md = this.metadata.find(m => m.key === key);
-  return md ? {key: md.key, value: JSON.parse(md.value)} : false;
-};
-
-schema.methods.rmMetadata = function(key) {
-  Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-
-  return this
-    .update({$pull: {metadata: {key: key}}})
-    .then(res => res.nModified !== 0);
-};
+schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
+schema.methods.findMetadata = Shared.findMetadata;
+schema.methods.rmMetadata = Shared.rmMetadata;
 
 ModelDef = mongoose.model('Call', schema);
 
