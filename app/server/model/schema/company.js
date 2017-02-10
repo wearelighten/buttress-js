@@ -387,7 +387,6 @@ schema.statics.findAllById = ids => {
   return ModelDef.find({_id: {$in: ids}, _app: Model.authApp._id});
 };
 
-
 /* ********************************************************************************
  *
  * METADATA
@@ -397,7 +396,6 @@ schema.statics.findAllById = ids => {
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
-
 
 /* ********************************************************************************
  *

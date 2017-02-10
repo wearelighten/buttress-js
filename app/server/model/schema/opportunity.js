@@ -291,10 +291,14 @@ schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
 
+/* ********************************************************************************
+ *
+ * EXPORTS
+ *
+ **********************************************************************************/
 
 ModelDef = mongoose.model('Opportunity', schema);
 
 module.exports.constants = constants;
 module.exports.schema = schema;
 module.exports.model = ModelDef;
-

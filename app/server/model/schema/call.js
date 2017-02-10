@@ -277,7 +277,6 @@ schema.methods.rm = function() {
   return ModelDef.remove({_id: this._id});
 };
 
-
 /* ********************************************************************************
  *
  * METADATA

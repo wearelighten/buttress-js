@@ -384,7 +384,6 @@ class GetMetadata extends Route {
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
-
   }
 
   _validate() {
@@ -392,7 +391,7 @@ class GetMetadata extends Route {
       this._metadata = null;
       this._allMetadata = null;
 
-      Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
+      this.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
       Model.Contactlist.findById(this.req.params.id).then(contactList => {
         if (!contactList) {
           this.log('ERROR: Invalid Contact List ID', Route.LogLevel.ERR);

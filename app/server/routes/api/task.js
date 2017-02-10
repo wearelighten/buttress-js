@@ -269,7 +269,6 @@ class GetMetadata extends Route {
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
-
   }
 
   _validate() {

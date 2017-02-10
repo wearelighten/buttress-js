@@ -267,7 +267,6 @@ const PATH_CONTEXT = {
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
 schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
 
-
 /* ********************************************************************************
  *
  * METHODS

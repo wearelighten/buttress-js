@@ -266,7 +266,6 @@ class GetMetadata extends Route {
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
-
   }
 
   _validate() {
@@ -298,7 +297,7 @@ class GetMetadata extends Route {
           this._allMetadata = appointment.metadata.reduce((prev, curr) => {
             prev[curr.key] = JSON.parse(curr.value);
             return prev;
-            }, {});
+          }, {});
         }
 
         resolve(true);
