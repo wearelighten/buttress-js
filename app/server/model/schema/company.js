@@ -16,6 +16,7 @@ const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
 const humanname = require('humanname');
+const addressit = require('addressit');
 
 const schema = new mongoose.Schema();
 let ModelDef = null;
@@ -110,7 +111,11 @@ schema.add({
     url: String
   }],
   primaryLocation: Number,
-  locations: [Model.Schema.Location],
+  locations: [{
+    name: String,
+    address: String,
+    phoneNumber: String
+  }],
   primaryContact: Number,
   contacts: [{
     name: String,
@@ -203,11 +208,11 @@ schema.statics.validate = body => {
 const __addCompany = body => {
   return prev => {
     // Logging.logDebug(body);
-    const loc = new Model.Location({
-      name: body.location.name,
-      address: Model.Address.create(body.location.address),
-      phoneNumber: body.location.phoneNumber
-    });
+    // const loc = new Model.Location({
+    //   name: body.location.name,
+    //   address: Model.Address.create(body.location.address),
+    //   phoneNumber: body.location.phoneNumber
+    // });
 
     // Logging.logDebug(loc.address.details);
 
@@ -223,7 +228,7 @@ const __addCompany = body => {
       subsector: body.subsector,
       website: body.website,
       primaryLocation: 0,
-      locations: [loc],
+      locations: [body.location],
       primaryContact: 0,
       contacts: [body.contact],
       _app: Model.authApp._id
@@ -266,6 +271,27 @@ schema.statics.add = body => {
 schema.virtual('details').get(function() {
   // Logging.logDebug(this.locations[this.primaryLocation].details);
 
+  const _locations = this.locations.map(l => {
+    const _address = addressit(l.address, {locale: 'en-GB'});
+    const regions = _address.regions;
+    Logging.log(l.address, Logging.Constants.LogLevel.INFO);
+    Logging.log(_address, Logging.Constants.LogLevel.INFO);
+    return {
+      name: l.name,
+      phoneNumber: l.phoneNumber,
+      address: {
+        full: l.address,
+        unit: _address.unit,
+        number: _address.number,
+        street: _address.street,
+        town: regions.length >= 2 ? regions.shift() : '',
+        city: regions.length >= 1 ? regions.shift() : '',
+        county: _address.state,
+        postcode: _address.postalcode
+      }
+    };
+  });
+
   const _contacts = this.contacts.map(c => {
     const name = humanname.parse(c.name);
     const formalName =
@@ -294,12 +320,11 @@ schema.virtual('details').get(function() {
     turnoverBand: this.turnoverBand,
     sector: this.sector,
     subsector: this.subsector,
-    locations: this.locations.map(l => l.details),
+    locations: _locations,
     contacts: _contacts,
-    primaryLocation: this.locations[this.primaryLocation].details,
+    primaryLocation: _locations[this.primaryLocation],
     primaryContact: _contacts[this.primaryContact],
     website: this.website,
-    metadata: this.metadata ? this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})) : [],
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
   };
 });
@@ -353,7 +378,7 @@ const PATH_CONTEXT = {
   'contacts.([0-9]{1,3}).(email|landline|mobile|role|name|linkedInProfile|twitterProfile)': {type: 'scalar', values: []},
   'locations': {type: 'vector-add', values: []},
   'locations.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
-  'locations.([0-9]{1,3}).text': {type: 'scalar', values: []}
+  'locations.([0-9]{1,3}).(name|phoneNumber|address)': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);

@@ -99,6 +99,7 @@ let _doUpdate = (entity, body, pathContext) => {
         const index = params.pop();
         const vector = entity.get(params.join('.'));
         vector.splice(index, 1);
+        body.path = params.join('.');
         response = {numRemoved: 1, index: index};
       } break;
       case 'scalar': {
