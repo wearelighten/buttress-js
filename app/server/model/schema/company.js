@@ -15,6 +15,7 @@ const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
+const humanname = require('humanname');
 
 const schema = new mongoose.Schema();
 let ModelDef = null;
@@ -111,7 +112,15 @@ schema.add({
   primaryLocation: Number,
   locations: [Model.Schema.Location],
   primaryContact: Number,
-  contacts: [Model.Schema.Contact],
+  contacts: [{
+    name: String,
+    role: String,
+    email: String,
+    mobile: String,
+    landline: String,
+    linkedInProfile: String,
+    twitterProfile: String
+  }],
   _app: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Application'
@@ -170,6 +179,10 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('contact.name');
   }
+  if (!body.contact.role) {
+    res.isValid = false;
+    res.missing.push('contact.role');
+  }
 
   return res;
 };
@@ -198,7 +211,7 @@ const __addCompany = body => {
 
     // Logging.logDebug(loc.address.details);
 
-    const contact = Model.Contact.create(body.contact);
+    // const contact = Model.Contact.create(body.contact);
 
     const company = new ModelDef({
       name: body.name,
@@ -212,7 +225,7 @@ const __addCompany = body => {
       primaryLocation: 0,
       locations: [loc],
       primaryContact: 0,
-      contacts: [contact],
+      contacts: [body.contact],
       _app: Model.authApp._id
     });
 
@@ -252,6 +265,27 @@ schema.statics.add = body => {
 
 schema.virtual('details').get(function() {
   // Logging.logDebug(this.locations[this.primaryLocation].details);
+
+  const _contacts = this.contacts.map(c => {
+    const name = humanname.parse(c.name);
+    const formalName =
+      `${name.title ? name.title + ' ' : ''}${name.firstName} ${name.initials ? name.initials + ' ' : ''}${name.lastName}`;
+    return {
+      name: {
+        full: c.name,
+        formal: formalName,
+        title: name.title,
+        forename: name.firstName,
+        initials: name.initials,
+        surname: name.lastName,
+        suffix: name.suffix
+      },
+      role: c.role,
+      email: c.email,
+      landline: c.landline,
+      mobile: c.mobile
+    };
+  });
   return {
     id: this._id,
     name: this.name,
@@ -261,9 +295,9 @@ schema.virtual('details').get(function() {
     sector: this.sector,
     subsector: this.subsector,
     locations: this.locations.map(l => l.details),
-    contacts: this.contacts.map(c => c.details),
+    contacts: _contacts,
     primaryLocation: this.locations[this.primaryLocation].details,
-    primaryContact: this.contacts[this.primaryContact].details,
+    primaryContact: _contacts[this.primaryContact],
     website: this.website,
     metadata: this.metadata ? this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})) : [],
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
@@ -316,7 +350,7 @@ const PATH_CONTEXT = {
   'notes.([0-9]{1,3}).text': {type: 'scalar', values: []},
   'contacts': {type: 'vector-add', values: []},
   'contacts.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
-  'contacts.([0-9]{1,3}).text': {type: 'scalar', values: []},
+  'contacts.([0-9]{1,3}).(email|landline|mobile|role|name|linkedInProfile|twitterProfile)': {type: 'scalar', values: []},
   'locations': {type: 'vector-add', values: []},
   'locations.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
   'locations.([0-9]{1,3}).text': {type: 'scalar', values: []}
