@@ -318,7 +318,7 @@ schema.virtual('details').get(function() {
       name: c.name,
       role: c.role,
       email: c.email,
-      landline: c.landline,
+      directDial: c.directDial,
       mobile: c.mobile
     };
   });
@@ -381,9 +381,11 @@ schema.methods.updateByObject = function(body) {
 
 const PATH_CONTEXT = {
   '^notes$': {type: 'vector-add', values: []},
+  '^notes.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
   '^contacts$': {type: 'vector-add', values: []},
+  '^contacts.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^contacts.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
   '^contacts.([0-9]{1,3}).(email|directDial|mobile|role|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []},
   '^locations$': {type: 'vector-add', values: []},
