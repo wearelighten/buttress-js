@@ -199,7 +199,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  read: {type: 'scalar', values: [true, false]}
+  '^read$': {type: 'scalar', values: [true, false]}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);

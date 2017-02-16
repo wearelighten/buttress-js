@@ -227,13 +227,13 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  'outcome': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL]},
-  'reason': {type: 'scalar', values: []},
-  'contact.name': {type: 'scalar', values: []},
-  'contact.email': {type: 'scalar', values: []},
-  'notes': {type: 'vector-add', values: []},
-  'notes.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
-  'notes.([0-9]{1,3}).text': {type: 'scalar', values: []}
+  '^outcome$': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL]},
+  '^reason$': {type: 'scalar', values: []},
+  '^contact.name$': {type: 'scalar', values: []},
+  '^contact.email$': {type: 'scalar', values: []},
+  '^notes$': {type: 'vector-add', values: []},
+  '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: ['']},
+  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);

@@ -259,12 +259,12 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  'status': {type: 'scalar', values: status},
-  'outcome': {type: 'scalar', values: outcome},
-  'connections': {type: 'vector-add', values: []},
-  'notes': {type: 'vector-add', values: []},
-  'notes.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
-  'notes.([0-9]{1,3}).text': {type: 'scalar', values: []}
+  '^status$': {type: 'scalar', values: status},
+  '^outcome$': {type: 'scalar', values: outcome},
+  '^connections$': {type: 'vector-add', values: []},
+  '^notes$': {type: 'vector-add', values: []},
+  '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);

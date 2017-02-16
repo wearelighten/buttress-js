@@ -40,8 +40,8 @@ let _doValidateUpdate = function(pathContext) {
       res.missingRequired = 'path';
       return res;
     }
-    if (!body.value) {
-      res.missingRequired = 'path';
+    if (body.value === undefined) {
+      res.missingRequired = 'value';
       return res;
     }
 
@@ -55,9 +55,13 @@ let _doValidateUpdate = function(pathContext) {
       }
 
       const rex = new RegExp(pathSpec);
-      if (rex.test(body.path)) {
+      let matches = rex.exec(body.path);
+      if (matches) {
+        matches.splice(0, 1);
         validPath = true;
         body.contextPath = pathSpec;
+        body.contextParams = matches;
+        break;
       }
     }
 
@@ -81,8 +85,8 @@ let _doValidateUpdate = function(pathContext) {
 
 let _doUpdate = (entity, body, pathContext) => {
   return prev => {
-    let context = pathContext[body.contextPath];
-    let updateType = context.type;
+    const context = pathContext[body.contextPath];
+    const updateType = context.type;
     let response = null;
 
     switch (updateType) {
@@ -96,6 +100,7 @@ let _doUpdate = (entity, body, pathContext) => {
       } break;
       case 'vector-rm': {
         const params = body.path.split('.');
+        params.splice(-1, 1);
         const index = params.pop();
         const vector = entity.get(params.join('.'));
         vector.splice(index, 1);
@@ -103,7 +108,19 @@ let _doUpdate = (entity, body, pathContext) => {
         response = {numRemoved: 1, index: index};
       } break;
       case 'scalar': {
-        entity.set(body.path, body.value);
+        if (body.value instanceof Object) {
+          for (let field in body.value) {
+            if (!Object.prototype.hasOwnProperty.call(body.value, field)) {
+              continue;
+            }
+
+            Logging.logDebug(`${body.path}.${field} = ${body.value[field]}`);
+            entity.set(`${body.path}.${field}`, body.value[field]);
+          }
+        } else {
+          entity.set(body.path, body.value);
+        }
+
         response = entity.get(body.path);
       } break;
 

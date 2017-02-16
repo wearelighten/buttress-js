@@ -16,7 +16,7 @@ const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
 const humanname = require('humanname');
-const addressit = require('addressit');
+// const addressit = require('addressit');
 
 const schema = new mongoose.Schema();
 let ModelDef = null;
@@ -114,6 +114,8 @@ schema.add({
   locations: [{
     name: String,
     address: String,
+    city: String,
+    postCode: String,
     phoneNumber: String
   }],
   primaryContact: Number,
@@ -122,7 +124,7 @@ schema.add({
     role: String,
     email: String,
     mobile: String,
-    landline: String,
+    directDial: String,
     linkedInProfile: String,
     twitterProfile: String
   }],
@@ -171,6 +173,10 @@ const __doValidation = body => {
   if (!body.location.address) {
     res.isValid = false;
     res.missing.push('location.address');
+  }
+  if (!body.location.postCode) {
+    res.isValid = false;
+    res.missing.push('location.postCode');
   }
   if (!body.location.phoneNumber) {
     res.isValid = false;
@@ -272,40 +278,44 @@ schema.virtual('details').get(function() {
   // Logging.logDebug(this.locations[this.primaryLocation].details);
 
   const _locations = this.locations.map(l => {
-    const _address = addressit(l.address, {locale: 'en-GB'});
-    const regions = _address.regions;
-    Logging.log(l.address, Logging.Constants.LogLevel.INFO);
-    Logging.log(_address, Logging.Constants.LogLevel.INFO);
+    // const _address = addressit(l.address, {locale: 'en-GB'});
+    // const regions = _address.regions;
+    Logging.log(l.address, Logging.Constants.LogLevel.SILLY);
+    // Logging.log(_address, Logging.Constants.LogLevel.DEBUG);
     return {
       name: l.name,
-      phoneNumber: l.phoneNumber,
-      address: {
-        full: l.address,
-        unit: _address.unit,
-        number: _address.number,
-        street: _address.street,
-        town: regions.length >= 2 ? regions.shift() : '',
-        city: regions.length >= 1 ? regions.shift() : '',
-        county: _address.state,
-        postcode: _address.postalcode
-      }
+      address: l.address,
+      city: l.city,
+      postCode: l.postCode,
+      phoneNumber: l.phoneNumber
+      // address: {
+      //   full: l.address,
+      //   unit: _address.unit,
+      //   number: _address.number,
+      //   street: _address.street,
+      //   town: regions.length >= 2 ? regions.shift() : '',
+      //   city: regions.length >= 1 ? regions.shift() : '',
+      //   county: _address.state,
+      //   postcode: _address.postalcode
+      // }
     };
   });
 
   const _contacts = this.contacts.map(c => {
-    const name = humanname.parse(c.name);
-    const formalName =
-      `${name.title ? name.title + ' ' : ''}${name.firstName} ${name.initials ? name.initials + ' ' : ''}${name.lastName}`;
+    // const name = humanname.parse(c.name);
+    // const formalName =
+    //   `${name.title ? name.title + ' ' : ''}${name.firstName} ${name.initials ? name.initials + ' ' : ''}${name.lastName}`;
     return {
-      name: {
-        full: c.name,
-        formal: formalName,
-        title: name.title,
-        forename: name.firstName,
-        initials: name.initials,
-        surname: name.lastName,
-        suffix: name.suffix
-      },
+      // name: {
+      //   full: c.name,
+      //   formal: formalName,
+      //   title: name.title,
+      //   forename: name.firstName,
+      //   initials: name.initials,
+      //   surname: name.lastName,
+      //   suffix: name.suffix
+      // },
+      name: c.name,
       role: c.role,
       email: c.email,
       landline: c.landline,
@@ -322,8 +332,8 @@ schema.virtual('details').get(function() {
     subsector: this.subsector,
     locations: _locations,
     contacts: _contacts,
-    primaryLocation: _locations[this.primaryLocation],
-    primaryContact: _contacts[this.primaryContact],
+    primaryLocation: this.primaryLocation,
+    primaryContact: this.primaryContact,
     website: this.website,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
   };
@@ -370,15 +380,16 @@ schema.methods.updateByObject = function(body) {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  'notes': {type: 'vector-add', values: []},
-  'notes.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
-  'notes.([0-9]{1,3}).text': {type: 'scalar', values: []},
-  'contacts': {type: 'vector-add', values: []},
-  'contacts.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
-  'contacts.([0-9]{1,3}).(email|landline|mobile|role|name|linkedInProfile|twitterProfile)': {type: 'scalar', values: []},
-  'locations': {type: 'vector-add', values: []},
-  'locations.([0-9]{1,3})': {type: 'vector-rm', values: ['remove']},
-  'locations.([0-9]{1,3}).(name|phoneNumber|address)': {type: 'scalar', values: []}
+  '^notes$': {type: 'vector-add', values: []},
+  '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
+  '^contacts$': {type: 'vector-add', values: []},
+  '^contacts.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
+  '^contacts.([0-9]{1,3}).(email|directDial|mobile|role|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []},
+  '^locations$': {type: 'vector-add', values: []},
+  '^locations.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^locations.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
+  '^locations.([0-9]{1,3}).(name|phoneNumber|address|city|postCode)$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
