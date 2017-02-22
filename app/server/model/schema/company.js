@@ -110,7 +110,7 @@ schema.add({
     type: String,
     url: String
   }],
-  primaryLocation: Number,
+  primaryLocation: String,
   locations: [{
     name: String,
     address: String,
@@ -118,7 +118,7 @@ schema.add({
     postCode: String,
     phoneNumber: String
   }],
-  primaryContact: Number,
+  primaryContact: String,
   contacts: [{
     name: String,
     role: String,
@@ -233,12 +233,13 @@ const __addCompany = body => {
       sector: body.sector,
       subsector: body.subsector,
       website: body.website,
-      primaryLocation: 0,
       locations: [body.location],
-      primaryContact: 0,
       contacts: [body.contact],
       _app: Model.authApp._id
     });
+
+    company.primaryContact = company.contacts[0]._id;
+    company.primaryLocation = company.locations[0]._id;
 
     return Promise.resolve(prev.concat([company.toObject()]));
   };
@@ -283,6 +284,7 @@ schema.virtual('details').get(function() {
     Logging.log(l.address, Logging.Constants.LogLevel.SILLY);
     // Logging.log(_address, Logging.Constants.LogLevel.DEBUG);
     return {
+      id: l._id,
       name: l.name,
       address: l.address,
       city: l.city,
@@ -315,6 +317,7 @@ schema.virtual('details').get(function() {
       //   surname: name.lastName,
       //   suffix: name.suffix
       // },
+      id: c._id,
       name: c.name,
       role: c.role,
       email: c.email,
