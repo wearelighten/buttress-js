@@ -97,6 +97,11 @@ let _doUpdate = (entity, body, pathContext) => {
         const vector = entity.get(body.path);
         vector.push(body.value);
         response = vector[vector.length - 1];
+        if (response instanceof Object) {
+          response = response.toObject();
+        }
+        response.id = `${response._id}`;
+        delete response._id;
       } break;
       case 'vector-rm': {
         const params = body.path.split('.');
@@ -122,6 +127,9 @@ let _doUpdate = (entity, body, pathContext) => {
         }
 
         response = entity.get(body.path);
+        if (response instanceof Object) {
+          response = response.toObject();
+        }
       } break;
 
     }
