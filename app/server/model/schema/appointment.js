@@ -74,7 +74,16 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   },
-  contact: Model.Schema.Contact,
+  contact: {
+    name: String,
+    role: String,
+    email: String,
+    mobile: String,
+    directDial: String,
+    linkedInProfile: String,
+    twitterProfile: String
+  },
+  locationId: String,
   calendarEntryId: String,
   date: {
     type: Date
@@ -109,6 +118,7 @@ schema.virtual('details').get(function() {
     assignedToId: this._assignedTo && this._assignedTo._id ? this._assignedTo._id : this._assignedTo,
     companyId: this._company && this._company._id ? this._company._id : this._company,
     contact: this.contact,
+    locationId: this.locationId,
     date: this.date,
     outcome: this.outcome,
     reason: this.reason,
@@ -152,7 +162,7 @@ const __doValidation = body => {
     res.missing.push('contact.name');
     return res;
   }
-  if (!body.contact.email && !body.contact.landline && !body.contact.mobile) {
+  if (!body.contact.email && !body.contact.directDial && !body.contact.mobile) {
     res.missing.push('contact.details');
     return res;
   }
@@ -188,7 +198,8 @@ const __add = body => {
       _owner: body.ownerId,
       _assignedTo: body.assignedToId,
       _company: body.companyId,
-      contact: body.contact
+      contact: body.contact,
+      locationId: body.locationId
     });
 
     return cl.save()
@@ -229,8 +240,8 @@ schema.statics.rmAll = () => {
 const PATH_CONTEXT = {
   '^outcome$': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL]},
   '^reason$': {type: 'scalar', values: []},
-  '^contact.name$': {type: 'scalar', values: []},
-  '^contact.email$': {type: 'scalar', values: []},
+  '^contact.(name|email|mobile|directDial|role|linkedInProfile|twitterProfile)': {type: 'scalar', values: []},
+  '^locationId$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: ['']},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
