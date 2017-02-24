@@ -127,7 +127,7 @@ let _doUpdate = (entity, body, pathContext) => {
         }
 
         response = entity.get(body.path);
-        if (response instanceof Object) {
+        if (response.toObject) {
           response = response.toObject();
         }
       } break;
