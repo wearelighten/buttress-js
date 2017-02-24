@@ -74,15 +74,7 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   },
-  contact: {
-    name: String,
-    role: String,
-    email: String,
-    mobile: String,
-    directDial: String,
-    linkedInProfile: String,
-    twitterProfile: String
-  },
+  contactId: String,
   locationId: String,
   calendarEntryId: String,
   date: {
@@ -117,7 +109,7 @@ schema.virtual('details').get(function() {
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
     assignedToId: this._assignedTo && this._assignedTo._id ? this._assignedTo._id : this._assignedTo,
     companyId: this._company && this._company._id ? this._company._id : this._company,
-    contact: this.contact,
+    contactId: this.contactId,
     locationId: this.locationId,
     date: this.date,
     outcome: this.outcome,
@@ -158,12 +150,8 @@ const __doValidation = body => {
     res.missing.push('companyId');
     return res;
   }
-  if (!body.contact.name) {
-    res.missing.push('contact.name');
-    return res;
-  }
-  if (!body.contact.email && !body.contact.directDial && !body.contact.mobile) {
-    res.missing.push('contact.details');
+  if (!body.contactId) {
+    res.missing.push('contactId');
     return res;
   }
   if (!body.date) {
@@ -198,7 +186,7 @@ const __add = body => {
       _owner: body.ownerId,
       _assignedTo: body.assignedToId,
       _company: body.companyId,
-      contact: body.contact,
+      contactId: body.contactId,
       locationId: body.locationId
     });
 
@@ -240,8 +228,9 @@ schema.statics.rmAll = () => {
 const PATH_CONTEXT = {
   '^outcome$': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL]},
   '^reason$': {type: 'scalar', values: []},
-  '^contact.(name|email|mobile|directDial|role|linkedInProfile|twitterProfile)': {type: 'scalar', values: []},
+  '^contactId$': {type: 'scalar', values: []},
   '^locationId$': {type: 'scalar', values: []},
+  '^date$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: ['']},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
