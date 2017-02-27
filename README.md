@@ -1,6 +1,6 @@
-# rhizome
-### version: 1.0.0-3
-The API that feeds grass roots movements.
+# ButtressJS
+### version: 1.0.0
+Realtime datastore for business software.
 ## Prerequisites ##
 You'll need gulp:
 `npm install -g gulp && npm install gulp`
@@ -20,9 +20,4 @@ Then add to config.json.
 `npm start`; or
 `npm run dev`
 ## Testing ##
-Need someone to take ownership of unit tests.
-## To Do ##
-- ~~Convert to ES6~~
-- Make it run in a docker instance
-- Dependency on local MongoDB. Need a better solution than that. Docker?
-- Everything!
+Tests are implemented in the ButtressJS API.
