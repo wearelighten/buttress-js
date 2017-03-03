@@ -1,50 +1,50 @@
 {
   "global": {
     "app": {
-      "title": "Rhizome",
-      "description": "The API that supports grassroots movements.",
-      "code": "rhizome",
-      "version": "v1.0.0-3",
+      "title": "ButtressJS",
+      "description": "Realtime datastore for business software",
+      "code": "buttressjs",
+      "version": "v1.0.0",
       "protocol": "http",
-      "subdomain": "rhizome",
-      "domain": "codersforcorbyn.com",
+      "subdomain": "dev",
+      "domain": "buttressjs.com",
       "apiPrefix": "/api/v1/"
     }
   },
   "local": {
     "environment": {
-      "RHIZOME_SERVER_ID": "",
-      "RHIZOME_MONGO_URL_DEV": "",
-      "RHIZOME_MONGO_URL_PROD": "",
-      "RHIZOME_MONGO_URL_TEST": ""
+      "BUTTRESS_SERVER_ID": "",
+      "BUTTRESS_MONGO_URL_DEV": "",
+      "BUTTRESS_MONGO_URL_PROD": "",
+      "BUTTRESS_MONGO_URL_TEST": ""
     },
     "workstation1": {
       "logPath": {
-        "dev":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/dev",
-        "prod":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/prod",
-        "test":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/test"
+        "dev":"/home/chris/Work/Workspaces/WebStorm/buttressjs/logs/dev",
+        "prod":"/home/chris/Work/Workspaces/WebStorm/buttressjs/logs/prod",
+        "test":"/home/chris/Work/Workspaces/WebStorm/buttressjs/logs/test"
       },
       "appDataPath": {
-        "dev": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
-        "prod": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
-        "test": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data/test"
+        "dev": "/home/chris/Work/Workspaces/WebStorm/buttressjs/app_data",
+        "prod": "/home/chris/Work/Workspaces/WebStorm/buttressjs/app_data",
+        "test": "/home/chris/Work/Workspaces/WebStorm/buttressjs/app_data/test"
       },
       "listenPort": {
-        "dev": 6001,
-        "prod": 6000,
-        "test": 6002
+        "dev": 7001,
+        "prod": 7000,
+        "test": 7002
       }
     },
     "workstation2": {
       "logPath": {
-        "dev":"/home/c(Logging.Constants.LogLevel.INFOhris/Work/Workspaces/WebStorm/rhizome/logs/dev",
-        "prod":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/prod",
-        "test":"/home/chris/Work/Workspaces/WebStorm/rhizome/logs/test"
+        "dev":"/home/tom/Work/Workspaces/WebStorm/buttressjs/logs/dev",
+        "prod":"/home/tom/Work/Workspaces/WebStorm/buttressjs/logs/prod",
+        "test":"/home/tom/Work/Workspaces/WebStorm/buttressjs/logs/test"
       },
       "appDataPath": {
-        "dev": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
-        "prod": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data",
-        "test": "/home/chris/Work/Workspaces/WebStorm/rhizome/app_data/test"
+        "dev": "/home/tom/Work/Workspaces/WebStorm/buttressjs/app_data",
+        "prod": "/home/tom/Work/Workspaces/WebStorm/buttressjs/app_data",
+        "test": "/home/tom/Work/Workspaces/WebStorm/buttressjs/app_data/test"
       },
       "listenPort": {
         "dev": 6001,
@@ -54,14 +54,14 @@
     },
     "yubaba": {
       "logPath": {
-        "dev": "/home/chris/apps/rhizome-DEV/logs",
-        "prod": "/home/chris/apps/rhizome/logs",
-        "test": "/home/chris/apps/rhizome/logs"
+        "dev": "/home/chris/apps/buttressjs-DEV/logs",
+        "prod": "/home/chris/apps/buttressjs/logs",
+        "test": "/home/chris/apps/buttressjs/logs"
       },
       "appDataPath": {
-       "dev": "/home/chris/apps/rhizome-DEV/app_data",
-       "prod": "/home/chris/apps/rhizome/app_data",
-       "test": "/home/chris/apps/rhizome/app_data"
+       "dev": "/home/chris/apps/buttressjs-DEV/app_data",
+       "prod": "/home/chris/apps/buttressjs/app_data",
+       "test": "/home/chris/apps/buttressjs/app_data"
       },
       "listenPort": {
         "dev": 6001,

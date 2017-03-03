@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file index.js
  * @description Model management
@@ -24,6 +24,7 @@ const Model = require('../model');
  */
 function _initRoute(app, Route) {
   let route = new Route();
+  Logging.log(route);
   app[route.verb](`/api/v1/${route.path}`, (req, res) => {
     route
       .exec(req, res)
@@ -78,6 +79,7 @@ function _authenticateToken(req, res, next) {
       res.sendStatus(401);
       return;
     }
+
     // console.log(`_authenticateToken (pre-save): ${_timers[req.path].interval.toFixed(3)}`);
 
     Model.token = req.token = token.details;
@@ -162,8 +164,12 @@ function _loadTokens() {
  * @private
  */
 function _configCrossDomain(req, res, next) {
-  if (req.token.type !== Model.Constants.Token.Type.USER || !req.authUser) {
+  if (req.token.type !== Model.Constants.Token.Type.USER) {
     next();
+    return;
+  }
+  if (!req.authUser) {
+    res.sendStatus(401);
     return;
   }
 
@@ -172,7 +178,7 @@ function _configCrossDomain(req, res, next) {
 
   const domainIdx = req.token.domains.indexOf(req.header('Origin'));
   if (domainIdx === -1) {
-    next();
+    res.sendStatus(403);
     return;
   }
 
@@ -199,7 +205,7 @@ exports.init = (app, io) => {
   io.origins('*:*');
 
   app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
-  app.get('/index.html', (req, res, next) => res.send('<html><head><title>Rhizome</title></head></html>'));
+  app.get('/index.html', (req, res, next) => res.send('<html><head><title>ButtressJS</title></head></html>'));
 
   app.use(_authenticateToken);
   app.use(_configCrossDomain);

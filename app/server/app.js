@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file app.js
  * @description
@@ -28,21 +28,21 @@ const Logging = require('./logging');
  */
 const configureDevelopment = () => {
   Config.env = 'dev';
-  app.set('db-uri', `mongodb://${Config.RHIZOME_MONGO_URL_DEV}/${Config.app.code}-dev`);
+  app.set('db-uri', `mongodb://${Config.BUTTRESS_MONGO_URL_DEV}/${Config.app.code}-dev`);
   app.use(morgan('short'));
   app.set('port', Config.listenPort);
 };
 
 const configureProduction = () => {
   Config.env = 'prod';
-  app.set('db-uri', `mongodb://${Config.RHIZOME_MONGO_URL_PROD}/${Config.app.code}-prod`);
+  app.set('db-uri', `mongodb://${Config.BUTTRESS_MONGO_URL_PROD}/${Config.app.code}-prod`);
   app.use(morgan('short'));
   app.set('port', Config.listenPort);
 };
 
 const configureTest = () => {
   Config.env = 'test';
-  app.set('db-uri', `mongodb://${Config.RHIZOME_MONGO_URL_TEST}/${Config.app.code}-test`);
+  app.set('db-uri', `mongodb://${Config.BUTTRESS_MONGO_URL_TEST}/${Config.app.code}-test`);
   app.use(morgan('short'));
   app.set('port', Config.listenPort);
 };

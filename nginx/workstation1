@@ -1,16 +1,16 @@
-upstream rhizome_upstream {
+upstream buttress_upstream {
     ip_hash;
-    server localhost:6001;
+    server localhost:7001;
 }
 
-upstream rhizome_test_upstream {
+upstream buttress_test_upstream {
     ip_hash;
-    server localhost:6002;
+    server localhost:7002;
 }
 
 server {
     listen 80;
-    server_name dev.rhizome.com dev.rhizome.wearelightenclients.co.uk;
+    server_name dev.buttressjs.com dev.local.buttressjs.com;
     root index.html;
     location / {
         proxy_set_header Upgrade $http_upgrade;
@@ -18,12 +18,12 @@ server {
         proxy_http_version 1.1;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $host;
-        proxy_pass http://rhizome_upstream;
+        proxy_pass http://buttress_upstream;
     }
 }
 server {
     listen 80;
-    server_name test.rhizome.com;
+    server_name test.buttressjs.com test.local.buttressjs.com;
     root index.html;
     location / {
         proxy_set_header Upgrade $http_upgrade;
@@ -31,6 +31,6 @@ server {
         proxy_http_version 1.1;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header Host $host;
-        proxy_pass http://rhizome_test_upstream;
+        proxy_pass http://buttress_test_upstream;
     }
 }

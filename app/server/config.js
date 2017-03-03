@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file config.js
  * @description
@@ -30,7 +30,7 @@ var _env = process.env.NODE_ENV ? process.env.NODE_ENV : 'development';
  */
 class Config {
   constructor() {
-    if (!process.env.RHIZOME_SERVER_ID) {
+    if (!process.env.BUTTRESS_SERVER_ID) {
       throw new Error('You need to add config ' +
         'settings for your environment to config.json');
     }
@@ -55,7 +55,7 @@ class Config {
       settings.local.environment[variable] = process.env[variable];
     }
 
-    var local = settings.local[process.env.RHIZOME_SERVER_ID];
+    var local = settings.local[process.env.BUTTRESS_SERVER_ID];
     for (variable in local) {
       if (local[variable] instanceof Object && local[variable][_map[_env]]) {
         local[variable] = local[variable][_map[_env]];

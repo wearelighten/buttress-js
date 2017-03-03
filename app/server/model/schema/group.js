@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file group.js
  * @description Group model definition. Groups are subsets of organisations.
@@ -134,10 +134,12 @@ schema.statics.isDuplicate = name => {
 /**
  * @return {Promise} - resolves to an array of Organisations (Organisation.details)
  */
-schema.statics.findAll = () => {
-  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+schema.statics.getAll = () => {
+  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+  Logging.log(`getAll: Token.authLevel: ${Model.token.authLevel}`, Logging.Constants.LogLevel.INFO);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    Logging.logDebug(`getAll: SUPER`);
     return ModelDef.find({});
   }
 

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file route.js
  * @description Route Class - Route authorisation (against app permissions), validation and execution
@@ -189,6 +189,7 @@ class Route {
         return;
       }
 
+      this.log(this.req.token, Logging.Constants.LogLevel.INFO);
       if (!this.req.token) {
         this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR);
         reject({statusCode: 401});
@@ -213,7 +214,7 @@ class Route {
        */
       var authorised = false;
       let token = this.req.token;
-      Logging.log(token.permissions, Logging.Constants.LogLevel.SILLY);
+      Logging.log(token.permissions, Logging.Constants.LogLevel.DEBUG);
       for (var x = 0; x < token.permissions.length; x++) {
         var p = token.permissions[x];
         if (this._matchRoute(p.route) && this._matchPermission(p.permission)) {

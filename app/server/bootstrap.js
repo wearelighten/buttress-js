@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file config.js
  * @description
@@ -30,8 +30,8 @@ var _installApp = (app, io) => {
         return Promise.resolve(true); // If any organisations, assume we've got a Super Admin app
       }
       return Model.Organisation.add({
-        name: 'Coders for Labour',
-        type: Model.Constants.Organisation.Type.POLITICAL
+        name: 'Lighten',
+        type: Model.Constants.Organisation.Type.COMPANY
       });
     })
     .then(org => {
@@ -44,7 +44,7 @@ var _installApp = (app, io) => {
       Logging.log(org.id, Logging.Constants.LogLevel.DEBUG);
 
       return Model.Group.add({
-        name: 'Rhizome Admin',
+        name: 'ButtressJS Admin',
         type: Model.Constants.Group.Type.VOLUNTEERS,
         orgId: org.id
       });
@@ -58,7 +58,7 @@ var _installApp = (app, io) => {
       Logging.log(group.id, Logging.Constants.LogLevel.DEBUG);
 
       return Model.App.add({
-        name: 'Rhizome ADMIN',
+        name: 'ButtressJS Admin',
         type: Model.Constants.App.Type.SERVER,
         authLevel: Model.Constants.Token.AuthLevel.SUPER,
         permissions: [{route: '*', permission: '*'}],
