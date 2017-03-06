@@ -24,7 +24,6 @@ const Model = require('../model');
  */
 function _initRoute(app, Route) {
   let route = new Route();
-  Logging.log(route);
   app[route.verb](`/api/v1/${route.path}`, (req, res) => {
     route
       .exec(req, res)
@@ -164,6 +163,10 @@ function _loadTokens() {
  * @private
  */
 function _configCrossDomain(req, res, next) {
+  if (!req.token) {
+    res.sendStatus(401);
+    return;
+  }
   if (req.token.type !== Model.Constants.Token.Type.USER) {
     next();
     return;
