@@ -91,8 +91,19 @@ class AddTask extends Route {
     return new Promise((resolve, reject) => {
       let validation = Model.Task.validate(this.req.body);
       if (!validation.isValid) {
-        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `TASK: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `TASK: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: TASK: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `TASK: Unhandled error.`});
         return;
       }
 
@@ -129,12 +140,12 @@ class UpdateTask extends Route {
       if (!validation.isValid) {
         if (validation.isPathValid === false) {
           this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `APPOINTMENT: Update path is invalid: ${validation.invalidPath}`});
+          reject({statusCode: 400, message: `TASK: Update path is invalid: ${validation.invalidPath}`});
           return;
         }
         if (validation.isValueValid === false) {
           this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `APPOINTMENT: Update value is invalid: ${validation.invalidValue}`});
+          reject({statusCode: 400, message: `TASK: Update value is invalid: ${validation.invalidValue}`});
           return;
         }
       }

@@ -126,6 +126,7 @@ schema.virtual('details').get(function() {
     name: this.name,
     type: this.taskType,
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
+    assignedToId: this._assignedTo && this._assignedTo._id ? this._assignedTo._id : this._assignedTo,
     entityId: this.entityId,
     dueDate: this.dueDate,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
@@ -151,6 +152,10 @@ const __doValidation = body => {
   if (!body.ownerId) {
     res.isValid = false;
     res.missing.push('ownerId');
+  }
+  if (!body.assignedToId) {
+    res.isValid = false;
+    res.missing.push('assignedToId');
   }
   if (!body.name) {
     res.isValid = false;
@@ -199,6 +204,7 @@ const __add = body => {
     const cl = new ModelDef({
       _app: Model.authApp._id,
       _owner: body.ownerId,
+      _assignedTo: body.assignedToId,
       name: body.name,
       taskType: body.type,
       entityId: body.entityId,
@@ -242,6 +248,7 @@ schema.statics.rmAll = () => {
 
 const PATH_CONTEXT = {
   '^status$': {type: 'scalar', values: status},
+  '^(name|dueDate|assignedTo)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
