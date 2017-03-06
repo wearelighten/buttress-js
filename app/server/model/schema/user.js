@@ -11,15 +11,15 @@
  *
  */
 
-var mongoose = require('mongoose');
-var Model = require('../');
-var Logging = require('../../logging');
+const mongoose = require('mongoose');
+const Model = require('../');
+const Logging = require('../../logging');
 
 /**
  * Constants
 */
 
-var constants = {
+const constants = {
 };
 
 Model.initModel('Person');
@@ -29,9 +29,12 @@ Model.initModel('Appauth');
 /**
  * Schema
  */
-var schema = new mongoose.Schema();
+const schema = new mongoose.Schema();
 schema.add({
   username: String,
+  orgRole: String,
+  teamName: String,
+  teamRole: String,
   metadata: [{
     _app: {
       type: mongoose.Schema.Types.ObjectId,
@@ -57,7 +60,7 @@ schema.add({
   auth: [Model.Schema.Appauth]
 });
 
-var ModelDef = null;
+let ModelDef = null;
 
 /**
  * Schema Virtual Methods
@@ -66,6 +69,9 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     username: this.username,
+    orgRole: this.orgRole,
+    teamName: this.teamName,
+    teamRole: this.teamRole,
     metadata: this.authenticatedMetadata,
     auth: this.auth.map(a => a.details),
     person: this.tryPerson
@@ -101,7 +107,10 @@ schema.virtual('tryPerson').get(function() {
 schema.statics.add = (body, personDetails, auth) => {
   var user = new ModelDef({
     _apps: [Model.authApp],
-    _person: personDetails.id
+    _person: personDetails.id,
+    orgRole: body.orgRole,
+    teamName: body.teamName,
+    teamRole: body.teamRole
   });
 
   // Logging.logDebug(body);
