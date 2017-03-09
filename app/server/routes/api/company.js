@@ -150,9 +150,9 @@ class AddCompany extends Route {
 routes.push(AddCompany);
 
 /**
- * @class AddCompanies
+ * @class BulkAddCompanies
  */
-class AddCompanies extends Route {
+class BulkAddCompanies extends Route {
   constructor() {
     super('company/bulk/add', 'BULK ADD COMPANIES');
     this.verb = Route.Constants.Verbs.POST;
@@ -203,7 +203,7 @@ class AddCompanies extends Route {
         .then(Logging.Promise.logProp('Added Companies', 'length', Route.LogLevel.VERBOSE));
   }
 }
-routes.push(AddCompanies);
+routes.push(BulkAddCompanies);
 
 /**
  * @class UpdateCompany
