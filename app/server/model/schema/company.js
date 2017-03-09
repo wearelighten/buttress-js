@@ -36,6 +36,18 @@ Model.initModel('Contact');
  * CONSTANTS
  *
  **********************************************************************************/
+const types = [
+  'prospect',
+  'client',
+  'supplier'
+];
+
+constants.Type = {
+  PROSPECT: types[0],
+  CLIENT: types[1],
+  SUPPLIER: types[2]
+};
+
 const employeeBands = [
   '1-4',
   '5-9',
@@ -92,7 +104,13 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   },
+  companyType: {
+    type: String,
+    enum: types,
+    default: constants.Type.PROSPECT
+  },
   name: String,
+  reference: String,
   number: Number,
   employeeBand: {
     type: String,
@@ -122,11 +140,16 @@ schema.add({
   contacts: [{
     name: String,
     role: String,
+    responsibility: String,
     email: String,
     mobile: String,
     directDial: String,
     linkedInProfile: String,
     twitterProfile: String
+  }],
+  contractIds: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Contract'
   }],
   _app: {
     type: mongoose.Schema.Types.ObjectId,
@@ -162,6 +185,10 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('name');
   }
+  if (body.companyType && !types.indexOf(body.companyType) === -1) {
+    res.isValid = false;
+    res.invalid.push('companyType');
+  }
   if (!body.location) {
     res.isValid = false;
     res.missing.push('location');
@@ -178,10 +205,10 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('location.postCode');
   }
-  if (!body.location.phoneNumber) {
-    res.isValid = false;
-    res.missing.push('location.phoneNumber');
-  }
+  // if (!body.location.phoneNumber) {
+  //   res.isValid = false;
+  //   res.missing.push('location.phoneNumber');
+  // }
   if (!body.contact) {
     res.isValid = false;
     res.missing.push('contact');
@@ -226,6 +253,8 @@ const __addCompany = body => {
 
     const company = new ModelDef({
       name: body.name,
+      companyType: body.companyType,
+      reference: body.reference,
       number: body.number,
       employeeBand: body.employeeBand,
       turnoverBand: body.turnoverBand,
@@ -328,6 +357,8 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
+    companyType: this.companyType,
+    reference: this.reference,
     number: this.number,
     employeeBand: this.employeeBand,
     turnoverBand: this.turnoverBand,
@@ -335,6 +366,7 @@ schema.virtual('details').get(function() {
     subsector: this.subsector,
     locations: _locations,
     contacts: _contacts,
+    contractIds: this.contractIds,
     primaryLocation: this.primaryLocation,
     primaryContact: this.primaryContact,
     website: this.website,
@@ -387,6 +419,9 @@ const PATH_CONTEXT = {
   '^notes.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
+  '^contractIds$': {type: 'vector-add', values: []},
+  '^contractIds.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^contractIds.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
   '^contacts$': {type: 'vector-add', values: []},
   '^contacts.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^contacts.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
