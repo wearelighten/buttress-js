@@ -174,7 +174,7 @@ schema.statics.findAll = () => {
   Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
-    return ModelDef.find({});
+    return ModelDef.find({visibility: constants.Visibility.PUBLIC});
   }
 
   return ModelDef.find({_app: Model.authApp._id, visibility: constants.Visibility.PUBLIC});
