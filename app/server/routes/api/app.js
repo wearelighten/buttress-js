@@ -128,7 +128,9 @@ class AddApp extends Route {
               {route: "call/*", permission: "*"},
               {route: "task/*", permission: "*"},
               {route: "appointment/*", permission: "*"},
-              {route: "notification/*", permission: "*"}
+              {route: "notification/*", permission: "*"},
+              {route: "contract/*", permission: "*"},
+              {route: "document/*", permission: "*"}
             ];
 
             this.req.body.permissions = JSON.stringify(permissions);
