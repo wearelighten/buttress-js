@@ -86,11 +86,11 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
   },
-  _owner: {
+  ownerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  _assignedTo: {
+  assignedToId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
@@ -125,8 +125,9 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     type: this.taskType,
-    ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
-    assignedToId: this._assignedTo && this._assignedTo._id ? this._assignedTo._id : this._assignedTo,
+    status: this.status,
+    ownerId: this.ownerId && this.ownerId._id ? this.ownerId._id : this.ownerId,
+    assignedToId: this.assignedToId && this.assignedToId._id ? this.assignedToId._id : this.assignedToId,
     entityId: this.entityId,
     dueDate: this.dueDate,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
@@ -203,8 +204,8 @@ const __add = body => {
     Logging.logDebug(body);
     const cl = new ModelDef({
       _app: Model.authApp._id,
-      _owner: body.ownerId,
-      _assignedTo: body.assignedToId,
+      ownerId: body.ownerId,
+      assignedToId: body.assignedToId,
       name: body.name,
       taskType: body.type,
       entityId: body.entityId,
@@ -248,7 +249,7 @@ schema.statics.rmAll = () => {
 
 const PATH_CONTEXT = {
   '^status$': {type: 'scalar', values: status},
-  '^(name|dueDate|assignedTo)$': {type: 'scalar', values: []},
+  '^(name|dueDate|assignedToId)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
