@@ -38,7 +38,8 @@ const types = [
   'campaign',
   'contact-list',
   'call',
-  'appointment'
+  'appointment',
+  'contract'
 ];
 const Type = {
   FREE: types[0],
@@ -46,7 +47,8 @@ const Type = {
   CAMPAIGN: types[2],
   CONTACT_LIST: types[3],
   CALL: types[4],
-  APPOINTMENT: types[5]
+  APPOINTMENT: types[5],
+  CONTRACT: types[6]
 };
 
 constants.Type = Type;
@@ -105,6 +107,16 @@ schema.add({
     type: Date,
     default: Date.create
   },
+  reminder: {
+    status: {
+      type: String,
+      default: 'pending'
+    },
+    snoozed: {
+      type: Date,
+      default: null
+    }
+  },
   metadata: [{key: String, value: String}],
   notes: [{
     text: String,
@@ -130,6 +142,7 @@ schema.virtual('details').get(function() {
     assignedToId: this.assignedToId && this.assignedToId._id ? this.assignedToId._id : this.assignedToId,
     entityId: this.entityId,
     dueDate: this.dueDate,
+    reminder: this.reminder,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
   };
 });
@@ -237,6 +250,14 @@ schema.statics.getAll = () => {
   return ModelDef.find({_app: Model.authApp._id});
 };
 
+/**
+ * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+ */
+schema.statics.getAllReminders = () => {
+  Logging.log(`getAllReminders: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+  return ModelDef.find({_app: Model.authApp._id, 'reminder.status':'pending'});
+};
+
 schema.statics.rmAll = () => {
   return ModelDef.remove({});
 };
@@ -250,6 +271,7 @@ schema.statics.rmAll = () => {
 const PATH_CONTEXT = {
   '^status$': {type: 'scalar', values: status},
   '^(name|dueDate|assignedToId)$': {type: 'scalar', values: []},
+  '^(reminder.status|reminder.snoozed)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}

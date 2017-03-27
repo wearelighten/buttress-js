@@ -40,6 +40,28 @@ class GetTaskList extends Route {
 routes.push(GetTaskList);
 
 /**
+ * @class GetTaskReminders
+ */
+class GetTaskReminders extends Route {
+  constructor() {
+    super('task/reminders', 'GET TASK REMINDERS');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.LIST;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Task.getAllReminders()
+      .then(Helpers.Promise.arrayProp('details'));
+  }
+}
+routes.push(GetTaskReminders);
+
+/**
  * @class GetTask
  */
 class GetTask extends Route {
