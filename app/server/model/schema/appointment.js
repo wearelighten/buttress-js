@@ -62,20 +62,34 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
   },
-  _owner: {
+  ownerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  _assignedTo: {
+  assignedToId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  _company: {
+  companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   },
   contactId: String,
   locationId: String,
+  approval: {
+    status: {
+      type: String,
+      default: 'pending'
+    },
+    timestamp: {
+      type: Date,
+      default: Date.create
+    },
+    approverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  },
   calendarEntryId: String,
   date: {
     type: Date
@@ -106,11 +120,12 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
-    ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
-    assignedToId: this._assignedTo && this._assignedTo._id ? this._assignedTo._id : this._assignedTo,
-    companyId: this._company && this._company._id ? this._company._id : this._company,
+    ownerId: this.ownerId && this.ownerId._id ? this.ownerId._id : this.ownerId,
+    assignedToId: this.assignedToId && this.assignedToId._id ? this.assignedToId._id : this.assignedToId,
+    companyId: this.companyId && this.companyId._id ? this.companyId._id : this.companyId,
     contactId: this.contactId,
     locationId: this.locationId,
+    approval: this.approval,
     date: this.date,
     outcome: this.outcome,
     reason: this.reason,
@@ -183,9 +198,9 @@ const __add = body => {
       _app: Model.authApp._id,
       name: body.name,
       date: Date.create(body.date),
-      _owner: body.ownerId,
-      _assignedTo: body.assignedToId,
-      _company: body.companyId,
+      ownerId: body.ownerId,
+      assignedToId: body.assignedToId,
+      companyId: body.companyId,
       contactId: body.contactId,
       locationId: body.locationId
     });
@@ -231,6 +246,7 @@ const PATH_CONTEXT = {
   '^contactId$': {type: 'scalar', values: []},
   '^locationId$': {type: 'scalar', values: []},
   '^date$': {type: 'scalar', values: []},
+  '^approval$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: ['']},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
