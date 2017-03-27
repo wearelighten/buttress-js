@@ -97,7 +97,7 @@ let _doUpdate = (entity, body, pathContext) => {
         const vector = entity.get(body.path);
         vector.push(body.value);
         response = vector[vector.length - 1];
-        if (response.toObject) {
+        if (response && response.toObject) {
           response = response.toObject();
           response.id = `${response._id}`;
           delete response._id;
@@ -112,7 +112,7 @@ let _doUpdate = (entity, body, pathContext) => {
         body.path = params.join('.');
         response = {numRemoved: 1, index: index};
       } break;
-      case 'scalar': {
+      case 'scalar':
         if (body.value instanceof Object) {
           for (let field in body.value) {
             if (!Object.prototype.hasOwnProperty.call(body.value, field)) {
@@ -127,12 +127,12 @@ let _doUpdate = (entity, body, pathContext) => {
         }
 
         response = entity.get(body.path);
-        if (response.toObject) {
+        if (response && response.toObject) {
           response = response.toObject();
           response.id = `${response._id}`;
           delete response._id;
         }
-      } break;
+        break;
 
     }
 
