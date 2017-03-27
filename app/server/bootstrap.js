@@ -3,9 +3,9 @@
 /**
  * ButtressJS - Realtime datastore for business software
  *
- * @file config.js
+ * @file bootstrap.js
  * @description
- * @module Config
+ * @module System
  * @author Chris Bates-Keegan
  *
  */
