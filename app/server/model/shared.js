@@ -129,6 +129,8 @@ let _doUpdate = (entity, body, pathContext) => {
         response = entity.get(body.path);
         if (response.toObject) {
           response = response.toObject();
+          response.id = `${response._id}`;
+          delete response._id;
         }
       } break;
 
