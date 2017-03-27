@@ -119,6 +119,10 @@ schema.add({
   },
   metadata: [{key: String, value: String}],
   notes: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
     text: String,
     timestamp: {
       type: Date,
@@ -143,7 +147,7 @@ schema.virtual('details').get(function() {
     entityId: this.entityId,
     dueDate: this.dueDate,
     reminder: this.reminder,
-    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
 
@@ -255,7 +259,7 @@ schema.statics.getAll = () => {
  */
 schema.statics.getAllReminders = () => {
   Logging.log(`getAllReminders: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return ModelDef.find({_app: Model.authApp._id, 'reminder.status':'pending'});
+  return ModelDef.find({'_app': Model.authApp._id, 'reminder.status': 'pending'});
 };
 
 schema.statics.rmAll = () => {

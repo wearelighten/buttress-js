@@ -113,6 +113,10 @@ schema.add({
   },
   metadata: [{key: String, value: String}],
   notes: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
     text: String,
     timestamp: {
       type: Date,
@@ -145,7 +149,7 @@ schema.virtual('details').get(function() {
     executionDate: this.executionDate,
     startDate: this.startDate,
     endDate: this.endDate,
-    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
 
@@ -262,12 +266,12 @@ const PATH_CONTEXT = {
   '^documentIds$': {type: 'vector-add', values: []},
   '^documentIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^documentIds.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^datesSubmitted$': {type: 'vector-add', values: []},
-  '^datesSubmitted.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^datesSubmitted.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^datesReceived$': {type: 'vector-add', values: []},
-  '^datesReceived.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^datesReceived.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^submittedDates$': {type: 'vector-add', values: []},
+  '^submittedDates.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  '^submittedDates.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^receivedDates$': {type: 'vector-add', values: []},
+  '^receivedDates.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  '^receivedDates.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}

@@ -90,6 +90,10 @@ schema.add({
   templates: [{label: String, markup: String}],
   metadata: [{key: String, value: String}],
   notes: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
     text: String,
     timestamp: {
       type: Date,
@@ -115,7 +119,7 @@ schema.virtual('details').get(function() {
     images: this.images.map(i => i.label),
     templates: this.templates.map(t => t.label),
     metadata: this._metadata,
-    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
 

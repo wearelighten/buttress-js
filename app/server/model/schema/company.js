@@ -15,7 +15,7 @@ const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
-const humanname = require('humanname');
+// const humanname = require('humanname');
 // const addressit = require('addressit');
 
 const schema = new mongoose.Schema();
@@ -157,6 +157,10 @@ schema.add({
   },
   metadata: [{key: String, value: String}],
   notes: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
     text: String,
     timestamp: {
       type: Date,
@@ -370,7 +374,7 @@ schema.virtual('details').get(function() {
     primaryLocation: this.primaryLocation,
     primaryContact: this.primaryContact,
     website: this.website,
-    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
 

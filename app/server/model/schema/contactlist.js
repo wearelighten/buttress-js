@@ -76,6 +76,10 @@ schema.add({
   },
   metadata: [{key: String, value: String}],
   notes: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
     text: String,
     timestamp: {
       type: Date,
@@ -94,7 +98,7 @@ schema.virtual('details').get(function() {
     campaignId: this._campaign && this._campaign._id ? this._campaign._id : this._campaign,
     companyIds: this._companies,
     userId: this._user,
-    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp}))
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
 
