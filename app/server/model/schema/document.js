@@ -53,7 +53,10 @@ schema.add({
     lastModified: {
       type: Date,
       default: Date.create
-    }
+    },
+    iconUrl: String,
+    mimeType: String,
+    fileSizeBytes: Number
   },
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -108,9 +111,13 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('name');
   }
-  if (!body.documentId) {
+  if (!body.documentMetadata) {
     res.isValid = false;
-    res.missing.push('name');
+    res.missing.push('documentMetadata');
+  }
+  if (!body.documentMetadata.id) {
+    res.isValid = false;
+    res.missing.push('documentMetadata.id');
   }
 
   return res;
@@ -136,9 +143,7 @@ const __add = body => {
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       name: body.name,
-      documentMetadata: {
-        id: body.documentId
-      }
+      documentMetadata: body.documentMetadata
     });
 
     return cl.save()
