@@ -189,12 +189,12 @@ class Route {
         return;
       }
 
-      this.log(this.req.token, Logging.Constants.LogLevel.INFO);
       if (!this.req.token) {
         this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR);
         reject({statusCode: 401});
         return;
       }
+      this.log(this.req.token.value, Logging.Constants.LogLevel.SILLY);
 
       this.log(`AUTHLEVEL: ${this.auth}`, Logging.Constants.LogLevel.VERBOSE);
       if (this.req.token.authLevel < this.auth) {
