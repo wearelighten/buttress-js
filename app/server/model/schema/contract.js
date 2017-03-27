@@ -60,6 +60,10 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
+  assignedToId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   name: String,
   contractType: {
     type: String
@@ -127,6 +131,7 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     ownerId: this.ownerId,
+    assignedToId: this.assignedToId,
     entityId: this.entityId,
     entityType: this.entityType,
     references: this.references,
