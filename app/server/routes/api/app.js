@@ -104,10 +104,10 @@ class AddApp extends Route {
 
       if (!this.req.body.permissions || this.req.body.permissions.length === 0) {
         switch (Number(this.req.body.authLevel)) {
-          default: {
+          default:
             this.req.body.permissions = JSON.stringify([]);
             Logging.logDebug('Creating default permissions');
-          } break;
+            break;
           case Model.Constants.Token.AuthLevel.SUPER: {
             let permissions = [
               {route: '*', permission: '*'}
