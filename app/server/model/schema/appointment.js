@@ -248,6 +248,7 @@ const PATH_CONTEXT = {
   '^outcome$': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL]},
   '^reason$': {type: 'scalar', values: []},
   '^contactId$': {type: 'scalar', values: []},
+  '^assignedToId$': {type: 'scalar', values: []},
   '^locationId$': {type: 'scalar', values: []},
   '^date$': {type: 'scalar', values: []},
   '^approval$': {type: 'scalar', values: []},
