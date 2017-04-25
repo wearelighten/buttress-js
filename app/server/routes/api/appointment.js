@@ -82,6 +82,9 @@ class AddAppointment extends Route {
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
   }
 
   _validate() {
