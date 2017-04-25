@@ -509,9 +509,10 @@ class GetMetadata extends Route {
           reject({statusCode: 400});
           return;
         }
-        if (`${user._app}` !== `${this.req.authApp._id}`) {
+        let appIndex = user._apps.findIndex(a => `${a}` === `${this.req.authApp._id}`);
+        if (appIndex === -1) {
           this.log('ERROR: Not authorised', Route.LogLevel.ERR);
-          reject({statusCode: 401});
+          reject({statusCode: 401, message: `App:${this.req.authApp._id} is not authorised for this user.`});
           return;
         }
         // Logging.log(this._metadata.value, Route.LogLevel.INFO);
