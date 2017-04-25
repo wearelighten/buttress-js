@@ -143,7 +143,7 @@ module.exports.Promise.log = (log, level) => {
   return res => {
     if (res instanceof Object) {
       _log(`${log}:`, level);
-      _log(res, level);
+      _log(res.toObject ? res.toObject() : res, level);
     } else {
       _log(`${log}: ${res}`, level);
     }
