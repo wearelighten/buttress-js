@@ -31,6 +31,27 @@ let ModelDef = null;
  **********************************************************************************/
 let constants = {};
 
+const types = [
+  'free',
+  'company',
+  'campaign',
+  'contact-list',
+  'call',
+  'appointment',
+  'contract'
+];
+const Type = {
+  FREE: types[0],
+  COMPANY: types[1],
+  CAMPAIGN: types[2],
+  CONTACT_LIST: types[3],
+  CALL: types[4],
+  APPOINTMENT: types[5],
+  CONTRACT: types[6]
+};
+
+constants.Type = Type;
+
 /* ********************************************************************************
  *
  * SCHEMA
@@ -46,6 +67,7 @@ schema.add({
     default: 'google'
   },
   name: String,
+  tag: String,
   documentMetadata: {
     id: String,
     name: String,
@@ -57,6 +79,13 @@ schema.add({
     iconUrl: String,
     mimeType: String,
     fileSizeBytes: Number
+  },
+  entityType: {
+    type: String,
+    enum: types
+  },
+  entityId: {
+    type: mongoose.Schema.Types.ObjectId
   },
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -85,6 +114,9 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
+    tag: this.tag,
+    entityType: this.entityType,
+    entityId: this.entityId,
     documentMetadata: this.documentMetadata,
     ownerId: this.ownerId && this.ownerId._id ? this.ownerId._id : this.ownerId,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
@@ -115,6 +147,7 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('name');
   }
+
   if (!body.documentMetadata) {
     res.isValid = false;
     res.missing.push('documentMetadata');
@@ -122,6 +155,17 @@ const __doValidation = body => {
   if (!body.documentMetadata.id) {
     res.isValid = false;
     res.missing.push('documentMetadata.id');
+  }
+
+  if (body.entityType) {
+    if (types.indexOf(body.entityType) === -1) {
+      res.isValid = false;
+      res.invalid.push('type');
+    }
+    if (body.entityType !== Type.FREE && !body.entityId) {
+      res.isValid = false;
+      res.missing.push('entityId');
+    }
   }
 
   return res;
@@ -147,6 +191,9 @@ const __add = body => {
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       name: body.name,
+      tag: body.tag ? body.tag : '',
+      entityType: body.entityType,
+      entityId: body.entityId,
       documentMetadata: body.documentMetadata
     });
 
@@ -186,7 +233,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(name|documentMetadata)$': {type: 'scalar', values: []},
+  '^(name|tag|entityType|entityId|documentMetadata)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}

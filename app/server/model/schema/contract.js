@@ -65,6 +65,7 @@ schema.add({
     ref: 'User'
   },
   name: String,
+  tag: String,
   contractType: {
     type: String
   },
@@ -79,22 +80,25 @@ schema.add({
     enum: status,
     default: Status.PENDING
   },
-  partyIds: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Company'
+  parties: [{
+    partyType: String,
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Company'
+    },
+    submitted: {
+      type: Date,
+      default: null
+    },
+    received: {
+      type: Date,
+      default: null
+    }
   }],
   dateCreated: {
     type: Date,
     default: Date.create
   },
-  submittedDates: [{
-    type: Date,
-    default: null
-  }],
-  receivedDates: [{
-    type: Date,
-    default: null
-  }],
   documentIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Document'
@@ -134,6 +138,7 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
+    tag: this.tag,
     ownerId: this.ownerId,
     assignedToId: this.assignedToId,
     entityId: this.entityId,
@@ -142,9 +147,7 @@ schema.virtual('details').get(function() {
     contractType: this.contractType,
     contractMode: this.contractMode,
     status: this.status,
-    partyIds: this.partyIds,
-    submittedDates: this.submittedDates,
-    receivedDates: this.receivedDates,
+    parties: this.parties,
     documentIds: this.documentIds,
     executionDate: this.executionDate,
     startDate: this.startDate,
@@ -177,9 +180,9 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('name');
   }
-  if (!body.partyIds) {
+  if (!body.parties) {
     res.isValid = false;
-    res.missing.push('partyIds');
+    res.missing.push('parties');
   }
   if (!body.contractType) {
     res.isValid = false;
@@ -209,14 +212,15 @@ const __add = body => {
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       name: body.name,
+      tag: body.tag,
       contractType: body.contractType,
       contractMode: body.contractMode,
       entityId: body.entityId,
       entityType: body.entityType,
       references: body.references,
-      partyIds: body.partyIds,
-      submittedDates: body.submittedDates ? body.submittedDates : new Array(body.partyIds.length),
-      receivedDates: body.receivedDates ? body.receivedDates : new Array(body.partyIds.length),
+      parties: body.parties,
+      // submittedDates: body.submittedDates ? body.submittedDates : new Array(body.partyIds.length),
+      // receivedDates: body.receivedDates ? body.receivedDates : new Array(body.partyIds.length),
       executionDate: body.executionDate,
       startDate: body.startDate,
       endDate: body.endDate
@@ -259,19 +263,22 @@ schema.statics.rmAll = () => {
 
 const PATH_CONTEXT = {
   '^status$': {type: 'scalar', values: status},
-  '^(name|contractType|contractMode|entityId|entityType|dateOfAgreement|startDate|endDate)$': {type: 'scalar', values: []},
-  '^partyIds$': {type: 'vector-add', values: []},
-  '^partyIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^partyIds.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^(name|tag|contractType|contractMode|entityId|entityType|dateOfAgreement|startDate|endDate)$': {type: 'scalar', values: []},
+  // '^partyIds$': {type: 'vector-add', values: []},
+  // '^partyIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  // '^partyIds.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^parties$': {type: 'vector-add', values: []},
+  '^parties.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  '^parties.([0-9]{1,3}).(submitted|received)$': {type: 'scalar', values: []},
   '^documentIds$': {type: 'vector-add', values: []},
   '^documentIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^documentIds.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^submittedDates$': {type: 'vector-add', values: []},
-  '^submittedDates.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^submittedDates.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^receivedDates$': {type: 'vector-add', values: []},
-  '^receivedDates.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^receivedDates.([0-9]{1,3})$': {type: 'scalar', values: []},
+  // '^submittedDates$': {type: 'vector-add', values: []},
+  // '^submittedDates.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  // '^submittedDates.([0-9]{1,3})$': {type: 'scalar', values: []},
+  // '^receivedDates$': {type: 'vector-add', values: []},
+  // '^receivedDates.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  // '^receivedDates.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},

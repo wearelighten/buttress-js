@@ -39,8 +39,8 @@ var schema = new mongoose.Schema({
     landline: String,
     mobile: String
   },
-  membershipNumber: String,
-  voterId: String,
+  company: String,
+  role: String,
   metadata: [{
     _app: {
       type: mongoose.Schema.Types.ObjectId,
@@ -78,8 +78,8 @@ schema.virtual('details').get(function() {
       landline: this.landline,
       mobile: this.mobile
     },
-    membershipNumber: this.membershipNumber,
-    voterId: this.voterId,
+    company: this.company,
+    role: this.role,
     dataOwner: this.tryOwner,
     metadata: this.authenticatedMetadata
   };
@@ -124,8 +124,6 @@ schema.statics.add = (body, owner) => {
       },
       address: body.address,
       postcode: body.postcode,
-      membershipNumber: body.membershipNumber,
-      voterId: body.voterId,
       _dataOwner: owner
     });
 

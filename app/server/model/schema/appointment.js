@@ -128,6 +128,7 @@ schema.virtual('details').get(function() {
     assignedToId: this.assignedToId && this.assignedToId._id ? this.assignedToId._id : this.assignedToId,
     companyId: this.companyId && this.companyId._id ? this.companyId._id : this.companyId,
     contactId: this.contactId,
+    calendarEntryId: this.calendarEntryId,
     locationId: this.locationId,
     approval: this.approval,
     date: this.date,
@@ -246,11 +247,7 @@ schema.statics.rmAll = () => {
 
 const PATH_CONTEXT = {
   '^outcome$': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL]},
-  '^reason$': {type: 'scalar', values: []},
-  '^contactId$': {type: 'scalar', values: []},
-  '^assignedToId$': {type: 'scalar', values: []},
-  '^locationId$': {type: 'scalar', values: []},
-  '^date$': {type: 'scalar', values: []},
+  '^(reason|contactId|locationId|date|calendarEntryId|assignedToId)$': {type: 'scalar', values: []},
   '^approval$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: ['']},

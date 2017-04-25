@@ -50,27 +50,27 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
   },
-  _campaign: {
+  campaignId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Campaign'
   },
-  _companies: [{
+  companyIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   }],
-  _people: [{
+  personIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Person'
   }],
-  _calls: [{
+  callIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Call'
   }],
-  _emails: [{
+  emailIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Email'
   }],
-  _user: {
+  assignedToUserId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
@@ -95,9 +95,9 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
-    campaignId: this._campaign && this._campaign._id ? this._campaign._id : this._campaign,
-    companyIds: this._companies,
-    userId: this._user,
+    campaignId: this.campaignId,
+    companyIds: this.companyIds,
+    assignedToUserId: this.assignedToUserId,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
@@ -127,7 +127,7 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('data');
   }
-  if (!body.userId) {
+  if (!body.assignedToUserId) {
     res.isValid = false;
     res.missing.push('user');
   }
@@ -153,10 +153,10 @@ const __addContactlist = (campaign, body) => {
     const cl = new ModelDef({
       name: body.name,
       _app: Model.authApp._id,
-      _campaign: campaign,
-      _companies: body.companyIds,
-      _people: body.people,
-      _user: body.userId
+      campaignId: body.campaignId,
+      companyIds: body.companyIds,
+      personIds: body.personIds,
+      assignedToUserId: body.assignedToUserId
     });
 
     return cl.save()
@@ -189,6 +189,10 @@ schema.statics.rmAll = () => {
  *
  **********************************************************************************/
 const PATH_CONTEXT = {
+  '^companyIds$': {type: 'vector-add', values: []},
+  '^assignedToUserId$': {type: 'scalar', values: []},
+  '^companyIds.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^companyIds.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}

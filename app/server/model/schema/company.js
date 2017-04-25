@@ -110,19 +110,29 @@ schema.add({
     default: constants.Type.PROSPECT
   },
   name: String,
+  siccode: Number,
   reference: String,
-  number: Number,
+  description: String,
+  companyNumber: Number,
+  numEmployees: Number,
   employeeBand: {
     type: String,
     enum: employeeBands
   },
+  annualTurnover: Number,
+  profitPreTax: Number,
+  financeAnnualEndDate: Date,
+  netWorth: Number,
   turnoverBand: {
     type: String,
     enum: turnoverBands
   },
+  vatExempt: String,
+  vatRegistrationNumber: String,
   sector: String,
   subsector: String,
-  siccode: Number,
+  memberships: String,
+  flags: String,
   website: String,
   socialMedia: [{
     type: String,
@@ -258,11 +268,22 @@ const __addCompany = body => {
     const company = new ModelDef({
       name: body.name,
       companyType: body.companyType,
-      reference: body.reference,
-      number: body.number,
-      employeeBand: body.employeeBand,
-      turnoverBand: body.turnoverBand,
       siccode: body.siccode,
+      reference: body.reference,
+      description: body.description,
+      source: body.source,
+      flags: body.flags,
+      memberships: body.memberships,
+      companyNumber: body.number ? body.number : body.companyNumber,
+      numEmployees: body.numEmployees,
+      employeeBand: body.employeeBand,
+      annualTurnover: body.annualTurnover,
+      turnoverBand: body.turnoverBand,
+      profitPreTax: body.profitPreTax,
+      netWorth: body.netWorth,
+      financeAnnualEndDate: body.financeAnnualEndDate,
+      vatExempt: body.vatExempt,
+      vatRegistrationNumber: body.vatRegistrationNumber,
       sector: body.sector,
       subsector: body.subsector,
       website: body.website,
@@ -319,6 +340,7 @@ schema.virtual('details').get(function() {
     return {
       id: l._id,
       name: l.name,
+      tag: '',
       address: l.address,
       city: l.city,
       postCode: l.postCode,
@@ -352,6 +374,7 @@ schema.virtual('details').get(function() {
       // },
       id: c._id,
       name: c.name,
+      tag: '',
       role: c.role,
       email: c.email,
       directDial: c.directDial,
@@ -362,10 +385,22 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     companyType: this.companyType,
+    description: this.description,
+    siccode: this.siccode,
     reference: this.reference,
-    number: this.number,
+    source: this.source,
+    memberships: this.memberships,
+    flags: this.flags,
+    companyNumber: this.companyNumber,
+    numEmployees: this.numEmployees,
     employeeBand: this.employeeBand,
+    annualTurnover: this.annualTurnover,
     turnoverBand: this.turnoverBand,
+    profitPreTax: this.profitPreTax,
+    netWorth: this.netWorth,
+    financeAnnualEndDate: this.financeAnnualEndDate,
+    vatExempt: this.vatExempt,
+    vatRegistrationNumber: this.vatRegistrationNumber,
     sector: this.sector,
     subsector: this.subsector,
     locations: _locations,
@@ -384,34 +419,6 @@ schema.virtual('details').get(function() {
  *
  **********************************************************************************/
 
-/**
- * @param {Object} body - body passed through from a POST request
- * @return {Promise} - returns a promise that is fulfilled when the database request is completed
- */
-schema.methods.updateByObject = function(body) {
-  Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
-
-  this.name = body.name ? body.name : this.name;
-  this.number = body.number ? body.number : this.number;
-  this.siccode = body.siccode ? body.siccode : this.siccode;
-  this.employeeBand = body.employeeBand ? body.employeeBand : this.employeeBand;
-  this.turnoverBand = body.turnoverBand ? body.turnoverBand : this.turnoverBand;
-  this.sector = body.sector ? body.sector : this.sector;
-  this.subsector = body.subsector ? body.subsector : this.subsector;
-  this.website = body.website ? body.website : this.website;
-
-  if (body.location && this.locations[this.primaryLocation]) {
-    let loc = this.locations[this.primaryLocation];
-    loc.name = body.location.name ? body.location.name : loc.name;
-    loc.phoneNumber = body.location.phoneNumber ? body.location.phoneNumber : loc.phoneNumber;
-    if (body.location.address) {
-      loc.address.update(body.location.address);
-    }
-  }
-
-  return this.save();
-};
-
 /* ********************************************************************************
  *
  * UPDATE BY PATH
@@ -419,6 +426,7 @@ schema.methods.updateByObject = function(body) {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
+  '^(name|companyType|reference|description|siccode|numEmployees|annualTurnover|profitPreTax|financeEndDate|netWorth|source|memberships|flags|vatExempt|vatRegistrationNumber|companyNumber)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
@@ -429,11 +437,11 @@ const PATH_CONTEXT = {
   '^contacts$': {type: 'vector-add', values: []},
   '^contacts.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^contacts.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^contacts.([0-9]{1,3}).(email|directDial|mobile|role|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []},
+  '^contacts.([0-9]{1,3}).(email|tag|directDial|mobile|role|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []},
   '^locations$': {type: 'vector-add', values: []},
   '^locations.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^locations.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^locations.([0-9]{1,3}).(name|phoneNumber|address|city|postCode)$': {type: 'scalar', values: []}
+  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|address|city|postCode)$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);

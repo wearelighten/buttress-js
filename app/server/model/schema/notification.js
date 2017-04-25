@@ -38,7 +38,8 @@ const types = [
   'call',
   'appointment',
   'task',
-  'contract'
+  'contract',
+  'post'
 ];
 const Type = {
   CHAT: types[0],
@@ -48,7 +49,8 @@ const Type = {
   CALL: types[4],
   APPOINTMENT: types[5],
   TASK: types[6],
-  CONTRACT: types[7]
+  CONTRACT: types[7],
+  POST: types[8]
 };
 
 constants.Type = Type;

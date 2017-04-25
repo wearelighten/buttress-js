@@ -74,15 +74,15 @@ schema.add({
     ref: 'App'
   },
   filters: [{name: String, value: String}],
-  _companies: [{
+  companyIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   }],
-  _people: [{
+  personIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Person'
   }],
-  _contactLists: [{
+  contactListIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Contactlist'
   }],
@@ -113,9 +113,9 @@ schema.virtual('details').get(function() {
     description: this.description,
     legals: this.legals,
     filters: this.filters.map(f => ({name: f.name, value: f.value})),
-    companies: this._companies,
-    people: this._people,
-    contactLists: this.contactLists,
+    companyIds: this.companyIds,
+    personIds: this.personIds,
+    contactListIds: this.contactListIds,
     images: this.images.map(i => i.label),
     templates: this.templates.map(t => t.label),
     metadata: this._metadata,
@@ -164,7 +164,7 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('filters');
   }
-  if (!body.companies && !body.people) {
+  if (!body.companyIds && !body.personIds) {
     res.isValid = false;
     res.missing.push('data');
   }
@@ -192,8 +192,8 @@ const __addCampaign = body => {
       name: body.name,
       type: body.type,
       filters: body.filters,
-      _companies: body.companies,
-      _people: body.people,
+      companyIds: body.companyIds,
+      personIds: body.personIds,
       description: body.description,
       legals: body.legals
     });
@@ -219,7 +219,7 @@ schema.methods.addContactList = function(body) {
   return Model.Contactlist.add(this, body)
     .then(cl => {
       Logging.logDebug(cl[0]._id);
-      this._contactLists.push(cl[0]);
+      this.contactListIds.push(cl[0]);
       return this.save().then(() => cl[0]);
     });
 };
@@ -263,6 +263,8 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
+  '^companyIds$': {type: 'vector-add', values: []},
+  '^companyIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
