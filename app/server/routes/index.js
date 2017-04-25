@@ -75,7 +75,7 @@ function _authenticateToken(req, res, next) {
   .then(token => {
     if (token === null) {
       Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
-      res.sendStatus(401);
+      res.sendStatus(401).json({message: 'Token is invalid is required'});
       return;
     }
 
@@ -164,7 +164,7 @@ function _loadTokens() {
  */
 function _configCrossDomain(req, res, next) {
   if (!req.token) {
-    res.sendStatus(401);
+    res.sendStatus(401).json({message: 'Auth token is required'});
     return;
   }
   if (req.token.type !== Model.Constants.Token.Type.USER) {
@@ -172,7 +172,7 @@ function _configCrossDomain(req, res, next) {
     return;
   }
   if (!req.authUser) {
-    res.sendStatus(401);
+    res.sendStatus(401).json({message: 'Auth user is required'});
     return;
   }
 
