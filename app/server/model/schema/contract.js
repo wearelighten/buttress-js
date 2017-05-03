@@ -219,6 +219,7 @@ const __add = body => {
       entityType: body.entityType,
       references: body.references,
       parties: body.parties,
+      documentIds: body.documentIds,
       // submittedDates: body.submittedDates ? body.submittedDates : new Array(body.partyIds.length),
       // receivedDates: body.receivedDates ? body.receivedDates : new Array(body.partyIds.length),
       executionDate: body.executionDate,

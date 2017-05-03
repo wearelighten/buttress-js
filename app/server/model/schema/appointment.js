@@ -41,12 +41,14 @@ let constants = {};
 const outcomes = [
   'fail',
   'defer',
+  'progressed',
   'success'
 ];
 const Outcomes = {
   FAIL: outcomes[0],
   DEFER: outcomes[1],
-  SUCCESS: outcomes[2]
+  PROGRESSED: outcomes[2],
+  SUCCESS: outcomes[3]
 };
 
 constants.Outcomes = Outcomes;
@@ -207,7 +209,8 @@ const __add = body => {
       assignedToId: body.assignedToId,
       companyId: body.companyId,
       contactId: body.contactId,
-      locationId: body.locationId
+      locationId: body.locationId,
+      notes: body.notes
     });
 
     return cl.save()
@@ -246,7 +249,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^outcome$': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL]},
+  '^outcome$': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.PROGRESSED, Outcomes.DEFER, Outcomes.FAIL]},
   '^(reason|contactId|locationId|date|calendarEntryId|assignedToId)$': {type: 'scalar', values: []},
   '^approval$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
