@@ -283,7 +283,7 @@ schema.methods.findMetadata = function(key) {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(teamRole|teamName|orgRole)$': {type: 'scalar', values: []},
+  '^(teamRole|teamName|orgRole)$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);

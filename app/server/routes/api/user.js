@@ -323,7 +323,6 @@ class UpdateUser extends Route {
 }
 routes.push(UpdateUser);
 
-
 /**
  * @class DeleteAllUsers
  */
