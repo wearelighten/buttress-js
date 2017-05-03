@@ -274,6 +274,57 @@ class AddUser extends Route {
 routes.push(AddUser);
 
 /**
+ * @class UpdateUser
+ */
+class UpdateUser extends Route {
+  constructor() {
+    super('user/:id', 'UPDATE USER');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.WRITE;
+    this._user = null;
+
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityBroadcast = true;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      let validation = Model.User.validateUpdate(this.req.body);
+      if (!validation.isValid) {
+        if (validation.isPathValid === false) {
+          this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `USER: Update path is invalid: ${validation.invalidPath}`});
+          return;
+        }
+        if (validation.isValueValid === false) {
+          this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `USER: Update value is invalid: ${validation.invalidValue}`});
+          return;
+        }
+      }
+
+      Model.User.findById(this.req.params.id)
+        .then(user => {
+          if (!user) {
+            this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+            reject({statusCode: 400});
+            return;
+          }
+          this._user = user;
+          resolve(true);
+        });
+    });
+  }
+
+  _exec() {
+    return this._user.updateByPath(this.req.body);
+  }
+}
+routes.push(UpdateUser);
+
+
+/**
  * @class DeleteAllUsers
  */
 class DeleteAllUsers extends Route {

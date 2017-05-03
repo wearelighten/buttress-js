@@ -137,6 +137,20 @@ schema.add({
     enum: outcome,
     default: Outcome.NO_OUTCOME
   },
+  intelApproval: {
+    status: {
+      type: String,
+      default: 'pending'
+    },
+    timestamp: {
+      type: Date,
+      default: Date.create
+    },
+    approverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  },
   metadata: [{key: String, value: String}],
   notes: [{
     userId: {
@@ -165,6 +179,7 @@ schema.virtual('details').get(function() {
     personId: this._person && this._person._id ? this._person._id : this._person,
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
     connections: this.connections,
+    intelApprovale: this.intelApproval,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
@@ -265,6 +280,7 @@ schema.statics.rmAll = () => {
 const PATH_CONTEXT = {
   '^status$': {type: 'scalar', values: status},
   '^outcome$': {type: 'scalar', values: outcome},
+  '^intelApproval$': {type: 'scalar', values: []},
   '^connections$': {type: 'vector-add', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},

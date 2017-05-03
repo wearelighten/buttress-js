@@ -14,6 +14,7 @@
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
+const Shared = require('../shared');
 
 /**
  * Constants
@@ -274,6 +275,19 @@ schema.methods.findMetadata = function(key) {
   var md = this.metadata.find(m => `${m._app}` === `${Model.authApp._id}` && m.key === key);
   return md ? {key: md.key, value: JSON.parse(md.value)} : false;
 };
+
+/* ********************************************************************************
+ *
+ * UPDATE BY PATH
+ *
+ **********************************************************************************/
+
+const PATH_CONTEXT = {
+  '^(teamRole|teamName|orgRole)$': {type: 'scalar', values: []},
+};
+
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
 
 ModelDef = mongoose.model('User', schema);
 

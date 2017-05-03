@@ -113,6 +113,7 @@ schema.add({
   siccode: Number,
   reference: String,
   description: String,
+  source: String,
   companyNumber: Number,
   numEmployees: Number,
   employeeBand: {
@@ -127,7 +128,7 @@ schema.add({
     type: String,
     enum: turnoverBands
   },
-  vatExempt: String,
+  vatExempt: Boolean,
   vatRegistrationNumber: String,
   sector: String,
   subsector: String,
@@ -143,6 +144,8 @@ schema.add({
     name: String,
     address: String,
     city: String,
+    county: String,
+    region: String,
     postCode: String,
     phoneNumber: String
   }],
@@ -156,6 +159,17 @@ schema.add({
     directDial: String,
     linkedInProfile: String,
     twitterProfile: String
+  }],
+  emailHistory: [{
+    sent: Boolean,
+    received: Boolean,
+    timestamp: Date,
+    emailId: String,
+    threadId: String,
+    to: [String],
+    from: String,
+    subject: String,
+    snippet: String
   }],
   contractIds: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -343,6 +357,7 @@ schema.virtual('details').get(function() {
       tag: '',
       address: l.address,
       city: l.city,
+      county: l.county,
       postCode: l.postCode,
       phoneNumber: l.phoneNumber
       // address: {
@@ -409,6 +424,7 @@ schema.virtual('details').get(function() {
     primaryLocation: this.primaryLocation,
     primaryContact: this.primaryContact,
     website: this.website,
+    emailHistory: this.emailHistory,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
@@ -431,6 +447,8 @@ const PATH_CONTEXT = {
   '^notes.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
+  '^emailHistory$': {type: 'vector-add', values: []},
+  '^emailHistory.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
   '^contractIds$': {type: 'vector-add', values: []},
   '^contractIds.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^contractIds.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
@@ -441,7 +459,7 @@ const PATH_CONTEXT = {
   '^locations$': {type: 'vector-add', values: []},
   '^locations.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^locations.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|address|city|postCode)$': {type: 'scalar', values: []}
+  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|address|county|city|postCode)$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);

@@ -80,6 +80,20 @@ schema.add({
     enum: status,
     default: Status.PENDING
   },
+  approval: {
+    status: {
+      type: String,
+      default: 'pending'
+    },
+    timestamp: {
+      type: Date,
+      default: Date.create
+    },
+    approverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  },
   parties: [{
     partyType: String,
     companyId: {
@@ -264,21 +278,13 @@ schema.statics.rmAll = () => {
 const PATH_CONTEXT = {
   '^status$': {type: 'scalar', values: status},
   '^(name|tag|contractType|contractMode|entityId|entityType|dateOfAgreement|startDate|endDate)$': {type: 'scalar', values: []},
-  // '^partyIds$': {type: 'vector-add', values: []},
-  // '^partyIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  // '^partyIds.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^approval$': {type: 'scalar', values: []},
   '^parties$': {type: 'vector-add', values: []},
   '^parties.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^parties.([0-9]{1,3}).(submitted|received)$': {type: 'scalar', values: []},
   '^documentIds$': {type: 'vector-add', values: []},
   '^documentIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^documentIds.([0-9]{1,3})$': {type: 'scalar', values: []},
-  // '^submittedDates$': {type: 'vector-add', values: []},
-  // '^submittedDates.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  // '^submittedDates.([0-9]{1,3})$': {type: 'scalar', values: []},
-  // '^receivedDates$': {type: 'vector-add', values: []},
-  // '^receivedDates.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  // '^receivedDates.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},

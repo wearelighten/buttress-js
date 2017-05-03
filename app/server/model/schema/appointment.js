@@ -41,6 +41,7 @@ let constants = {};
 const outcomes = [
   'fail',
   'defer',
+  'progressed',
   'success'
 ];
 const Outcomes = {
@@ -66,9 +67,13 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  assignedToId: {
+  assignedToUserId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+  assignedToAccepted: {
+    type: Boolean,
+    default: false
   },
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -76,7 +81,7 @@ schema.add({
   },
   contactId: String,
   locationId: String,
-  approval: {
+  intelApproval: {
     status: {
       type: String,
       default: 'pending'
@@ -125,12 +130,13 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     ownerId: this.ownerId && this.ownerId._id ? this.ownerId._id : this.ownerId,
-    assignedToId: this.assignedToId && this.assignedToId._id ? this.assignedToId._id : this.assignedToId,
+    assignedToUserId: this.assignedToUserId && this.assignedToUserId._id ? this.assignedToUserId._id : this.assignedToUserId,
+    assignedToAccepted: this.assignedToAccepted,
     companyId: this.companyId && this.companyId._id ? this.companyId._id : this.companyId,
     contactId: this.contactId,
     calendarEntryId: this.calendarEntryId,
     locationId: this.locationId,
-    approval: this.approval,
+    intelApproval: this.intelApproval,
     date: this.date,
     outcome: this.outcome,
     reason: this.reason,
@@ -247,8 +253,8 @@ schema.statics.rmAll = () => {
 
 const PATH_CONTEXT = {
   '^outcome$': {type: 'scalar', values: [Outcomes.SUCCESS, Outcomes.DEFER, Outcomes.FAIL]},
-  '^(reason|contactId|locationId|date|calendarEntryId|assignedToId)$': {type: 'scalar', values: []},
-  '^approval$': {type: 'scalar', values: []},
+  '^(reason|contactId|locationId|date|calendarEntryId|assignedToId|assignedToAccepted)$': {type: 'scalar', values: []},
+  '^intelApproval$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: ['']},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
