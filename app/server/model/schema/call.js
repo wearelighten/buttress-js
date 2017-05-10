@@ -179,7 +179,7 @@ schema.virtual('details').get(function() {
     personId: this._person && this._person._id ? this._person._id : this._person,
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
     connections: this.connections,
-    intelApprovale: this.intelApproval,
+    intelApproval: this.intelApproval,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
