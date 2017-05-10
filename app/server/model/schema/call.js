@@ -93,6 +93,7 @@ const Outcome = {
 
 constants.Status = Status;
 constants.ConnectionOutcome = ConnectionOutcome;
+constants.ConnectionStatus = ConnectionStatus;
 constants.Outcome = Outcome;
 
 /* ********************************************************************************
@@ -130,7 +131,8 @@ schema.add({
   connections: [{
     status: {
       type: String,
-      enum: connectionStatus
+      enum: connectionStatus,
+      default: Status.DISCONNECTED
     },
     start: {
       type: Date,
@@ -295,7 +297,7 @@ const PATH_CONTEXT = {
   '^outcome$': {type: 'scalar', values: outcome},
   '^intelApproval$': {type: 'scalar', values: []},
   '^connections$': {type: 'vector-add', values: []},
-  '^connections.([0-9]{1,3}).status$': {type: 'scalar', values: connectionOutcome},
+  '^connections.([0-9]{1,3}).status$': {type: 'scalar', values: connectionStatus},
   '^connections.([0-9]{1,3}).start$': {type: 'scalar', values: []},
   '^connections.([0-9]{1,3}).end$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
