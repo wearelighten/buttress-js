@@ -69,7 +69,7 @@ const connectionStatus = [
 ];
 const ConnectionStatus = {
   CONNECTED: connectionStatus[0],
-  DISCONNECTED: connectionStatus[0]
+  DISCONNECTED: connectionStatus[1]
 };
 
 const outcome = [
