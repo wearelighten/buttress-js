@@ -161,6 +161,7 @@ schema.virtual('details').get(function() {
     contractType: this.contractType,
     contractMode: this.contractMode,
     status: this.status,
+    approval: this.approval,
     parties: this.parties,
     documentIds: this.documentIds,
     executionDate: this.executionDate,
