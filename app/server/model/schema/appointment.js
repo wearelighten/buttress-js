@@ -169,8 +169,8 @@ const __doValidation = body => {
     res.missing.push('ownerId');
     return res;
   }
-  if (!body.assignedToId) {
-    res.missing.push('assignedToId');
+  if (!body.assignedToUserId) {
+    res.missing.push('assignedToUserId');
     return res;
   }
   if (!body.companyId) {
@@ -211,7 +211,7 @@ const __add = body => {
       name: body.name,
       date: Date.create(body.date),
       ownerId: body.ownerId,
-      assignedToId: body.assignedToId,
+      assignedToUserId: body.assignedToUserId,
       companyId: body.companyId,
       contactId: body.contactId,
       locationId: body.locationId,
@@ -255,7 +255,7 @@ schema.statics.rmAll = () => {
 
 const PATH_CONTEXT = {
   '^outcome$': {type: 'scalar', values: Outcomes},
-  '^(reason|contactId|locationId|date|calendarEntryId|assignedToUserId)$': {type: 'scalar', values: []},
+  '^(reason|contactId|locationId|date|calendarEntryId|assignedToUserId|assignedToAccepted)$': {type: 'scalar', values: []},
   '^intelApproval$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: ['']},
