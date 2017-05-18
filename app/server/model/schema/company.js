@@ -100,19 +100,22 @@ constants.TurnoverBands = {
  *
  **********************************************************************************/
 schema.add({
-  _parent: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Company'
-  },
   companyType: {
     type: String,
-    enum: types,
     default: constants.Type.PROSPECT
   },
   name: String,
   siccode: Number,
   reference: String,
   description: String,
+  parentCompanyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company'
+  },
+  childType: {
+    type: String,
+    default: ''
+  },
   source: String,
   companyNumber: Number,
   numEmployees: Number,
@@ -282,6 +285,8 @@ const __addCompany = body => {
     const company = new ModelDef({
       name: body.name,
       companyType: body.companyType,
+      parentCompanyId: body.parentCompanyId,
+      childType: body.childType,
       siccode: body.siccode,
       reference: body.reference,
       description: body.description,
@@ -400,6 +405,8 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     companyType: this.companyType,
+    parentCompanyId: this.parentCompanyId,
+    childType: this.childType,
     description: this.description,
     siccode: this.siccode,
     reference: this.reference,
@@ -442,7 +449,7 @@ schema.virtual('details').get(function() {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(name|companyType|reference|description|siccode|numEmployees|annualTurnover|profitPreTax|financeEndDate|netWorth|source|memberships|flags|vatExempt|vatRegistrationNumber|companyNumber)$': {type: 'scalar', values: []}, // eslint-disable-line max-len
+  '^(name|parentCompanyId|childType|companyType|reference|description|siccode|numEmployees|annualTurnover|profitPreTax|financeEndDate|netWorth|source|memberships|flags|vatExempt|vatRegistrationNumber|companyNumber)$': {type: 'scalar', values: []}, // eslint-disable-line max-len
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
