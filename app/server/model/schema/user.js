@@ -73,7 +73,6 @@ schema.virtual('details').get(function() {
     orgRole: this.orgRole,
     teamName: this.teamName,
     teamRole: this.teamRole,
-    metadata: this.authenticatedMetadata,
     auth: this.auth.map(a => a.details),
     person: this.tryPerson
   };
