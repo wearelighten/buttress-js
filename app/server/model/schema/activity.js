@@ -103,6 +103,8 @@ schema.virtual('tokenValue').get(function() {
  * Schema Static Methods
  */
 
+const collection = Model.mongoDb.collection('activities');
+
 /**
  * @param {Object} route - route object that fulfilled the request
  * @param {Object} response - object containing the response data
@@ -121,7 +123,7 @@ schema.statics.add = (route, response) => {
   delete q.token;
   delete q.urq;
 
-  const app = new ModelDef({
+  const activity = new ModelDef({
     title: route.activityTitle,
     description: route.activityDescription,
     visibility: route.activityVisibility,
@@ -132,13 +134,24 @@ schema.statics.add = (route, response) => {
     params: route.req.params,
     query: q,
     body: route.req.body,
-    response: response,
+    // response: response,
     _token: Model.token.id,
     _user: Model.authUser,
     _app: Model.authApp
   });
 
-  return app.save();
+  return new Promise((resolve, reject) => {
+    collection.insert(activity.toObject(), (err, res) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      resolve(res.ops.map(c => c._id));
+    });
+  });
+
+  // return app.save();
 };
 
 /**
