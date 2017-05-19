@@ -10,21 +10,17 @@
  *
  */
 
-var path = require('path');
-var fs = require('fs');
-var Config = require('./config');
-var Model = require('./model');
-var Routes = require('./routes');
-var Logging = require('./logging');
+const path = require('path');
+const fs = require('fs');
+const Config = require('./config');
+const Model = require('./model');
+const Routes = require('./routes');
+const Logging = require('./logging');
+const Helpers = require('./helpers');
+const MongoClient = require('mongodb').MongoClient;
 
-var _installApp = (app, io) => {
-  Model.init(app);
-  return Routes
-    .init(app, io)
-    .then(() => {
-      return Model.Organisation
-        .find({});
-    })
+const __systemInit = () => {
+  return Model.Organisation.find({})
     .then(orgs => {
       if (orgs.length > 0) {
         return Promise.resolve(true); // If any organisations, assume we've got a Super Admin app
@@ -86,8 +82,30 @@ var _installApp = (app, io) => {
           resolve(true);
         });
       });
-    })
-    .catch(Logging.Promise.logError());
+    });
+};
+
+const __nativeMongoConnect = app => {
+  return new Promise((resolve, reject) => {
+    MongoClient.connect(app.get('db-uri'), (err, db) => {
+      if (err) throw err;
+      Model.init(db);
+      resolve();
+    });
+  });
+};
+
+const _installApp = (app, io) => {
+  return __nativeMongoConnect(app)
+    .then(() => {
+      let tasks = [
+        __nativeMongoConnect(app),
+        Routes.init(app, io),
+        __systemInit()
+      ];
+
+      return Promise.all(tasks);
+    });
 };
 
 module.exports = {
