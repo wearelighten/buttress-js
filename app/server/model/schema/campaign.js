@@ -439,12 +439,13 @@ schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
 
+const collection = Model.mongoDb.collection('campaigns');
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return ModelDef.find({_app: Model.authApp._id}).then(campaigns => campaigns.map(c => c.details));
+  return collection.find({_app: Model.authApp._id});
 };
 
 /**

@@ -33,8 +33,7 @@ class GetCompanyList extends Route {
   }
 
   _exec() {
-    return Model.Company.findAll()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Company.findAll();
   }
 }
 routes.push(GetCompanyList);

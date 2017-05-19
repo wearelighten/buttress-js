@@ -33,8 +33,7 @@ class GetCallList extends Route {
   }
 
   _exec() {
-    return Model.Call.getAll()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Call.getAll();
   }
 }
 routes.push(GetCallList);

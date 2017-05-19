@@ -32,8 +32,7 @@ class GetNotificationList extends Route {
   }
 
   _exec() {
-    return Model.Notification.getAll()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Notification.getAll();
   }
 }
 routes.push(GetNotificationList);

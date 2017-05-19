@@ -246,12 +246,13 @@ schema.statics.add = body => {
   }, Promise.resolve([]));
 };
 
+const collection = Model.mongoDb.collection('tasks');
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return ModelDef.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id});
 };
 
 /**
@@ -259,7 +260,7 @@ schema.statics.getAll = () => {
  */
 schema.statics.getAllReminders = () => {
   Logging.log(`getAllReminders: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return ModelDef.find({'_app': Model.authApp._id, 'reminder.status': 'pending'});
+  return collection.find({_app: Model.authApp._id, 'reminder.status': 'pending'});
 };
 
 schema.statics.rmAll = () => {

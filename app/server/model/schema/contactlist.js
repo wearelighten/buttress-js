@@ -176,8 +176,9 @@ schema.statics.add = (campaign, body) => {
   }, Promise.resolve([]));
 };
 
+const collection = Model.mongoDb.collection('contactlists');
 schema.statics.getAll = () => {
-  return ModelDef.find({});
+  return collection.find({_app: Model.authApp._id});
 };
 schema.statics.rmAll = () => {
   return ModelDef.remove({});

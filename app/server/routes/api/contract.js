@@ -33,8 +33,8 @@ class GetContractList extends Route {
   }
 
   _exec() {
-    return Model.Contract.getAll()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Contract.getAll();
+      // .then(Helpers.Promise.arrayProp('details'));
   }
 }
 routes.push(GetContractList);

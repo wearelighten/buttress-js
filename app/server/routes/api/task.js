@@ -33,8 +33,7 @@ class GetTaskList extends Route {
   }
 
   _exec() {
-    return Model.Task.getAll()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Task.getAll();
   }
 }
 routes.push(GetTaskList);
@@ -55,8 +54,7 @@ class GetTaskReminders extends Route {
   }
 
   _exec() {
-    return Model.Task.getAllReminders()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Task.getAllReminders();
   }
 }
 routes.push(GetTaskReminders);

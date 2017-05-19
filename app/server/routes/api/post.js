@@ -33,8 +33,7 @@ class GetPostList extends Route {
   }
 
   _exec() {
-    return Model.Post.getAll()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Post.getAll();
   }
 }
 routes.push(GetPostList);

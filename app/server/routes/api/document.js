@@ -33,8 +33,7 @@ class GetDocumentList extends Route {
   }
 
   _exec() {
-    return Model.Document.getAll()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Document.getAll();
   }
 }
 routes.push(GetDocumentList);

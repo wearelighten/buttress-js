@@ -32,8 +32,7 @@ class GetContactListList extends Route {
   }
 
   _exec() {
-    return Model.Contactlist.getAll()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Contactlist.getAll();
   }
 }
 routes.push(GetContactListList);

@@ -259,12 +259,14 @@ schema.statics.add = body => {
   }, Promise.resolve([]));
 };
 
+const collection = Model.mongoDb.collection('contracts');
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return ModelDef.find({_app: Model.authApp._id});
+
+  return collection.find({_app: Model.authApp._id});
 };
 
 schema.statics.rmAll = () => {

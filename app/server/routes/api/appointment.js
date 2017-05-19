@@ -33,8 +33,7 @@ class GetAppointmentList extends Route {
   }
 
   _exec() {
-    return Model.Appointment.getAll()
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Appointment.getAll();
   }
 }
 routes.push(GetAppointmentList);

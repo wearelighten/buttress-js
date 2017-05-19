@@ -511,6 +511,8 @@ schema.statics.rmAll = () => {
   return ModelDef.remove({});
 };
 
+const collection = Model.mongoDb.collection('companies');
+
 /**
  * @return {Promise} - resolves to an array of Companies
  */
@@ -521,7 +523,7 @@ schema.statics.findAll = () => {
     return ModelDef.find({});
   }
 
-  return ModelDef.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id});
 };
 
 /**
