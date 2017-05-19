@@ -14,8 +14,8 @@ const Config = require('../config');
 const Logging = require('../logging');
 const Model = require('../model');
 const Helpers = require('../helpers');
-// var OTP = require('../stotp');
 const _ = require('underscore');
+const Mongo = require('mongodb');
 
 /**
  */
@@ -26,8 +26,8 @@ const _ = require('underscore');
 //   tolerance: 3
 // });
 
-var _app = null;
-var _io = null;
+let _app = null;
+let _io = null;
 
 /**
  * @type {{Auth: {
@@ -51,7 +51,7 @@ var _io = null;
  *          DEL: string
 *          }}}
  */
-var Constants = {
+const Constants = {
   Auth: {
     NONE: 0,
     USER: 1,
@@ -75,30 +75,6 @@ var Constants = {
   }
 };
 
-class Timer {
-  constructor() {
-    this._start = 0;
-  }
-
-  start() {
-    let hrTime = process.hrtime();
-    this._last = this._start = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
-  }
-
-  get lapTime() {
-    let hrTime = process.hrtime();
-    let time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
-    let lapTime = time - this._last;
-    this._last = time;
-    return (lapTime / 1000000);
-  }
-  get interval() {
-    let hrTime = process.hrtime();
-    let time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
-    return ((time - this._start) / 1000000);
-  }
-}
-
 class Route {
   constructor(path, name) {
     this.verb = Constants.Verbs.GET;
@@ -109,7 +85,7 @@ class Route {
     this.activityTitle = 'Private Activity';
     this.activityDescription = '';
 
-    this._timer = new Timer();
+    this._timer = new Helpers.Timer();
 
     this.path = path;
     this.name = name;
@@ -150,12 +126,14 @@ class Route {
 
   _logActivity(res) {
     Logging.logDebug(`logging activity: [${this.verb}] ${this.path} (${this.auth}:${this.permissions})`);
-    let broadcast = activity => {
+    if (res instanceof Mongo.Cursor) {
+      return Promise.resolve(res);
+    }
+
+    let broadcast = () => {
       if (this.activityBroadcast === false) {
         return;
       }
-
-      let userId = activity._user ? activity._user._id : null;
 
       _io.sockets.emit('db-activity', {
         visibility: this.activityVisibility,
@@ -168,13 +146,16 @@ class Route {
         timestamp: activity.timestamp,
         activityId: activity._id,
         response: res,
-        user: userId
+        user: Model.authUser ? Model.authUser._id : ''
       });
     };
 
-    return Model.Activity.add(this, res)
-      .then(broadcast)
-      .then(Helpers.Promise.inject(res));
+    let p = setTimeout(() => {
+      Model.Activity.add(this, res);
+      broadcast();
+    }, 100);
+
+    return Promise.resolve(res);
   }
 
   /**
@@ -212,11 +193,11 @@ class Route {
        * @TODO Improve the pattern matching granularity ie like Glob
        * @TODO Support Regex in specific ie match routes like app/:id/permission
        */
-      var authorised = false;
+      let authorised = false;
       let token = this.req.token;
       Logging.log(token.permissions, Logging.Constants.LogLevel.DEBUG);
-      for (var x = 0; x < token.permissions.length; x++) {
-        var p = token.permissions[x];
+      for (let x = 0; x < token.permissions.length; x++) {
+        let p = token.permissions[x];
         if (this._matchRoute(p.route) && this._matchPermission(p.permission)) {
           authorised = true;
           break;
@@ -248,8 +229,8 @@ class Route {
       return true;
     }
 
-    var wildcard = /(.+)(\/\*)/;
-    var matches = routeSpec.match(wildcard);
+    let wildcard = /(.+)(\/\*)/;
+    let matches = routeSpec.match(wildcard);
     if (matches) {
       Logging.log(matches, Logging.Constants.LogLevel.DEBUG);
       if (this.path.match(new RegExp(`^${matches[1]}`)) &&
@@ -300,7 +281,7 @@ class Route {
   }
 
   /**
-   * @return {Enum} - returns the LogLevel enum (convenience)
+   * @return {enum} - returns the LogLevel enum (convenience)
    */
   static get LogLevel() {
     return Logging.Constants.LogLevel;
