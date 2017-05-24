@@ -181,10 +181,10 @@ const __doValidation = body => {
     res.missing.push('contactId');
     return res;
   }
-  if (!body.date) {
-    res.missing.push('date');
-    return res;
-  }
+  // if (!body.date) {
+  //   res.missing.push('date');
+  //   return res;
+  // }
 
   res.isValid = true;
   return res;
