@@ -60,7 +60,7 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  assignedToId: {
+  assignedToUserId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
@@ -154,7 +154,7 @@ schema.virtual('details').get(function() {
     name: this.name,
     tag: this.tag,
     ownerId: this.ownerId,
-    assignedToId: this.assignedToId,
+    assignedToUserId: this.assignedToUserId,
     entityId: this.entityId,
     entityType: this.entityType,
     references: this.references,
@@ -226,6 +226,7 @@ const __add = body => {
     const cl = new ModelDef({
       _app: Model.authApp._id,
       ownerId: body.ownerId,
+      assignedToUserId: body.assignedToUserId
       name: body.name,
       tag: body.tag,
       contractType: body.contractType,
@@ -281,7 +282,7 @@ schema.statics.rmAll = () => {
 
 const PATH_CONTEXT = {
   '^status$': {type: 'scalar', values: status},
-  '^(name|tag|contractType|contractMode|entityId|entityType|dateOfAgreement|startDate|endDate)$': {type: 'scalar', values: []},
+  '^(name|tag|contractType|contractMode|assignedToUserId|entityId|entityType|dateOfAgreement|startDate|endDate)$': {type: 'scalar', values: []},
   '^approval$': {type: 'scalar', values: []},
   '^parties$': {type: 'vector-add', values: []},
   '^parties.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
