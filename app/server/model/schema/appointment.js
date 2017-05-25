@@ -80,6 +80,7 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   },
+  tag: String,
   contactId: String,
   locationId: String,
   intelApproval: {
@@ -134,6 +135,7 @@ schema.virtual('details').get(function() {
     assignedToUserId: this.assignedToUserId && this.assignedToUserId._id ? this.assignedToUserId._id : this.assignedToUserId,
     assignedToAccepted: this.assignedToAccepted,
     companyId: this.companyId && this.companyId._id ? this.companyId._id : this.companyId,
+    tag: this.tag,
     contactId: this.contactId,
     calendarEntryId: this.calendarEntryId,
     locationId: this.locationId,
@@ -212,6 +214,7 @@ const __add = body => {
       date: Date.create(body.date),
       ownerId: body.ownerId,
       assignedToUserId: body.assignedToUserId,
+      tag: body.tag ? body.tag : '',
       companyId: body.companyId,
       contactId: body.contactId,
       locationId: body.locationId,
@@ -256,7 +259,7 @@ schema.statics.rmAll = () => {
 
 const PATH_CONTEXT = {
   '^outcome$': {type: 'scalar', values: Outcomes},
-  '^(reason|contactId|locationId|date|calendarEntryId|assignedToUserId|assignedToAccepted)$': {type: 'scalar', values: []},
+  '^(reason|tag|contactId|locationId|date|calendarEntryId|assignedToUserId|assignedToAccepted)$': {type: 'scalar', values: []},
   '^intelApproval$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: ['']},
