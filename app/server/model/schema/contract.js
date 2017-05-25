@@ -226,7 +226,7 @@ const __add = body => {
     const cl = new ModelDef({
       _app: Model.authApp._id,
       ownerId: body.ownerId,
-      assignedToUserId: body.assignedToUserId
+      assignedToUserId: body.assignedToUserId,
       name: body.name,
       tag: body.tag,
       contractType: body.contractType,
