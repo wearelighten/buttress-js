@@ -143,8 +143,7 @@ class Route {
         permissions: this.permissions,
         title: this.activityTitle,
         description: this.activityDescription,
-        timestamp: activity.timestamp,
-        activityId: activity._id,
+        timestamp: new Date(),
         response: res,
         user: Model.authUser ? Model.authUser._id : ''
       });
@@ -248,7 +247,7 @@ class Route {
    * @private
    */
   _matchPermission(permissionSpec) {
-    if (permissionSpec === '*' || permissionSpec === this.permission) {
+    if (permissionSpec === '*' || permissionSpec === this.permissions) {
       return true;
     }
 

@@ -99,7 +99,6 @@ const _installApp = (app, io) => {
   return __nativeMongoConnect(app)
     .then(() => {
       let tasks = [
-        __nativeMongoConnect(app),
         Routes.init(app, io),
         __systemInit()
       ];
