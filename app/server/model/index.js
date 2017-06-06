@@ -35,7 +35,7 @@ class Model {
   init(db) {
     this.mongoDb = db;
     let models = _getModels();
-    Logging.log(models, Logging.Constants.LogLevel.DEBUG);
+    Logging.log(models, Logging.Constants.LogLevel.SILLY);
     for (let x = 0; x < models.length; x++) {
       this._initModel(models[x]);
     }

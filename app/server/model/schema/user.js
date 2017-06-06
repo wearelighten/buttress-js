@@ -140,6 +140,58 @@ schema.statics.add = (body, personDetails, auth) => {
   return Promise.all([saveUser, getToken]);
 };
 
+schema.methods.addAuth = function(auth) {
+  Logging.log(`addAuth: ${auth.app}`, Logging.Constants.LogLevel.INFO);
+  let existing = this.auth.find(a => a.app === auth.app && a.id == auth.id); // eslint-disable-line eqeqeq
+  if (existing) {
+    Logging.log(`present: ${auth.app}:${auth.id}`, Logging.Constants.LogLevel.DEBUG);
+    return Promise.resolve(this);
+  }
+
+  Logging.log(`not present: ${auth.app}:${auth.id}`, Logging.Constants.LogLevel.DEBUG);
+  this.auth.push(new Model.Appauth({
+    app: auth.app,
+    appId: auth.id,
+    username: auth.username,
+    profileUrl: auth.profileUrl,
+    images: {
+      profile: auth.profileImgUrl,
+      banner: auth.bannerImgUrl
+    },
+    email: auth.email,
+    token: auth.token,
+    tokenSecret: auth.tokenSecret,
+    refreshToken: auth.refreshToken
+  }));
+  return this.save();
+};
+
+/**
+ * @param {string} app - name of the app for which the token is being updated
+ * @param {Object} updated - updated app information passed through from a PUT request
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.methods.updateAppInfo = function(app, updated) {
+  var auth = this.auth.find(a => a.app === app);
+  if (!auth) {
+    Logging.log(`Unable to find Appauth for ${app}`, Logging.Constants.LogLevel.DEBUG);
+    return Promise.resolve(false);
+  }
+
+  auth.username = updated.username;
+  auth.profileUrl = updated.profileUrl;
+  auth.images.profile = updated.profileImgUrl;
+  auth.images.banner = updated.bannerImgUrl;
+  auth.email = updated.email;
+  auth.token = updated.token;
+  auth.tokenSecret = updated.tokenSecret;
+  auth.refreshToken = updated.refreshToken;
+
+  Logging.logDebug(updated.profileImgUrl);
+
+  return this.save().then(() => true);
+};
+
 schema.methods.updateApps = function(app) {
   Logging.log(`updateApps: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
   if (!this._apps) {

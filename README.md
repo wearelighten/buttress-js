@@ -1,6 +1,10 @@
 # ButtressJS
-### version: 1.0.0
 Realtime datastore for business software.
+
+# What's New
+### version: 1.0.0
+
+
 ## Prerequisites ##
 You'll need gulp:
 `npm install -g gulp && npm install gulp`

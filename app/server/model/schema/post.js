@@ -51,6 +51,8 @@ const Type = {
   CONTRACT: types[6]
 };
 
+constants.Type = Type;
+
 /* ********************************************************************************
  *
  * SCHEMA
@@ -58,6 +60,9 @@ const Type = {
  **********************************************************************************/
 schema.add({
   text: String,
+  image: String,
+  url: String,
+  tags: String,
   postType: {
     type: String,
     enum: types
@@ -104,6 +109,9 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     text: this.text,
+    image: this.image,
+    tags: this.tags,
+    url: this.url,
     type: this.postType,
     ownerId: this.ownerId && this.ownerId._id ? this.ownerId._id : this.ownerId,
     entityId: this.entityId,
@@ -145,10 +153,6 @@ const __doValidation = body => {
     res.isValid = false;
     res.invalid.push('type');
   }
-  if (body.type !== Type.FREE && !body.entityId) {
-    res.isValid = false;
-    res.missing.push('entityId');
-  }
 
   return res;
 };
@@ -173,6 +177,9 @@ const __add = body => {
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       text: body.text,
+      image: body.image,
+      url: body.url,
+      tags: body.tags,
       postType: body.type,
       entityId: body.entityId
     });
@@ -214,7 +221,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(text)$': {type: 'scalar', values: []},
+  '^(text|image|url|tags)$': {type: 'scalar', values: []},
   '^likeUserIds$': {type: 'vector-add', values: []},
   '^likeUserIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes$': {type: 'vector-add', values: []},

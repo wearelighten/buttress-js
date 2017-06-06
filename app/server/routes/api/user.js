@@ -1,4 +1,4 @@
-'use strict';
+'use strict'; // eslint-disable-line max-lines
 
 /**
  * ButtressJS - Realtime datastore for business software
@@ -10,12 +10,12 @@
  *
  */
 
-var Route = require('../route');
-var Model = require('../../model');
-var Logging = require('../../logging');
-var Helpers = require('../../helpers');
+const Route = require('../route');
+const Model = require('../../model');
+const Logging = require('../../logging');
+const Helpers = require('../../helpers');
 
-var routes = [];
+let routes = [];
 
 /**
  * @class GetUserList
@@ -24,7 +24,7 @@ class GetUserList extends Route {
   constructor() {
     super('user', 'GET USER LIST');
     this.verb = Route.Constants.Verbs.GET;
-    this.auth = Route.Constants.Auth.ADMIN;
+    this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.LIST;
   }
 
@@ -34,7 +34,20 @@ class GetUserList extends Route {
 
   _exec() {
     return Model.User.getAll()
-    .then(users => users.map(u => u.details));
+      .then(users => {
+        if (this.req.token.authLevel >= Route.Constants.Auth.ADMIN) {
+          return users.map(u => u.details);
+        }
+        return users.map(u => {
+          const details = u.details;
+          return {
+            id: details.id,
+            profiles: details.auth.map(a => ({app: a.app, username: a.username, url: a.profileUrl, image: a.images.profile})),
+            formalName: details.person.formalName,
+            name: details.person.name
+          };
+        });
+      });
   }
 }
 routes.push(GetUserList);
@@ -272,6 +285,104 @@ class AddUser extends Route {
   }
 }
 routes.push(AddUser);
+
+/**
+ * @class UpdateUserAppInfo
+ */
+class UpdateUserAppInfo extends Route {
+  constructor() {
+    super('user/:id/:app(twitter|facebook|google)/info', 'UPDATE USER APP INFO');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.WRITE;
+
+    this._user = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      if (!this.req.body ||
+        !this.req.body.token) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      Model.User.findById(this.req.params.id).select('-metadata').then(user => {
+        Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
+        this._user = user;
+        if (this._user) {
+          resolve(true);
+        } else {
+          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+          resolve({statusCode: 400});
+        }
+      });
+    });
+  }
+
+  _exec() {
+    return this._user.updateAppInfo(this.req.params.app, this.req.body);
+  }
+}
+routes.push(UpdateUserAppInfo);
+
+/**
+ * @class AddUserAuth
+ */
+class AddUserAuth extends Route {
+  constructor() {
+    super('user/:id/auth', 'ADD USER AUTH');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._user = null;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Logging.log(this.req.body.auth, Logging.Constants.LogLevel.DEBUG);
+      let auth = this.req.body.auth;
+
+      if (!auth || !auth.app || !auth.id || !auth.profileImgUrl || !auth.token) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      Model.User.findById(this.req.params.id).populate('_person').select('-metadata').then(user => {
+        Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
+        this._user = user;
+        if (this._user) {
+          resolve(true);
+        } else {
+          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+          resolve({statusCode: 400});
+        }
+      });
+    });
+  }
+
+  _exec() {
+    return this._user
+      .addAuth(this.req.body.auth)
+      .then(user => {
+        let tasks = [
+          Promise.resolve(user.details),
+          Model.Token.findUserAuthToken(this._user._id, this.req.authApp._id)
+        ];
+
+        if (this._user._person) {
+          tasks.push(this._user._person.updateFromAuth(this.req.body.auth));
+        }
+
+        return Promise.all(tasks);
+      })
+      .then(res => Object.assign(res[0], {authToken: res[1] ? res[1].value : false}));
+  }
+}
+routes.push(AddUserAuth);
 
 /**
  * @class UpdateUser
@@ -559,6 +670,7 @@ class GetMetadata extends Route {
           reject({statusCode: 400});
           return;
         }
+
         let appIndex = user._apps.findIndex(a => `${a}` === `${this.req.authApp._id}`);
         if (appIndex === -1) {
           this.log('ERROR: Not authorised', Route.LogLevel.ERR);

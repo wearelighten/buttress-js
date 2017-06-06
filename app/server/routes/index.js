@@ -45,7 +45,6 @@ function _initRoute(app, Route) {
 }
 
 let _tokens = [];
-// let _timers = {};
 
 /**
  * @param {Object} req - Request object
@@ -54,43 +53,37 @@ let _tokens = [];
  * @private
  */
 function _authenticateToken(req, res, next) {
-  // _timers[req.path] = new Timer();
-  // _timers[req.path].start();
+  Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.SILLY);
   req.session = null; // potentially prevents a write
 
-  Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.SILLY);
   if (!req.query.token) {
     Logging.log('EAUTH: Missing Token', Logging.Constants.LogLevel.ERR);
-    res.sendStatus(400);
+    res.status(400).json({message: 'missing_token'});
     return;
   }
   _getToken(req.query.token)
-  .then(token => {
-    if (token === null) {
-      Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
-      res.sendStatus(401).json({message: 'Token is invalid is required'});
-      return;
-    }
+    .then(token => {
+      return new Promise((resolve, reject) => {
+        if (token === null) {
+          Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
+          res.status(401).json({message: 'invalid_token'});
+          reject({message: 'invalid_token'});
+          return;
+        }
+        Model.token = req.token = token.details;
+        Model.authApp = req.authApp = token._app;
+        Model.authUser = req.authUser = token._user;
 
-    // console.log(`_authenticateToken (pre-save): ${_timers[req.path].interval.toFixed(3)}`);
+        Model.Token.update({_id: token.id}, {$push: {
+          uses: new Date()
+        }});
 
-    Model.token = req.token = token.details;
-    Model.authApp = req.authApp = token._app;
-    Model.authUser = req.authUser = token._user;
-
-    Model.Token.update({_id: token.id}, {$push: {
-      uses: new Date()
-    }});
-    // .then((res) => {
-    //   console.log(token.id);
-    //   console.log(res);
-    // });
-
-    // console.log(`_authenticateToken (post-save): ${_timers[req.path].interval.toFixed(3)}`);
-  })
-  .then(Helpers.Promise.inject())
-  .then(next)
-  .catch(Logging.Promise.logError());
+        resolve();
+      });
+    })
+    .then(Helpers.Promise.inject())
+    .then(next)
+    .catch(Logging.Promise.logError());
 }
 
 /**
@@ -114,15 +107,15 @@ function _getToken(tokenValue, timer) {
 
   return new Promise(resolve => {
     Model.Token.findAllNative()
-    .then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
-    .then(tokens => {
-      if (timer) {
-        console.log(`_getToken:Load: ${timer.interval.toFixed(3)}`);
-      }
-      _tokens = tokens;
-      token = _lookupToken(_tokens, tokenValue);
-      return resolve(token);
-    });
+      .then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
+      .then(tokens => {
+        if (timer) {
+          console.log(`_getToken:Load: ${timer.interval.toFixed(3)}`);
+        }
+        _tokens = tokens;
+        token = _lookupToken(_tokens, tokenValue);
+        return resolve(token);
+      });
   });
 }
 
@@ -157,7 +150,7 @@ function _loadTokens() {
  */
 function _configCrossDomain(req, res, next) {
   if (!req.token) {
-    res.sendStatus(401).json({message: 'Auth token is required'});
+    res.status(401).json({message: 'Auth token is required'});
     return;
   }
   if (req.token.type !== Model.Constants.Token.Type.USER) {
@@ -165,20 +158,32 @@ function _configCrossDomain(req, res, next) {
     return;
   }
   if (!req.authUser) {
-    res.sendStatus(401).json({message: 'Auth user is required'});
+    res.status(401).json({message: 'Auth user is required'});
     return;
   }
 
-  Logging.log(req.header('Origin'), Logging.Constants.LogLevel.DEBUG);
-  Logging.log(req.token.domains, Logging.Constants.LogLevel.DEBUG);
+  const rex = /https?:\/\/(.+)$/;
+  let origin = req.header('Origin');
+  let matches = rex.exec(origin);
+  if (matches) {
+    origin = matches[1];
+  }
 
-  const domainIdx = req.token.domains.indexOf(req.header('Origin'));
+  let domains = req.token.domains.map(d => {
+    matches = rex.exec(d);
+    return matches ? matches[1] : d;
+  });
+
+  Logging.logDebug(origin);
+  Logging.logDebug(domains);
+
+  const domainIdx = domains.indexOf(origin);
   if (domainIdx === -1) {
     res.sendStatus(403);
     return;
   }
 
-  res.header('Access-Control-Allow-Origin', `${req.token.domains[domainIdx]}`);
+  res.header('Access-Control-Allow-Origin', req.header('Origin'));
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'content-type');
 
@@ -194,11 +199,8 @@ function _configCrossDomain(req, res, next) {
  * @param {Object} io - socket io object
  * @return {Promise} - resolves once the tokens have been pre-cached
  */
-exports.init = (app, io) => {
+exports.init = app => {
   Route.app = app;
-  Route.io = io;
-
-  io.origins('*:*');
 
   app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
   app.get('/index.html', (req, res, next) => res.send('<html><head><title>ButtressJS</title></head></html>'));

@@ -260,7 +260,7 @@ schema.statics.getAll = () => {
  */
 schema.statics.getAllReminders = () => {
   Logging.log(`getAllReminders: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return collection.find({_app: Model.authApp._id, 'reminder.status': 'pending'});
+  return collection.find({'_app': Model.authApp._id, 'reminder.status': 'pending'});
 };
 
 schema.statics.rmAll = () => {

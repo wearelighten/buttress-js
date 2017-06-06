@@ -16,6 +16,9 @@ const Model = require('../model');
 const Helpers = require('../helpers');
 const _ = require('underscore');
 const Mongo = require('mongodb');
+const NRP = require('node-redis-pubsub');
+
+const nrp = new NRP(Config.redis);
 
 /**
  */
@@ -126,7 +129,7 @@ class Route {
 
   _logActivity(res) {
     Logging.logDebug(`logging activity: [${this.verb}] ${this.path} (${this.auth}:${this.permissions})`);
-    if (res instanceof Mongo.Cursor) {
+    if (res instanceof Mongo.Cursor || this.verb === Constants.Verbs.GET) {
       return Promise.resolve(res);
     }
 
@@ -135,24 +138,24 @@ class Route {
         return;
       }
 
-      _io.sockets.emit('db-activity', {
+      nrp.emit('activity', {
+        title: this.activityTitle,
+        description: this.activityDescription,
         visibility: this.activityVisibility,
         path: this.req.path.replace(Config.app.apiPrefix, ''),
         pathSpec: this.path,
         verb: this.verb,
         permissions: this.permissions,
-        title: this.activityTitle,
-        description: this.activityDescription,
         timestamp: new Date(),
         response: res,
         user: Model.authUser ? Model.authUser._id : ''
       });
     };
 
-    let p = setTimeout(() => {
+    setTimeout(() => {
       Model.Activity.add(this, res);
       broadcast();
-    }, 100);
+    }, 50);
 
     return Promise.resolve(res);
   }
@@ -225,6 +228,12 @@ class Route {
     }
 
     if (routeSpec === this.path) {
+      return true;
+    }
+
+    let userWildcard = /^user\/me.+/;
+    if (routeSpec.match(userWildcard) && this.req.params.id == this.req.authUser._id) { // eslint-disable-line eqeqeq
+      Logging.logDebug(`Matched user ${this.req.authUser._id} to /user/${this.req.params.id}`);
       return true;
     }
 

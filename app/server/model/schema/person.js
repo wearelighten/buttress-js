@@ -132,6 +132,24 @@ schema.statics.add = (body, owner) => {
 };
 
 /**
+ * @param {Object} appAuth - app auth details
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.methods.updateFromAuth = function(appAuth) {
+  if (!appAuth.email) {
+    return Promise.resolve();
+  }
+
+  if (this.emails.findIndex(e => e === appAuth.email) !== -1) {
+    return Promise.resolve();
+  }
+
+  this.emails.push(appAuth.email);
+
+  return this.save();
+};
+
+/**
  * @return {Promise} - resolves to an array of Apps (App.details)
  */
 schema.statics.findAll = () => {

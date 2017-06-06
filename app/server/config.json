@@ -1,67 +1,81 @@
 {
+  "environment": {
+    "BUTTRESS_SERVER_ID": "",
+    "BUTTRESS_HOST_URL": "",
+    "BUTTRESS_MONGO_URL_DEV": "",
+    "BUTTRESS_MONGO_URL_PROD": "",
+    "BUTTRESS_MONGO_URL_TEST": "",
+    "BUTTRESS_REDIS_PORT": "6379",
+    "BUTTRESS_REDIS_HOST": "localhost",
+    "BUTTRESS_REST_APP": "primary",
+    "BUTTRESS_SOCKET_APP": "primary",
+    "BUTTRESS_APP_PATH": ""
+  },
   "global": {
+    "env": "%NODE_ENV%",
     "app": {
       "title": "ButtressJS",
       "description": "Realtime datastore for business software",
       "code": "buttressjs",
-      "version": "v1.0.0",
+      "version": "1.0.0",
       "protocol": "http",
-      "subdomain": "dev",
-      "domain": "buttressjs.com",
+      "host": "%BUTTRESS_HOST%",
       "apiPrefix": "/api/v1/"
+    },
+    "mongoDb": {
+      "url": {
+        "dev": "%BUTTRESS_MONGO_URL_DEV%",
+        "prod": "%BUTTRESS_MONGO_URL_PROD%",
+        "test": "%BUTTRESS_MONGO_URL_TEST%"
+      }
+    },
+    "sio": {
+      "app": "%BUTTRESS_SOCKET_APP%"
+    },
+    "rest": {
+      "app": "%BUTTRESS_REST_APP%"
+    },
+    "redis": {
+      "port": "%BUTTRESS_REDIS_PORT%",
+      "host": "%BUTTRESS_REDIS_HOST%",
+      "scope": "buttress-internal"
     }
   },
   "local": {
-    "environment": {
-      "BUTTRESS_SERVER_ID": "",
-      "BUTTRESS_MONGO_URL_DEV": "",
-      "BUTTRESS_MONGO_URL_PROD": "",
-      "BUTTRESS_MONGO_URL_TEST": ""
-    },
     "workstation1": {
       "logPath": {
-        "dev":"/home/chris/Work/Workspaces/WebStorm/buttressjs/logs/dev",
-        "prod":"/home/chris/Work/Workspaces/WebStorm/buttressjs/logs/prod",
-        "test":"/home/chris/Work/Workspaces/WebStorm/buttressjs/logs/test"
+        "dev":"%BUTTRESS_APP_PATH%/logs/dev",
+        "prod":"%BUTTRESS_APP_PATH%/logs/prod",
+        "test":"%BUTTRESS_APP_PATH%/logs/test"
       },
       "appDataPath": {
-        "dev": "/home/chris/Work/Workspaces/WebStorm/buttressjs/app_data",
-        "prod": "/home/chris/Work/Workspaces/WebStorm/buttressjs/app_data",
-        "test": "/home/chris/Work/Workspaces/WebStorm/buttressjs/app_data/test"
+        "dev": "%BUTTRESS_APP_PATH%/app_data",
+        "prod": "%BUTTRESS_APP_PATH%/app_data",
+        "test": "%BUTTRESS_APP_PATH%/app_data/test"
       },
       "listenPort": {
         "dev": 7001,
         "prod": 7000,
         "test": 7002
+      },
+      "socket": {
+        "listenPort": {
+          "dev": 8011,
+          "prod": 8010,
+          "test": 8012
+        }
       }
     },
     "workstation2": {
       "logPath": {
-        "dev":"/home/tom/Work/Workspaces/WebStorm/buttressjs/logs/dev",
-        "prod":"/home/tom/Work/Workspaces/WebStorm/buttressjs/logs/prod",
-        "test":"/home/tom/Work/Workspaces/WebStorm/buttressjs/logs/test"
+        "dev":"%BUTTRESS_APP_PATH%/logs/dev",
+        "prod":"%BUTTRESS_APP_PATH%/logs/prod",
+        "test":"%BUTTRESS_APP_PATH%/logs/test"
       },
       "appDataPath": {
-        "dev": "/home/tom/Work/Workspaces/WebStorm/buttressjs/app_data",
-        "prod": "/home/tom/Work/Workspaces/WebStorm/buttressjs/app_data",
-        "test": "/home/tom/Work/Workspaces/WebStorm/buttressjs/app_data/test"
-      },
-      "listenPort": {
-        "dev": 6001,
-        "prod": 6000,
-        "test": 6002
-      }
-    },
-    "yubaba": {
-      "logPath": {
-        "dev": "/home/chris/apps/buttressjs-DEV/logs",
-        "prod": "/home/chris/apps/buttressjs/logs",
-        "test": "/home/chris/apps/buttressjs/logs"
-      },
-      "appDataPath": {
-       "dev": "/home/chris/apps/buttressjs-DEV/app_data",
-       "prod": "/home/chris/apps/buttressjs/app_data",
-       "test": "/home/chris/apps/buttressjs/app_data"
+        "dev": "%BUTTRESS_APP_PATH%/app_data",
+        "prod": "%BUTTRESS_APP_PATH%/app_data",
+        "test": "%BUTTRESS_APP_PATH%/app_data/test"
       },
       "listenPort": {
         "dev": 6001,

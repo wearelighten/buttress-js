@@ -39,7 +39,6 @@ class Timer {
 
 module.exports.Timer = Timer;
 
-
 class JSONStringifyStream extends Transform {
   constructor(options) {
     super(Object.assign(options || {}, {objectMode: true}));
@@ -75,10 +74,15 @@ class JSONStringifyStream extends Transform {
       this.push(`,${str}`);
     }
 
-    cb()
+    cb();
   }
 
   _flush(cb) {
+    if (this._first) {
+      this._first = false;
+      this.push('[');
+    }
+
     this.push(']');
     cb();
   }
