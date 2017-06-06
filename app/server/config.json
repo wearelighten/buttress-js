@@ -1,5 +1,6 @@
 {
   "environment": {
+    "NODE_ENV": "development",
     "BUTTRESS_SERVER_ID": "",
     "BUTTRESS_HOST_URL": "",
     "BUTTRESS_MONGO_URL_DEV": "",
@@ -19,7 +20,7 @@
       "code": "buttressjs",
       "version": "1.0.0",
       "protocol": "http",
-      "host": "%BUTTRESS_HOST%",
+      "host": "%BUTTRESS_HOST_URL%",
       "apiPrefix": "/api/v1/"
     },
     "mongoDb": {
@@ -54,9 +55,9 @@
         "test": "%BUTTRESS_APP_PATH%/app_data/test"
       },
       "listenPort": {
-        "dev": 7001,
-        "prod": 7000,
-        "test": 7002
+        "dev": 6001,
+        "prod": 6000,
+        "test": 6002
       },
       "socket": {
         "listenPort": {

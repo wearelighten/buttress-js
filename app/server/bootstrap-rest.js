@@ -187,8 +187,6 @@ const __initMaster = () => {
  *
  **********************************************************************************/
 const _initRestApp = () => {
-  Logging.setLogApp('rest');
-
   let p = null;
   if (cluster.isMaster) {
     p = __initMaster();

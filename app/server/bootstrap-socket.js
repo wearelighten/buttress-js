@@ -12,6 +12,7 @@
 const os = require('os');
 const cluster = require('cluster');
 const net = require('net');
+const Express = require('express');
 const sio = require('socket.io');
 const sioRedis = require('socket.io-redis');
 const sioEmitter = require('socket.io-emitter');
@@ -55,7 +56,7 @@ const __indexFromIP = (ip, spread) => {
   return Number(s) % spread;
 };
 
-const __initWorker = Express => {
+const __initWorker = () => {
   const app = new Express();
   const server = app.listen(0, 'localhost');
   const io = sio(server);
@@ -103,13 +104,11 @@ const __initMaster = express => {
  * RHIZOME SOCKET
  *
  **********************************************************************************/
-const _initSocketApp = Express => {
-  Logging.setLogApp('socket');
-
+const _initSocketApp = () => {
   if (cluster.isMaster) {
     __initMaster();
   } else {
-    __initWorker(Express);
+    __initWorker();
   }
 
   return Promise.resolve(cluster.isMaster);

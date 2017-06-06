@@ -18,6 +18,8 @@ const Bootstrap = require('./bootstrap');
  *
  */
 
+Logging.setLogApp('socket');
+
 Bootstrap
   .socket()
   .then(isMaster => {

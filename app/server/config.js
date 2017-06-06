@@ -23,7 +23,7 @@ const _map = {
 };
 
 const _env = process.env.NODE_ENV ? process.env.NODE_ENV : 'development';
-const _regEx = /^%(\w+)%$/;
+const _regEx = /^%(\w+)%/;
 
 /**
  * @param  {Object} env - environment variables
@@ -34,6 +34,7 @@ const __recurseVars = (env, root) => {
     if (!root.hasOwnProperty(variable)) { // eslint-disable-line no-prototype-builtins
       continue;
     }
+
     if (root[variable] instanceof Object) {
       __recurseVars(env, root[variable]);
     } else if (root[variable] instanceof Array) {
@@ -41,7 +42,7 @@ const __recurseVars = (env, root) => {
     } else if (typeof root[variable] === 'string') {
       const match = _regEx.exec(root[variable]);
       if (match) {
-        root[variable] = env[match[1]];
+        root[variable] = root[variable].replace(`%${match[1]}%`, env[match[1]]);
       }
     }
   }
