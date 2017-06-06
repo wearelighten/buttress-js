@@ -1,33 +1,83 @@
 {
+  "environment": {
+    "NODE_ENV": "development",
+    "BUTTRESS_SERVER_ID": "",
+    "BUTTRESS_HOST_URL": "",
+    "BUTTRESS_MONGO_URL_DEV": "",
+    "BUTTRESS_MONGO_URL_PROD": "",
+    "BUTTRESS_MONGO_URL_TEST": "",
+    "BUTTRESS_REDIS_PORT": "6379",
+    "BUTTRESS_REDIS_HOST": "localhost",
+    "BUTTRESS_REST_APP": "primary",
+    "BUTTRESS_SOCKET_APP": "primary",
+    "BUTTRESS_APP_PATH": ""
+  },
   "global": {
+    "env": "%NODE_ENV%",
     "app": {
-      "title": "Rhizome",
-      "description": "The API that supports grassroots movements.",
-      "code": "rhizome",
-      "version": "v0.0.1",
+      "title": "ButtressJS",
+      "description": "Realtime datastore for business software",
+      "code": "buttressjs",
+      "version": "1.0.0",
       "protocol": "http",
-      "subdomain": "rhizome",
-      "domain": "codersforcorbyn.com"
+      "host": "%BUTTRESS_HOST_URL%",
+      "apiPrefix": "/api/v1/"
+    },
+    "mongoDb": {
+      "url": {
+        "dev": "%BUTTRESS_MONGO_URL_DEV%",
+        "prod": "%BUTTRESS_MONGO_URL_PROD%",
+        "test": "%BUTTRESS_MONGO_URL_TEST%"
+      }
+    },
+    "sio": {
+      "app": "%BUTTRESS_SOCKET_APP%"
+    },
+    "rest": {
+      "app": "%BUTTRESS_REST_APP%"
+    },
+    "redis": {
+      "port": "%BUTTRESS_REDIS_PORT%",
+      "host": "%BUTTRESS_REDIS_HOST%",
+      "scope": "buttress-internal"
     }
   },
   "local": {
-    "environment": {
-      "RHIZOME_SERVER_ID": "",
-      "RHIZOME_OTP_SALT": "",
-      "RHIZOME_MONGO_URL_DEV": "",
-      "RHIZOME_MONGO_URL_PROD": "",
-      "RHIZOME_MONGO_URL_TEST": ""
-    },
     "workstation1": {
-      "logPath": "/home/chris/Work/Workspaces/WebStorm/rhizome/logs",
+      "logPath": {
+        "dev":"%BUTTRESS_APP_PATH%/logs/dev",
+        "prod":"%BUTTRESS_APP_PATH%/logs/prod",
+        "test":"%BUTTRESS_APP_PATH%/logs/test"
+      },
+      "appDataPath": {
+        "dev": "%BUTTRESS_APP_PATH%/app_data",
+        "prod": "%BUTTRESS_APP_PATH%/app_data",
+        "test": "%BUTTRESS_APP_PATH%/app_data/test"
+      },
       "listenPort": {
         "dev": 6001,
         "prod": 6000,
         "test": 6002
+      },
+      "socket": {
+        "listenPort": {
+          "dev": 8011,
+          "prod": 8010,
+          "test": 8012
+        }
       }
     },
-    "yubaba": {
-      "logPath": "/home/chris/apps/rhizome/logs",
+    "workstation2": {
+      "logPath": {
+        "dev":"%BUTTRESS_APP_PATH%/logs/dev",
+        "prod":"%BUTTRESS_APP_PATH%/logs/prod",
+        "test":"%BUTTRESS_APP_PATH%/logs/test"
+      },
+      "appDataPath": {
+        "dev": "%BUTTRESS_APP_PATH%/app_data",
+        "prod": "%BUTTRESS_APP_PATH%/app_data",
+        "test": "%BUTTRESS_APP_PATH%/app_data/test"
+      },
       "listenPort": {
         "dev": 6001,
         "prod": 6000,

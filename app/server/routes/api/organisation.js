@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file organisation.js
  * @description Organisation API specification
@@ -12,6 +12,7 @@
 
 var Route = require('../route');
 var Model = require('../../model');
+var Helpers = require('../../helpers');
 var Logging = require('../../logging');
 
 var routes = [];
@@ -34,9 +35,8 @@ class GetOrgList extends Route {
   }
 
   _exec() {
-    return new Promise((resolve, reject) => {
-      Model.Organisation.findAll().then(resolve, reject);
-    });
+    return Model.Organisation.findAll()
+      .then(Helpers.Promise.arrayProp('details'));
   }
 }
 routes.push(GetOrgList);
@@ -117,14 +117,53 @@ class AddOrg extends Route {
   }
 
   _exec() {
-    return new Promise((resolve, reject) => {
-      Model.Organisation.add(this.req.body)
+    return Model.Organisation.add(this.req.body)
         .then(Logging.Promise.logProp('Added Org', 'name', Route.LogLevel.VERBOSE))
-        .then(resolve, reject);
-    });
+        .then(Helpers.Promise.prop('details'));
   }
 }
 routes.push(AddOrg);
+
+/**
+ * @class UpdateOrg
+ */
+class UpdateOrg extends Route {
+  constructor() {
+    super('org/:id', 'UPDATE ORG');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.WRITE;
+    this._org = null;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      if (!this.req.body.name && !this.req.body.type && !this.req.body.website) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      Model.Organisation.findById(this.req.params.id)
+      .then(org => {
+        if (!org) {
+          this.log('ERROR: Invalid Organisation ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+        this.log(org._id);
+        this._org = org;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._org.update(this.req.body)
+        .then(Helpers.Promise.prop('details'));
+  }
+}
+routes.push(UpdateOrg);
 
 /**
  * @class DeleteOrg
@@ -150,7 +189,7 @@ class DeleteOrg extends Route {
           this._org = org;
           return org;
         })
-        .then(Logging.Promise.log('Org', Route.LogLevel.VERBOSE))
+        // .then(Logging.Promise.log('Org', Route.LogLevel.VERBOSE))
         .then(org => {
           org.findGroups()
             .then(Logging.Promise.log('Groups'), Route.LogLevel.VERBOSE)
@@ -173,6 +212,27 @@ class DeleteOrg extends Route {
   }
 }
 routes.push(DeleteOrg);
+
+/**
+ * @class DeleteAllOrganisations
+ */
+class DeleteAllOrganisations extends Route {
+  constructor() {
+    super('org', 'DELETE ALL ORGS');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.SUPER;
+    this.permissions = Route.Constants.Permissions.DELETE;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Organisation.rmAll().then(() => true);
+  }
+}
+routes.push(DeleteAllOrganisations);
 
 /**
  * @type {*[]}

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file app.js
  * @description App API specification
@@ -28,15 +28,11 @@ class GetAppList extends Route {
   }
 
   _validate() {
-    return new Promise((resolve, reject) => {
-      resolve(true);
-    });
+    return Promise.resolve(true);
   }
 
   _exec() {
-    return new Promise((resolve, reject) => {
-      Model.App.findAll().then(resolve, reject);
-    });
+    return Model.App.findAll();
   }
 }
 routes.push(GetAppList);
@@ -67,6 +63,7 @@ class GetApp extends Route {
           reject({statusCode: 400});
           return;
         }
+        // this.log(app._token, Route.LogLevel.DEBUG);
         this._app = app;
         resolve(true);
       });
@@ -94,7 +91,7 @@ class AddApp extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      if (!this.req.body.name || !this.req.body.type || !this.req.body.permissions || !this.req.body.authLevel) {
+      if (!this.req.body.name || !this.req.body.type || !this.req.body.authLevel) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
@@ -104,6 +101,44 @@ class AddApp extends Route {
         reject({statusCode: 400});
         return;
       }
+
+      if (!this.req.body.permissions || this.req.body.permissions.length === 0) {
+        switch (Number(this.req.body.authLevel)) {
+          default:
+            this.req.body.permissions = JSON.stringify([]);
+            Logging.logDebug('Creating default permissions');
+            break;
+          case Model.Constants.Token.AuthLevel.SUPER: {
+            let permissions = [
+              {route: '*', permission: '*'}
+            ];
+            this.req.body.permissions = JSON.stringify(permissions);
+            Logging.logDebug('Creating default SUPER permissions');
+          } break;
+          case Model.Constants.Token.AuthLevel.ADMIN: {
+            let permissions = [
+              {route: "org/*", permission: "*"},
+              {route: "group/*", permission: "*"},
+              {route: "user/*", permission: "*"},
+              {route: "person/*", permission: "*"},
+              {route: "campaign/*", permission: "*"},
+              {route: "activity/*", permission: "*"},
+              {route: "company/*", permission: "*"},
+              {route: "contact-list/*", permission: "*"},
+              {route: "call/*", permission: "*"},
+              {route: "task/*", permission: "*"},
+              {route: "appointment/*", permission: "*"},
+              {route: "notification/*", permission: "*"},
+              {route: "contract/*", permission: "*"},
+              {route: "document/*", permission: "*"}
+            ];
+
+            this.req.body.permissions = JSON.stringify(permissions);
+            Logging.logDebug('Creating default ADMIN permissions');
+          } break;
+        }
+      }
+
       try {
         this.req.body.permissions = JSON.parse(this.req.body.permissions);
       } catch (e) {
@@ -113,7 +148,7 @@ class AddApp extends Route {
       }
       if (this.req.body.ownerGroupId) {
         Model.Group.findById(this.req.body.ownerGroupId)
-          .then(Logging.Promise.log('Group', Route.LogLevel.VERBOSE))
+          .then(Logging.Promise.logProp('Group', 'details', Route.LogLevel.SILLY))
           .then(group => {
             if (!group) {
               Logging.log('Error: Invalid Group ID', Route.LogLevel.WARN);
@@ -134,6 +169,9 @@ class AddApp extends Route {
   _exec() {
     return new Promise((resolve, reject) => {
       Model.App.add(this.req.body)
+        .then(res => {
+          return Object.assign(res.app.details, {token: res.token.value});
+        })
         .then(Logging.Promise.logProp('Added App', 'name', Route.LogLevel.INFO))
         .then(resolve, reject);
     });
@@ -277,6 +315,47 @@ class GetAppPermissionList extends Route {
 routes.push(GetAppPermissionList);
 
 /**
+ * @class AddAppPermission
+ */
+class AddAppPermission extends Route {
+  constructor() {
+    super('app/:id/permission', 'ADD APP PERMISSION');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.SUPER;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this._app = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.App.findById(this.req.params.id).then(app => {
+        if (!app) {
+          this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        if (!this.req.body.route || !this.req.body.permission) {
+          this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._app = app;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._app.addOrUpdatePermission(this.req.body.route, this.req.body.permission)
+      .then(a => a.details);
+  }
+}
+routes.push(AddAppPermission);
+
+/**
  * @class AddAppMetadata
  */
 class AddAppMetadata extends Route {
@@ -388,7 +467,7 @@ class GetAppMetadata extends Route {
           return;
         }
         this._metadata = app.findMetadata(this.req.params.key);
-        if (this._metadata === undefined) {
+        if (this._metadata === false) {
           this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
           reject({statusCode: 404});
           return;

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file app.js
  * @description App model definition.
@@ -11,28 +11,25 @@
  *
  */
 
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 /**
  * Constants
 */
 
-var apps = ['google', 'facebook', 'twitter', 'linkedin'];
-var App = {
+const apps = ['google', 'facebook', 'twitter', 'linkedin'];
+const App = {
   GOOGLE: apps[0],
   FACEBOOK: apps[1],
   TWITTER: apps[2],
   LINKEDIN: apps[3]
 };
 
-var constants = {
+const constants = {
   App: App
 };
 
-/**
- * Schema
- */
-var schema = new mongoose.Schema({
+const schema = new mongoose.Schema({
   app: String,
   appId: String,
   username: String,
@@ -45,28 +42,28 @@ var schema = new mongoose.Schema({
   locale: String,
   token: String,
   tokenSecret: String,
+  refreshToken: String,
   extras: String
 });
 
-var ModelDef = null;
+let ModelDef = null;
 
 /**
  * Schema Virtual Methods
  */
 schema.virtual('details').get(function() {
   return {
-    id: this._id,
     app: this.app,
     appId: this.appId,
     username: this.username,
     token: this.token,
     tokenSecret: this.tokenSecret,
+    refreshToken: this.refreshToken,
     profileUrl: this.profileUrl,
     images: this.images,
     email: this.email
   };
 });
-
 /**
  * Schema Static Methods
  */

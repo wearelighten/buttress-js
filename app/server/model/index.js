@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file index.js
  * @description Model management
@@ -10,9 +10,9 @@
  *
  */
 
-var path = require('path');
-var fs = require('fs');
-var Logging = require('../logging');
+const path = require('path');
+const fs = require('fs');
+const Logging = require('../logging');
 require('sugar');
 
 /**
@@ -28,13 +28,15 @@ class Model {
     this.models = {};
     this.Schema = {};
     this.Constants = {};
+    this.mongoDb = null;
     this.app = false;
   }
 
-  init() {
-    var models = _getModels();
-    Logging.log(models, Logging.Constants.LogLevel.DEBUG);
-    for (var x = 0; x < models.length; x++) {
+  init(db) {
+    this.mongoDb = db;
+    let models = _getModels();
+    Logging.log(models, Logging.Constants.LogLevel.SILLY);
+    for (let x = 0; x < models.length; x++) {
       this._initModel(models[x]);
     }
   }
@@ -67,11 +69,11 @@ class Model {
  * @return {array} - list of files containing schemas
  */
 function _getModels() {
-  var filenames = fs.readdirSync(`${__dirname}/schema`);
+  let filenames = fs.readdirSync(`${__dirname}/schema`);
 
-  var files = [];
-  for (var x = 0; x < filenames.length; x++) {
-    var file = filenames[x];
+  let files = [];
+  for (let x = 0; x < filenames.length; x++) {
+    let file = filenames[x];
     if (path.extname(file) === '.js') {
       files.push(path.basename(file, '.js').capitalize());
     }

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file group.js
  * @description Group model definition. Groups are subsets of organisations.
@@ -32,7 +32,8 @@ var constants = {
 /**
  * Schema
  */
-var schema = new mongoose.Schema({
+var schema = new mongoose.Schema();
+schema.add({
   name: {
     type: String,
     index: true
@@ -41,11 +42,15 @@ var schema = new mongoose.Schema({
     type: String,
     enum: type
   },
+  website: String,
   _organisation: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organisation'
   },
-  website: String
+  _app: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Application'
+  }
 });
 
 var ModelDef = null;
@@ -88,20 +93,19 @@ schema.virtual('organisationName').get(function() {
  */
 schema.statics.add = body => {
   Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
-  return new Promise((resolve, reject) => {
-    var app = new ModelDef({
-      name: body.name,
-      type: body.type,
-      website: body.website,
-      images: {
-        avatar: body.avatarUrl,
-        banner: body.bannerUrl
-      },
-      _organisation: body.orgId
-    });
-
-    app.save().then(res => resolve(res.details), reject);
+  var app = new ModelDef({
+    name: body.name,
+    type: body.type,
+    website: body.website,
+    images: {
+      avatar: body.avatarUrl,
+      banner: body.bannerUrl
+    },
+    _organisation: body.orgId,
+    _app: Model.authApp ? Model.authApp._id : null
   });
+
+  return app.save();
 };
 
 /**
@@ -127,13 +131,19 @@ schema.statics.isDuplicate = name => {
 /**
  * @return {Promise} - resolves to an array of Organisations (Organisation.details)
  */
-schema.statics.findAll = () => {
-  return new Promise((resolve, reject) => {
-    ModelDef.find({})
-      .then(res => resolve(res.map(d => d.details)), reject);
-    // .then(Logging.Promise.logArrayProp('tokens', '_token'))
-    // .then(res => resolve(res.map(d => d.details)), reject);
-  });
+/**
+ * @return {Promise} - resolves to an array of Organisations (Organisation.details)
+ */
+schema.statics.getAll = () => {
+  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+  Logging.log(`getAll: Token.authLevel: ${Model.token.authLevel}`, Logging.Constants.LogLevel.INFO);
+
+  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    Logging.logDebug(`getAll: SUPER`);
+    return ModelDef.find({});
+  }
+
+  return ModelDef.find({_app: Model.authApp._id});
 };
 
 ModelDef = mongoose.model('Group', schema);

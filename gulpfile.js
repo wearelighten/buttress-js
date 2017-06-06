@@ -30,6 +30,29 @@ gulp.task('scripts', function() {
   return gulp.start(['coffee', 'js']);
 });
 
+/**
+ * STYLES
+ */
+gulp.task('email-styles', function() {
+  return gulp.src(['app/server/email/**/*.less'])
+    .pipe(gulp.dest('deploy/email'));
+});
+gulp.task('styles', function() {
+  return gulp.start('email-styles');
+});
+
+/**
+ * STYLES
+ */
+gulp.task('views-email', function() {
+  return gulp.src(['app/server/email/**/*.pug'], {base: 'app/server/email'})
+    .pipe(gulp.dest('deploy/email'));
+});
+
+gulp.task('views', function() {
+  return gulp.start('views-email');
+});
+
 //
 // Static resources
 //
@@ -52,13 +75,18 @@ gulp.task('resources', function() {
 //
 
 gulp.task('watch', ['clean'], function() {
-  gulp.start('scripts', 'resources');
+  gulp.start('scripts', 'styles', 'views', 'resources');
 
+  // Watch Views
+  gulp.watch(['app/server/**/*.pug'], ['views']);
+
+  // Watch Styles
+  gulp.watch(['app/server/**/*.less'], ['styles']);
   // Watch Scripts
   gulp.watch(['app/**/*.coffee'], ['coffee']);
   gulp.watch(['app/server/**/*.js'], ['js']);
   // Watch Resources
-  gulp.watch('app/server/nodemon.json', ['nodemon']);
+  gulp.watch('app/server/**/*.json', ['resources']);
 });
 
 gulp.task('clean', function() {
@@ -67,30 +95,29 @@ gulp.task('clean', function() {
 });
 
 gulp.task('build', ['clean'], function() {
-  return gulp.start('scripts', 'resources');
+  return gulp.start('scripts', 'styles', 'views', 'resources');
 });
 
 gulp.task('bump-major', function() {
-  return gulp.src(['./bower.json', './package.json', './README.md'])
+  return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
     .pipe(bump({type: 'major'}))
     .pipe(gulp.dest('./'));
 });
 
 gulp.task('bump-minor', function() {
-  return gulp.src(['./bower.json', './package.json', './README.md'])
+  return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
     .pipe(bump({type: 'minor'}))
     .pipe(gulp.dest('./'));
 });
 
 gulp.task('bump-patch', function() {
-  return gulp.src(['./bower.json', './package.json', './README.md'])
+  return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
     .pipe(bump({type: 'patch'}))
     .pipe(gulp.dest('./'));
 });
 
 gulp.task('bump-prerelease', function() {
-  return gulp.src(['./bower.json', './package.json', './README.md'])
+  return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
     .pipe(bump({type: 'prerelease'}))
     .pipe(gulp.dest('./'));
 });
-

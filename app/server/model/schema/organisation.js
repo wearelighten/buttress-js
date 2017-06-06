@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file organisation.js
  * @description Organisation model definition.
@@ -33,7 +33,8 @@ var constants = {
 /**
  * Schema
  */
-var schema = new mongoose.Schema({
+var schema = new mongoose.Schema();
+schema.add({
   name: {
     type: String,
     index: true
@@ -46,7 +47,11 @@ var schema = new mongoose.Schema({
     avatar: String,
     banner: String
   },
-  website: String
+  website: String,
+  _app: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Application'
+  }
 });
 
 var ModelDef = null;
@@ -83,19 +88,18 @@ schema.methods.findGroups = () => {
  */
 schema.statics.add = body => {
   Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
-  return new Promise((resolve, reject) => {
-    var app = new ModelDef({
-      name: body.name,
-      type: body.type,
-      images: {
-        avatar: body.avatarUrl,
-        banner: body.bannerUrl
-      },
-      website: body.website
-    });
-
-    app.save().then(res => resolve(res.details), reject);
+  let org = new ModelDef({
+    name: body.name,
+    type: body.type,
+    images: {
+      avatar: body.avatarUrl,
+      banner: body.bannerUrl
+    },
+    website: body.website,
+    _app: Model.authApp ? Model.authApp._id : null
   });
+
+  return org.save();
 };
 
 /**
@@ -103,9 +107,16 @@ schema.statics.add = body => {
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
 schema.statics.rm = org => {
-  Logging.log('DELETING', Logging.Constants.LogLevel.VERBOSE);
-  Logging.log(org.details, Logging.Constants.LogLevel.VERBOSE);
+  // Logging.log('DELETING', Logging.Constants.LogLevel.VERBOSE);
+  // Logging.log(org.details, Logging.Constants.LogLevel.VERBOSE);
   return ModelDef.remove({_id: org._id});
+};
+
+/**
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.statics.rmAll = () => {
+  return ModelDef.remove({});
 };
 
 /**
@@ -123,12 +134,45 @@ schema.statics.isDuplicate = name => {
  * @return {Promise} - resolves to an array of Organisations (Organisation.details)
  */
 schema.statics.findAll = () => {
-  return new Promise((resolve, reject) => {
-    ModelDef.find({})
-      .then(res => resolve(res.map(d => d.details)), reject);
-    // .then(Logging.Promise.logArrayProp('tokens', '_token'))
-    // .then(res => resolve(res.map(d => d.details)), reject);
-  });
+  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+
+  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    return ModelDef.find({});
+  }
+
+  return ModelDef.find({_app: Model.authApp._id});
+};
+
+/**
+ * @param {ObjectId} appId - id of the App that owns the user
+ * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+ */
+schema.statics.getAll = () => {
+  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+
+  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    return ModelDef.find({});
+  }
+
+  return ModelDef.find({_app: Model.authApp._id});
+};
+
+/**
+ * Methods
+ */
+
+/**
+ * @param {Object} body - body passed through from a POST request
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.methods.update = function(body) {
+  Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
+
+  this.name = body.name ? body.name : this.name;
+  this.type = body.type ? body.type : this.type;
+  this.website = body.website ? body.website : this.website;
+
+  return this.save();
 };
 
 ModelDef = mongoose.model('Organisation', schema);

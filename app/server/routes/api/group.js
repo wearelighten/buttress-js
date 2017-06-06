@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file group.js
  * @description Group API specification
@@ -12,6 +12,7 @@
 
 var Route = require('../route');
 var Model = require('../../model');
+var Helpers = require('../../helpers');
 var Logging = require('../../logging');
 
 var routes = [];
@@ -34,9 +35,8 @@ class GetGroupList extends Route {
   }
 
   _exec() {
-    return new Promise((resolve, reject) => {
-      Model.Group.findAll().then(resolve, reject);
-    });
+    return Model.Group.getAll()
+      .then(Helpers.Promise.arrayProp('details'));
   }
 }
 routes.push(GetGroupList);

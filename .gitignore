@@ -1,5 +1,6 @@
 #IDE
 .idea
+nginx
 
 # Logs
 logs
@@ -39,3 +40,5 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
+
+app_data

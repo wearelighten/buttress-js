@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Rhizome - The API that feeds grassroots movements
+ * ButtressJS - Realtime datastore for business software
  *
  * @file app.js
  * @description App model definition.
@@ -11,9 +11,12 @@
  *
  */
 
+var fs = require('fs');
+var crypto = require('crypto');
 var mongoose = require('mongoose');
 var Model = require('../');
 var Logging = require('../../logging');
+var Config = require('../../config');
 
 /**
  * Constants
@@ -27,34 +30,22 @@ var Type = {
   BROWSER: type[3]
 };
 
-var authLevel = [0, 1, 2, 3];
-var AuthLevel = {
-  NONE: 0,
-  USER: 1,
-  ADMIN: 2,
-  SUPER: 3
-};
-
 var constants = {
   Type: Type,
-  AuthLevel: AuthLevel
+  PUBLIC_DIR: true
 };
 
 /**
  * Schema
  */
-var schema = new mongoose.Schema({
+var schema = new mongoose.Schema();
+schema.add({
   name: String,
   type: {
     type: String,
     enum: type
   },
   domain: String,
-  authLevel: {
-    type: Number,
-    enum: authLevel
-  },
-  permissions: [{route: String, permission: String}],
   metadata: [{key: String, value: String}],
   _owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -78,17 +69,14 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     type: this.type,
-    authLevel: this.authLevel,
-    owner: this.ownerName,
     token: this.tokenValue,
-    metadata: this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)})),
-    permissions: this.permissions.map(p => {
-      return {route: p.route, permission: p.permission};
-    })
+    owner: this.ownerDetails,
+    publicUid: this.getPublicUID(),
+    metadata: this.metadata.map(m => ({key: m.key, value: JSON.parse(m.value)}))
   };
 });
 
-schema.virtual('ownerName').get(function() {
+schema.virtual('ownerDetails').get(function() {
   if (!this._owner) {
     return false;
   }
@@ -126,23 +114,34 @@ schema.methods.setOwner = function(group) {
  * @return {Promise} - fulfilled with App Object when the database request is completed
  */
 schema.statics.add = body => {
-  Logging.log(body);
-  return new Promise((resolve, reject) => {
-    var app = new ModelDef({
-      name: body.name,
-      type: body.type,
-      authLevel: body.authLevel,
-      permissions: body.permissions,
-      domain: body.domain,
-      _owner: body.ownerGroupId
-    });
+  Logging.log(body, Logging.Constants.LogLevel.DEBUG);
 
-    Model.Token.add(Model.Constants.Token.Type.APP)
-      .then(token => {
-        app._token = token;
-        app.save().then(res => resolve(Object.assign(res.details, {token: token.value})), reject);
-      });
+  var app = new ModelDef({
+    name: body.name,
+    type: body.type,
+    authLevel: body.authLevel,
+    permissions: body.permissions,
+    domain: body.domain,
+    _owner: body.ownerGroupId
   });
+
+  var _token = false;
+  return Model.Token
+    .add({
+      type: Model.Constants.Token.Type.APP,
+      app: app,
+      authLevel: body.authLevel,
+      permissions: body.permissions
+    })
+    .then(token => {
+      _token = token;
+      Logging.log(token.value, Logging.Constants.LogLevel.DEBUG);
+      app._token = token.id;
+      return app.save();
+    })
+    .then(app => {
+      return Promise.resolve({app: app, token: _token});
+    });
 };
 
 /**
@@ -172,6 +171,81 @@ schema.methods.findMetadata = function(key) {
 };
 
 /**
+ * @param {string} route - route for the permission
+ * @param {*} permission - permission to apply to the route
+ * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
+ */
+schema.methods.addOrUpdatePermission = function(route, permission) {
+  Logging.log(route, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(permission, Logging.Constants.LogLevel.DEBUG);
+
+  return new Promise((resolve, reject) => {
+    this.getToken()
+    .then(token => {
+      if (!token) {
+        return reject(new Error('No valid authentication token.'));
+      }
+      token.addOrUpdatePermission().then(resolve, reject);
+    });
+  });
+};
+
+/**
+ * @param {String} name - name of the data folder to create
+ * @param {Boolean} isPublic - true for /public (which is available via the static middleware) otherwise /private
+ * @return {String} - UID
+ */
+schema.methods.mkDataDir = function(name, isPublic) {
+  var uid = this.getPublicUID();
+  var baseName = `${Config.appDataPath}/${isPublic ? 'public' : 'private'}/${uid}`;
+
+  return new Promise((resolve, reject) => {
+    fs.mkdir(baseName, err => {
+      if (err && err.code !== 'EEXIST') {
+        reject(err);
+        return;
+      }
+      var dirName = `${baseName}/${name}`;
+      fs.mkdir(dirName, err => {
+        if (err && err.code !== 'EEXIST') {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
+  });
+};
+
+/**
+ * @return {String} - UID
+ */
+schema.methods.getPublicUID = function() {
+  var hash = crypto.createHash('sha512');
+  // Logging.log(`Create UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
+  hash.update(`${this.name}.${this.tokenValue}`);
+  var bytes = hash.digest();
+
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var mask = 0x3d;
+  var uid = '';
+
+  for (var byte = 0; byte < 32; byte++) {
+    uid += chars[bytes[byte] & mask];
+  }
+
+  Logging.log(`Got UID: ${uid}`, Logging.Constants.LogLevel.SILLY);
+  return uid;
+};
+
+/**
+ * @return {Promise} - resolves to the token
+ */
+schema.methods.getToken = function() {
+  return Model.Token.find({_app: this._id}).populate('_user');
+};
+
+/**
  * @param {App} app - App object to be deleted
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
@@ -189,11 +263,8 @@ schema.statics.rm = app => {
  */
 schema.statics.findAll = () => {
   return new Promise((resolve, reject) => {
-    ModelDef.find({}).populate('_token').populate('_owner')
-      .then(Logging.Promise.logArrayProp('App', '_token', Logging.Constants.LogLevel.DEBUG))
-      .then(res => resolve(res.map(d => Object.assign(d.details, {token: d._token.value}))), reject);
-      // .then(Logging.Promise.logArrayProp('tokens', '_token', Logging.Constants.LogLevel.DEBUG))
-      // .then(res => resolve(res.map(d => d.details)), reject);
+    ModelDef.find({}).populate('_owner').populate('_token')
+    .then(res => resolve(res.map(d => d.details)), reject);
   });
 };
 
@@ -201,13 +272,7 @@ schema.statics.findAll = () => {
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.findAllNative = () => {
-  return new Promise((resolve, reject) => {
-    ModelDef.find({}).populate('_token')
-      .then(Logging.Promise.logArrayProp('App', '_token', Logging.Constants.LogLevel.VERBOSE))
-      .then(resolve, reject);
-      // .then(Logging.Promise.logArrayProp('tokens', '_token'))
-      // .then(res => resolve(res.map(d => d.details)), reject);
-  });
+  return ModelDef.find({});
 };
 
 ModelDef = mongoose.model('App', schema);
