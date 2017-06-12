@@ -18,6 +18,8 @@ const Helpers = require('../helpers');
 const Model = require('../model');
 const Mongo = require('mongodb');
 
+const _timer = new Helpers.Timer();
+
 /**
  * @param {Object} app - express app object
  * @param {Function} Route - route object
@@ -26,6 +28,8 @@ const Mongo = require('mongodb');
 function _initRoute(app, Route) {
   let route = new Route();
   app[route.verb](`/api/v1/${route.path}`, (req, res) => {
+    Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
+
     route
       .exec(req, res)
       .then(result => {
@@ -36,6 +40,8 @@ function _initRoute(app, Route) {
         } else {
           res.json(result);
         }
+        Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
+        Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
       })
       .catch(err => {
         Logging.log(err, Logging.Constants.LogLevel.ERR);
@@ -55,13 +61,16 @@ let _tokens = [];
 function _authenticateToken(req, res, next) {
   Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.SILLY);
   req.session = null; // potentially prevents a write
+  req.timer = _timer;
+  req.timer.start();
+  Logging.logVerbose(`START ${req.path}`);
 
   if (!req.query.token) {
     Logging.log('EAUTH: Missing Token', Logging.Constants.LogLevel.ERR);
     res.status(400).json({message: 'missing_token'});
     return;
   }
-  _getToken(req.query.token)
+  _getToken(req)
     .then(token => {
       return new Promise((resolve, reject) => {
         if (token === null) {
@@ -87,20 +96,17 @@ function _authenticateToken(req, res, next) {
 }
 
 /**
- * @param  {String} tokenValue - token
- * @param  {Object=} timer - optional Timer
- * @return {Promise} - resolves with the matching token if any
+ * @param  {String} req - request object
+  * @return {Promise} - resolves with the matching token if any
  */
-function _getToken(tokenValue, timer) {
+function _getToken(req) {
   let token = null;
 
   if (_tokens.length > 0) {
-    token = _lookupToken(_tokens, tokenValue);
+    token = _lookupToken(_tokens, req.query.token);
     // Logging.log("Using Cached Tokens", Logging.Constants.LogLevel.DEBUG);
     if (token) {
-      if (timer) {
-        console.log(`_getToken:Lookup: ${timer.interval.toFixed(3)}`);
-      }
+      Logging.logSilly(`_getToken:Lookup: ${req.timer.interval.toFixed(3)}`);
       return Promise.resolve(token);
     }
   }
@@ -109,11 +115,9 @@ function _getToken(tokenValue, timer) {
     Model.Token.findAllNative()
       .then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
       .then(tokens => {
-        if (timer) {
-          console.log(`_getToken:Load: ${timer.interval.toFixed(3)}`);
-        }
+        Logging.logSilly(`_getToken:Load: ${req.timer.interval.toFixed(3)}`);
         _tokens = tokens;
-        token = _lookupToken(_tokens, tokenValue);
+        token = _lookupToken(_tokens, req.query.token);
         return resolve(token);
       });
   });
@@ -174,11 +178,12 @@ function _configCrossDomain(req, res, next) {
     return matches ? matches[1] : d;
   });
 
-  Logging.logDebug(origin);
-  Logging.logDebug(domains);
+  Logging.logSilly(origin);
+  Logging.logSilly(domains);
 
   const domainIdx = domains.indexOf(origin);
   if (domainIdx === -1) {
+    Logging.logError(new Error(`Invalid Domain: ${origin}`));
     res.sendStatus(403);
     return;
   }

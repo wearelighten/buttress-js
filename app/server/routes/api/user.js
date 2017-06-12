@@ -108,12 +108,12 @@ class FindUser extends Route {
   _validate() {
     return new Promise((resolve, reject) => {
       Model.User.getByAppId(this.req.params.app, this.req.params.id).then(user => {
-        Logging.logDebug(`FindUser: ${user !== null}`);
+        Logging.logSilly(`FindUser: ${user !== null}`);
         this._user = user;
         if (this._user) {
           Model.Token.findUserAuthToken(this._user.id, this.req.authApp._id)
           .then(token => {
-            Logging.logDebug(`FindUserToken: ${token !== null}`);
+            Logging.logSilly(`FindUserToken: ${token !== null}`);
             this._userAuthToken = token ? token.value : false;
             this._user.updateApps(this.req.authApp)
               .then(resolve, reject);
@@ -663,7 +663,7 @@ class GetMetadata extends Route {
       this._metadata = null;
       this._allMetadata = null;
 
-      Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
+      Logging.logSilly(`AppID: ${this.req.authApp._id}`);
       Model.User.findById(this.req.params.id).then(user => {
         if (!user) {
           this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);

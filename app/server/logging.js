@@ -204,7 +204,7 @@ module.exports.Promise.log = (log, level) => {
   return res => {
     if (res instanceof Object) {
       _log(`${log}:`, level);
-      _log(res, level);
+      _log(res.toObject ? res.toObject() : res, level);
     } else {
       _log(`${log}: ${res}`, level);
     }
@@ -342,6 +342,42 @@ module.exports.Promise.logError = () => {
     _log(err, level);
     return err;
   };
+};
+
+/**
+ * @param {string} log - Text to log
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logInfo = log => {
+  const level = LogLevel.INFO;
+  return module.exports.Promise.log(log, level);
+};
+
+/**
+ * @param {string} log - Text to log
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logVerbose = log => {
+  const level = LogLevel.VERBOSE;
+  return module.exports.Promise.log(log, level);
+};
+
+/**
+ * @param {string} log - Text to log
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logDebug = log => {
+  const level = LogLevel.DEBUG;
+  return module.exports.Promise.log(log, level);
+};
+
+/**
+ * @param {string} log - Text to log
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logSilly = log => {
+  const level = LogLevel.SILLY;
+  return module.exports.Promise.log(log, level);
 };
 
 /**

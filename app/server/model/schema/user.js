@@ -230,7 +230,7 @@ schema.statics.rm = function(user) {
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
-  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+  Logging.logSilly(`getAll: ${Model.authApp._id}`);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
     return ModelDef.find({});
@@ -238,6 +238,17 @@ schema.statics.getAll = () => {
 
   return ModelDef.find({_apps: Model.authApp._id}).populate('_person');
 };
+
+const collection = Model.mongoDb.collection('users');
+
+/**
+ * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+ */
+schema.statics.getSimplified = () => {
+  Logging.logSilly(`getSimplified: ${Model.authApp._id}`);
+  return collection.find({_apps: Model.authApp._id}, {_id: 1});
+};
+
 
 /**
  * @param {string} username - username to check for
