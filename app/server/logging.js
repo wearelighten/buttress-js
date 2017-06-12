@@ -187,7 +187,6 @@ module.exports.logTimerException = (log, timer, time) => {
   }
 };
 
-
 /**
  * PROMISE LOGGING
  */

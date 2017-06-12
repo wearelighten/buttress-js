@@ -249,7 +249,6 @@ schema.statics.getSimplified = () => {
   return collection.find({_apps: Model.authApp._id}, {_id: 1});
 };
 
-
 /**
  * @param {string} username - username to check for
  * @return {Promise} - resolves to a User object or null
