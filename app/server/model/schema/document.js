@@ -80,6 +80,10 @@ schema.add({
     mimeType: String,
     fileSizeBytes: Number
   },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company'
+  },
   entityType: {
     type: String,
     enum: types
@@ -117,6 +121,7 @@ schema.virtual('details').get(function() {
     tag: this.tag,
     entityType: this.entityType,
     entityId: this.entityId,
+    companyId: this.companyId,
     documentMetadata: this.documentMetadata,
     ownerId: this.ownerId && this.ownerId._id ? this.ownerId._id : this.ownerId,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
@@ -157,6 +162,11 @@ const __doValidation = body => {
     res.missing.push('documentMetadata.id');
   }
 
+  if (!body.companyId) {
+    res.isValid = false;
+    res.missing.push('companyId');
+  }
+
   if (body.entityType) {
     if (types.indexOf(body.entityType) === -1) {
       res.isValid = false;
@@ -192,6 +202,7 @@ const __add = body => {
       ownerId: body.ownerId,
       name: body.name,
       tag: body.tag ? body.tag : '',
+      companyId: body.companyId,
       entityType: body.entityType,
       entityId: body.entityId,
       documentMetadata: body.documentMetadata
@@ -234,7 +245,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(name|tag|entityType|entityId|documentMetadata)$': {type: 'scalar', values: []},
+  '^(name|tag|entityType|entityId|companyId|documentMetadata)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
