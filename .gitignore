@@ -1,6 +1,7 @@
 #IDE
 .idea
 nginx
+.public
 
 # Logs
 logs
