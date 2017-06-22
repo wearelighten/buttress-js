@@ -112,7 +112,7 @@ schema.statics.add = (body, owner) => {
 
   return new Promise((resolve, reject) => {
     var person = new ModelDef({
-      _id: body.id,
+      // _id: body.id,
       title: name.salutation,
       forename: name.firstName,
       initials: name.initials,
