@@ -94,7 +94,7 @@ schema.virtual('organisationName').get(function() {
 schema.statics.add = body => {
   Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
   var app = new ModelDef({
-    _id: body.id,
+    // _id: body.id,
     name: body.name,
     type: body.type,
     website: body.website,

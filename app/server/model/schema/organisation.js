@@ -89,7 +89,7 @@ schema.methods.findGroups = () => {
 schema.statics.add = body => {
   Logging.log(body, Logging.Constants.LogLevel.VERBOSE);
   let org = new ModelDef({
-    _id: body.id,
+    // _id: body.id,
     name: body.name,
     type: body.type,
     images: {
