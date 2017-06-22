@@ -117,6 +117,7 @@ schema.statics.add = (body, personDetails, auth) => {
   // Logging.logDebug(auth);
 
   user.auth.push(new Model.Appauth({
+    _id: body.id,
     app: body.app,
     appId: body.id,
     username: body.username,

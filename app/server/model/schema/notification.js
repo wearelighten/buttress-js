@@ -160,6 +160,7 @@ schema.statics.validate = body => {
 const __add = body => {
   return prev => {
     const cl = new ModelDef({
+      _id: body.id,
       _app: Model.authApp._id,
       name: body.name,
       userId: body.userId,

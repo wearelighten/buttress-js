@@ -174,6 +174,7 @@ const __add = body => {
   return prev => {
     Logging.logDebug(body);
     const cl = new ModelDef({
+      _id: body.id,
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       text: body.text,
