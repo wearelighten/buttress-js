@@ -116,7 +116,7 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Contactlist'
   },
-  _company: {
+  companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   },
@@ -190,7 +190,7 @@ schema.virtual('details').get(function() {
     status: this.status,
     outcome: this.outcome,
     contactListId: this._contactList && this._contactList._id ? this._contactList._id : this._contactList,
-    companyId: this._company && this._company._id ? this._company._id : this._company,
+    companyId: this.companyId,
     personId: this._person && this._person._id ? this._person._id : this._person,
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
     connections: this.connections,
@@ -243,11 +243,12 @@ schema.statics.validate = body => {
 const __add = body => {
   return prev => {
     const cl = new ModelDef({
+      _id: body.id,
       _app: Model.authApp._id,
       _owner: body.ownerId,
       name: body.name,
       _contactList: body.contactListId,
-      _company: body.companyId,
+      companyId: body.companyId,
       _person: body.personId
     });
 

@@ -39,7 +39,7 @@ const _workers = [];
  *
  **********************************************************************************/
 const __spawnWorkers = () => {
-  Logging.log(`Spawning ${processes} REST Workers`);
+  Logging.logVerbose(`Spawning ${processes} REST Workers`);
 
   const __spawn = idx => {
     _workers[idx] = cluster.fork();
@@ -126,15 +126,10 @@ const __systemInstall = () => {
  * MONGODB
  *
  **********************************************************************************/
+const POOL_SIZE = 10;
 const __nativeMongoConnect = app => {
-  return new Promise((resolve, reject) => {
-    const mongoUrl = `mongodb://${Config.mongoDb.url}/${Config.app.code}-${Config.env}`;
-    MongoClient.connect(mongoUrl, (err, db) => {
-      if (err) throw err;
-      Model.init(db);
-      resolve();
-    });
-  });
+  const mongoUrl = `mongodb://${Config.mongoDb.url}/${Config.app.code}-${Config.env}`;
+  return MongoClient.connect(mongoUrl, {poolSize: POOL_SIZE, native_parser: true}); // eslint-disable-line camelcase
 };
 
 /* ********************************************************************************
@@ -152,7 +147,9 @@ const __initWorker = () => {
   app.use(express.static(`${Config.appDataPath}/public`));
 
   return __nativeMongoConnect()
-    .then(() => {
+    .then(db => {
+      Model.init(db);
+
       let tasks = [
         Routes.init(app),
         __systemInstall()
@@ -173,7 +170,9 @@ const __initWorker = () => {
 const __initMaster = () => {
   const isPrimary = Config.rest.app === 'primary';
   if (isPrimary) {
-    Logging.logDebug(`Primary Master REST`);
+    Logging.logVerbose(`Primary Master REST`);
+  } else {
+    Logging.logVerbose(`Secondary Master REST`);
   }
 
   __spawnWorkers();

@@ -53,6 +53,7 @@ class Model {
     this.__defineGetter__(model, () => this._require(model).model);
     this.Schema.__defineGetter__(model, () => this._require(model).schema);
     this.Constants.__defineGetter__(model, () => this._require(model).constants);
+    this._require(model);
   }
 
   _require(model) {

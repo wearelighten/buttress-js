@@ -209,6 +209,7 @@ const __add = body => {
   return prev => {
     Logging.logDebug(body);
     const cl = new ModelDef({
+      _id: body.id,
       _app: Model.authApp._id,
       name: body.name,
       date: Date.create(body.date),

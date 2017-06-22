@@ -13,7 +13,6 @@
 const Config = require('../config');
 const Logging = require('../logging');
 const Model = require('../model');
-const Helpers = require('../helpers');
 const _ = require('underscore');
 const Mongo = require('mongodb');
 const NRP = require('node-redis-pubsub');
@@ -88,8 +87,6 @@ class Route {
     this.activityTitle = 'Private Activity';
     this.activityDescription = '';
 
-    this._timer = new Helpers.Timer();
-
     this.path = path;
     this.name = name;
   }
@@ -103,6 +100,8 @@ class Route {
     this.req = req;
     this.res = res;
 
+    this._timer = this.req.timer;
+
     return new Promise((resolve, reject) => {
       if (!this._exec) {
         this.log(`Error: ${this.name}: No _exec defined`, Logging.Constants.LogLevel.ERR);
@@ -110,25 +109,22 @@ class Route {
         return;
       }
 
-      this._timer.start();
-      this.log(`STARTING: ${this.name}`, Logging.Constants.LogLevel.INFO);
       this._authenticate()
-        .then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.DEBUG))
-        .then(Logging.Promise.log('authenticated', Logging.Constants.LogLevel.SILLY))
+        .then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
+        .then(Logging.Promise.logSilly('authenticated'))
         .then(_.bind(this._validate, this), reject)
-        .then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.DEBUG))
-        .then(Logging.Promise.log('validated', Logging.Constants.LogLevel.SILLY))
+        .then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
+        .then(Logging.Promise.logSilly('validated'))
         .then(_.bind(this._exec, this), reject)
-        .then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.DEBUG))
+        .then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
         .then(_.bind(this._logActivity, this))
-        .then(Logging.Promise.logTimer(`DONE: ${this.name}`, this._timer, Logging.Constants.LogLevel.INFO))
         .then(resolve, reject)
         .catch(Logging.Promise.logError());
     });
   }
 
   _logActivity(res) {
-    Logging.logDebug(`logging activity: [${this.verb}] ${this.path} (${this.auth}:${this.permissions})`);
+    Logging.logSilly(`logging activity: [${this.verb}] ${this.path} (${this.auth}:${this.permissions})`);
     if (res instanceof Mongo.Cursor || this.verb === Constants.Verbs.GET) {
       return Promise.resolve(res);
     }
@@ -197,7 +193,7 @@ class Route {
        */
       let authorised = false;
       let token = this.req.token;
-      Logging.log(token.permissions, Logging.Constants.LogLevel.DEBUG);
+      Logging.logSilly(token.permissions);
       for (let x = 0; x < token.permissions.length; x++) {
         let p = token.permissions[x];
         if (this._matchRoute(p.route) && this._matchPermission(p.permission)) {
@@ -233,14 +229,14 @@ class Route {
 
     let userWildcard = /^user\/me.+/;
     if (routeSpec.match(userWildcard) && this.req.params.id == this.req.authUser._id) { // eslint-disable-line eqeqeq
-      Logging.logDebug(`Matched user ${this.req.authUser._id} to /user/${this.req.params.id}`);
+      Logging.logSilly(`Matched user ${this.req.authUser._id} to /user/${this.req.params.id}`);
       return true;
     }
 
     let wildcard = /(.+)(\/\*)/;
     let matches = routeSpec.match(wildcard);
     if (matches) {
-      Logging.log(matches, Logging.Constants.LogLevel.DEBUG);
+      Logging.logSilly(matches);
       if (this.path.match(new RegExp(`^${matches[1]}`)) &&
         this.req.token.authLevel >= Constants.Auth.ADMIN) {
         return true;

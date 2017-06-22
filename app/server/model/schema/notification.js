@@ -70,7 +70,7 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
   },
-  _user: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
@@ -97,7 +97,7 @@ schema.virtual('details').get(function() {
     id: this._id,
     name: this.name,
     type: this.type,
-    userId: this._user && this._user._id ? this._user._id : this._user,
+    userId: this.userId,
     entityId: this.entityId,
     dateCreated: this.dateCreated,
     read: this.read
@@ -160,9 +160,10 @@ schema.statics.validate = body => {
 const __add = body => {
   return prev => {
     const cl = new ModelDef({
+      _id: body.id,
       _app: Model.authApp._id,
       name: body.name,
-      _user: body.userId,
+      userId: body.userId,
       type: body.type,
       entityId: body.entityId
     });

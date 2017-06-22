@@ -13,6 +13,7 @@
  *
  */
 
+const cluster = require('cluster');
 const proxyquire = require('proxyquire');
 const winston = require('winston');
 proxyquire('winston-logrotate', {
@@ -25,14 +26,14 @@ require('sugar');
  *
  * @type {{ERR: string, WARN: string, INFO: string, VERBOSE: string, DEBUG: string, SILLY: string, DEFAULT: string}}
  */
-var LogLevel = {
+const LogLevel = {
   ERR: 'error',
   WARN: 'warn',
   INFO: 'info',
   VERBOSE: 'verbose',
   DEBUG: 'debug',
   SILLY: 'silly',
-  DEFAULT: 'debug'
+  DEFAULT: 'info'
 };
 
 module.exports.Constants = {
@@ -42,6 +43,9 @@ module.exports.Constants = {
 let _logApp = '';
 module.exports.setLogApp = app => {
   _logApp = app;
+  if (cluster.isWorker) {
+    _logApp = `${cluster.worker.id}:${app}`;
+  }
 };
 
 /**
@@ -50,6 +54,7 @@ module.exports.setLogApp = app => {
 
 winston.remove(winston.transports.Console);
 winston.add(winston.transports.Console, {
+  name: 'console',
   colorize: 'all',
   timestamp: true,
   level: 'info'
@@ -65,16 +70,16 @@ winston.add(winston.transports.Rotate, {
   colorize: 'all',
   timestamp: true
 });
-// winston.add(winston.transports.Rotate, {
-//   name: 'verbose-file',
-//   json: false,
-//   file: `${Config.logPath}/log-verbose.log`,
-//   size: '1m',
-//   keep: 5,
-//   colorize: 'all',
-//   level: 'verbose',
-//   timestamp: true
-// });
+winston.add(winston.transports.Rotate, {
+  name: 'info-file',
+  json: false,
+  file: `${Config.logPath}/log-info.log`,
+  size: '1m',
+  keep: 5,
+  colorize: 'all',
+  level: 'info',
+  timestamp: true
+});
 winston.add(winston.transports.Rotate, {
   name: 'error-file',
   json: false,
@@ -82,6 +87,7 @@ winston.add(winston.transports.Rotate, {
   size: '1m',
   keep: 10,
   level: 'error',
+  colorize: 'none',
   timestamp: true
 });
 winston.addColors({
@@ -128,13 +134,6 @@ module.exports.log = (log, level) => {
 /**
  * @param {string} log - Text to log
  */
-module.exports.logInfo = log => {
-  module.exports.log(log, LogLevel.INFO);
-};
-
-/**
- * @param {string} log - Text to log
- */
 module.exports.logVerbose = log => {
   module.exports.log(log, LogLevel.VERBOSE);
 };
@@ -157,13 +156,35 @@ module.exports.logSilly = log => {
  * @param {string} warn - warning to log
  */
 module.exports.logWarn = warn => {
-  _log(warn, LogLevel.ERR);
+  _log(warn, LogLevel.WARN);
 };
 /**
  * @param {string} err - error object to log
  */
 module.exports.logError = err => {
   _log(err, LogLevel.ERR);
+};
+
+/**
+ * @param {string} log - Text to log
+ * @param {Object} timer - Object with an 'interval' property
+ * @param {string} level - level to log at
+ */
+module.exports.logTimer = (log, timer, level) => {
+  level = level || LogLevel.INFO;
+  _log(`${log} [${timer.interval.toFixed(6)}s]`, level);
+};
+
+/**
+ * @param {string} log - Text to log
+ * @param {Object} timer - Object with an 'interval' property
+ * @param {string} time - time above which to log the exception
+ */
+module.exports.logTimerException = (log, timer, time) => {
+  let level = LogLevel.ERR;
+  if (timer.interval > time) {
+    _log(`${log} ${timer.interval.toFixed(3)}s`, level);
+  }
 };
 
 /**
@@ -312,17 +333,50 @@ module.exports.Promise.logArrayProp = (log, prop, level) => {
 };
 
 /**
- * @param {string} log - Text to log
- * @param {string} prop - Name of the `res[]` property to log
- * @param {string} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
  */
 module.exports.Promise.logError = () => {
-  var level = LogLevel.ERR;
+  const level = LogLevel.ERR;
   return err => {
     _log(err, level);
     return err;
   };
+};
+
+/**
+ * @param {string} log - Text to log
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logInfo = log => {
+  const level = LogLevel.INFO;
+  return module.exports.Promise.log(log, level);
+};
+
+/**
+ * @param {string} log - Text to log
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logVerbose = log => {
+  const level = LogLevel.VERBOSE;
+  return module.exports.Promise.log(log, level);
+};
+
+/**
+ * @param {string} log - Text to log
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logDebug = log => {
+  const level = LogLevel.DEBUG;
+  return module.exports.Promise.log(log, level);
+};
+
+/**
+ * @param {string} log - Text to log
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logSilly = log => {
+  const level = LogLevel.SILLY;
+  return module.exports.Promise.log(log, level);
 };
 
 /**
@@ -335,6 +389,23 @@ module.exports.Promise.logTimer = (log, timer, level) => {
   level = level || LogLevel.INFO;
   return res => {
     _log(`${log} [${timer.lapTime.toFixed(6)}s] [${timer.interval.toFixed(6)}s]`, level);
+    return res;
+  };
+};
+
+/**
+ * @param {string} log - Text to log
+ * @param {Object} timer - Object with an 'interval' property
+ * @param {string} time - time above which to log the exception
+ * @return {function(*)} - returns a function for chaining into a promise
+ */
+module.exports.Promise.logTimerException = (log, timer, time) => {
+  let level = LogLevel.ERR;
+  return res => {
+    if (timer.interval > time) {
+      _log(`${log} ${timer.interval.toFixed(3)}s`, level);
+    }
+
     return res;
   };
 };

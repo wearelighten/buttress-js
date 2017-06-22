@@ -151,6 +151,7 @@ schema.statics.validate = body => {
 const __addContactlist = (campaign, body) => {
   return prev => {
     const cl = new ModelDef({
+      _id: body.id,
       name: body.name,
       _app: Model.authApp._id,
       campaignId: body.campaignId,

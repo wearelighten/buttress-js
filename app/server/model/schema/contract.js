@@ -224,6 +224,7 @@ const __add = body => {
   return prev => {
     Logging.logDebug(body);
     const cl = new ModelDef({
+      _id: body.id,
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       assignedToUserId: body.assignedToUserId,
@@ -265,8 +266,7 @@ const collection = Model.mongoDb.collection('contracts');
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
-  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-
+  Logging.logSilly(`getAll: ${Model.authApp._id}`);
   return collection.find({_app: Model.authApp._id});
 };
 

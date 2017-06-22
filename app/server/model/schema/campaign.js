@@ -188,6 +188,7 @@ schema.statics.validate = body => {
 const __addCampaign = body => {
   return prev => {
     const campaign = new ModelDef({
+      _id: body.id,
       _app: Model.authApp._id,
       name: body.name,
       type: body.type,

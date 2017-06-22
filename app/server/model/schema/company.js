@@ -283,6 +283,7 @@ const __addCompany = body => {
     // const contact = Model.Contact.create(body.contact);
 
     const company = new ModelDef({
+      _id: body.id,
       name: body.name,
       companyType: body.companyType,
       parentCompanyId: body.parentCompanyId,
@@ -517,7 +518,7 @@ const collection = Model.mongoDb.collection('companies');
  * @return {Promise} - resolves to an array of Companies
  */
 schema.statics.findAll = () => {
-  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+  Logging.logSilly(`findAll: ${Model.authApp._id}`);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
     return ModelDef.find({});

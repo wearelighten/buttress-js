@@ -117,6 +117,7 @@ schema.statics.add = body => {
   Logging.log(body, Logging.Constants.LogLevel.DEBUG);
 
   var app = new ModelDef({
+    _id: body.id,
     name: body.name,
     type: body.type,
     authLevel: body.authLevel,
