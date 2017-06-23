@@ -155,7 +155,7 @@ schema.statics.add = details => {
   Logging.logDebug(`Add User Token: ${details.user ? details.user._id : false}`);
 
   var token = new ModelDef({
-    _id: details.id,
+    // _id: details.id,
     type: details.type,
     value: _createTokenString(),
     _app: details.app,
