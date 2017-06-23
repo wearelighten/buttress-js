@@ -1,13 +1,13 @@
 {
-  "name": "Rhizome",
-  "version": "1.0.0-3",
-  "description": "The API that feeds grass roots growth.",
-  "author": "Coders for Labour",
+  "name": "ButtressJS",
+  "version": "1.0.0",
+  "description": "Realtime datastore for business software",
+  "author": "Lighten",
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": "~4.4.x",
-    "npm": "~2.15.x"
+    "node": "^6.11.x",
+    "npm": "^3.10.x"
   },
   "main": "deploy/app.js",
   "scripts": {
@@ -17,10 +17,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/coders-for-corbyn/rhizome.git"
+    "url": "https://github.com/wearelighten/buttress-js.git"
   },
   "bugs": {
-    "url": "https://github.com/coders-for-corbyn/rhizome/issues"
+    "url": "https://github.com/wearelighten/buttress-js/issues"
   },
   "dependencies": {
     "addressit": "^1.4.0",
