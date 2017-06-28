@@ -101,17 +101,10 @@ class Config {
       }
     }
 
-    let local = settings.local[process.env.BUTTRESS_SERVER_ID];
-    if (!local) {
-      throw new Error(`Missing local environment settings for BUTTRESS_SERVER_ID: ${process.env.BUTTRESS_SERVER_ID}`); // eslint-disable-line max-len
-    }
-
     __parse(settings.global);
-    __parse(local);
     __recurseVars(settings.environment, settings.global);
-    __recurseVars(settings.environment, local);
 
-    return Object.assign(settings.global, settings.local.environment, local);
+    return settings.global;
   }
 }
 
