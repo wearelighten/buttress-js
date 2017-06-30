@@ -150,7 +150,8 @@ schema.add({
     county: String,
     region: String,
     postCode: String,
-    phoneNumber: String
+    phoneNumber: String,
+    email: String
   }],
   primaryContact: String,
   contacts: [{
@@ -228,10 +229,10 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('location.name');
   }
-  if (!body.location.address) {
-    res.isValid = false;
-    res.missing.push('location.address');
-  }
+  // if (!body.location.address) {
+  //   res.isValid = false;
+  //   res.missing.push('location.address');
+  // }
   if (!body.location.postCode) {
     res.isValid = false;
     res.missing.push('location.postCode');
@@ -309,6 +310,7 @@ const __addCompany = body => {
       website: body.website,
       locations: [body.location],
       contacts: [body.contact],
+      notes: body.notes,
       _app: Model.authApp._id
     });
 
