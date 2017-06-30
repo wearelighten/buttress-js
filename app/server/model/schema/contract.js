@@ -222,9 +222,8 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
-    Logging.logDebug(body);
+    Logging.logSilly(body);
     const cl = new ModelDef({
-      _id: body.id,
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       assignedToUserId: body.assignedToUserId,
@@ -243,6 +242,10 @@ const __add = body => {
       startDate: body.startDate,
       endDate: body.endDate
     });
+
+    if (body.id) {
+      cl._id = body.id;
+    }
 
     return cl.save()
       .then(cl => prev.concat([cl]));

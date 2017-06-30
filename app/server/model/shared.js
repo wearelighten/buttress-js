@@ -183,8 +183,8 @@ module.exports.updateByPath = function(pathContext) {
  * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
  */
 module.exports.addOrUpdateMetadata = function(key, value) {
-  Logging.log(key, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(value, Logging.Constants.LogLevel.DEBUG);
+  Logging.logSilly(key);
+  Logging.logSilly(value);
 
   let exists = this.metadata.find(m => m.key === key);
   if (exists) {
