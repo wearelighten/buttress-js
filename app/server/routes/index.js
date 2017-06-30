@@ -44,7 +44,7 @@ function _initRoute(app, Route) {
         Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
       })
       .catch(err => {
-        Logging.log(err, Logging.Constants.LogLevel.ERR);
+        Logging.logError(err);
         res.status(err.statusCode ? err.statusCode : 500).json({message: err.message});
       });
   });

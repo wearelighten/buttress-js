@@ -162,7 +162,8 @@ module.exports.logWarn = warn => {
  * @param {string} err - error object to log
  */
 module.exports.logError = err => {
-  _log(err, LogLevel.ERR);
+  _log(err.message, LogLevel.ERR);
+  _log(err.stack, LogLevel.ERR);
 };
 
 /**
@@ -338,7 +339,8 @@ module.exports.Promise.logArrayProp = (log, prop, level) => {
 module.exports.Promise.logError = () => {
   const level = LogLevel.ERR;
   return err => {
-    _log(err, level);
+    _log(err.message, level);
+    _log(err.stack, level);
     return err;
   };
 };
