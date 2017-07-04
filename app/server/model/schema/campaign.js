@@ -187,8 +187,7 @@ schema.statics.validate = body => {
  */
 const __addCampaign = body => {
   return prev => {
-    const campaign = new ModelDef({
-      _id: body.id,
+    const md = new ModelDef({
       _app: Model.authApp._id,
       name: body.name,
       type: body.type,
@@ -199,8 +198,12 @@ const __addCampaign = body => {
       legals: body.legals
     });
 
-    return campaign.save()
-      .then(c => prev.concat([c]));
+    if (body.id) {
+      md._id = body.id;
+    }
+
+    return md.save()
+      .then(o => prev.concat([o]));
   };
 };
 

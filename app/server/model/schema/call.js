@@ -242,8 +242,7 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
-    const cl = new ModelDef({
-      _id: body.id,
+    const md = new ModelDef({
       _app: Model.authApp._id,
       _owner: body.ownerId,
       name: body.name,
@@ -252,8 +251,12 @@ const __add = body => {
       _person: body.personId
     });
 
-    return cl.save()
-      .then(cl => prev.concat([cl]));
+    if (body.id) {
+      md._id = body.id;
+    }
+
+    return md.save()
+      .then(o => prev.concat([o]));
   };
 };
 

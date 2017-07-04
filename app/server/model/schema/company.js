@@ -283,8 +283,7 @@ const __addCompany = body => {
 
     // const contact = Model.Contact.create(body.contact);
 
-    const company = new ModelDef({
-      _id: body.id,
+    const md = new ModelDef({
       name: body.name,
       companyType: body.companyType,
       parentCompanyId: body.parentCompanyId,
@@ -314,10 +313,14 @@ const __addCompany = body => {
       _app: Model.authApp._id
     });
 
-    company.primaryContact = company.contacts[0]._id;
-    company.primaryLocation = company.locations[0]._id;
+    if (body.id) {
+      md._id = body.id;
+    }
 
-    return Promise.resolve(prev.concat([company.toObject()]));
+    md.primaryContact = md.contacts[0]._id;
+    md.primaryLocation = md.locations[0]._id;
+
+    return Promise.resolve(prev.concat([md.toObject()]));
   };
 };
 

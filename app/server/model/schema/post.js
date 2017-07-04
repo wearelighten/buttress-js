@@ -172,9 +172,7 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
-    Logging.logDebug(body);
-    const cl = new ModelDef({
-      _id: body.id,
+    const md = new ModelDef({
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       text: body.text,
@@ -185,8 +183,12 @@ const __add = body => {
       entityId: body.entityId
     });
 
-    return cl.save()
-      .then(cl => prev.concat([cl]));
+    if (body.id) {
+      md._id = body.id;
+    }
+
+    return md.save()
+      .then(o => prev.concat([o]));
   };
 };
 
