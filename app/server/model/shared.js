@@ -95,7 +95,12 @@ let _doUpdate = (entity, body, pathContext) => {
       }
       case 'vector-add': {
         const vector = entity.get(body.path);
+        if (body.value instanceof Object && body.value.id) {
+          body.value._id = body.value.id;
+          delete body.value.id;
+        }
         vector.push(body.value);
+
         response = vector[vector.length - 1];
         if (response && response.toObject) {
           response = response.toObject();
