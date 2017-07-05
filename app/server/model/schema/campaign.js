@@ -187,8 +187,7 @@ schema.statics.validate = body => {
  */
 const __addCampaign = body => {
   return prev => {
-    const campaign = new ModelDef({
-      _id: body.id,
+    const md = new ModelDef({
       _app: Model.authApp._id,
       name: body.name,
       type: body.type,
@@ -199,8 +198,12 @@ const __addCampaign = body => {
       legals: body.legals
     });
 
-    return campaign.save()
-      .then(c => prev.concat([c]));
+    if (body.id) {
+      md._id = body.id;
+    }
+
+    return md.save()
+      .then(o => prev.concat([o]));
   };
 };
 
@@ -299,7 +302,7 @@ schema.methods.addImage = function(label, image, encoding) {
 
   return new Promise((resolve, reject) => {
     let uid = Model.authApp.getPublicUID();
-    let dirName = `${Config.appDataPath}/public/${uid}/campaign-images`;
+    let dirName = `${Config.paths.appData}/public/${uid}/campaign-images`;
     let pathName = `${dirName}/${label}.png`;
     let prefix = `${Config.app.protocol}://${Config.app.subdomain}.${Config.app.domain}`;
     let url = `${prefix}/${uid}/campaign-images/${label}.png`;
@@ -350,7 +353,7 @@ schema.methods.addTemplate = function(label, markup, format, encoding) {
 
   return new Promise((resolve, reject) => {
     let uid = Model.authApp.getPublicUID();
-    let dirName = `${Config.appDataPath}/private/${uid}/campaign-templates`;
+    let dirName = `${Config.paths.appData}/private/${uid}/campaign-templates`;
     let pathName = `${dirName}/${label}.${format}`;
     Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
 
@@ -407,7 +410,7 @@ schema.methods.createPreviewEmail = function(template, body) {
     app: {
       name: Model.authApp.name,
       trackingCode: 'welcome',
-      templatePath: path.join(Config.appDataPath, `/private/${uid}/campaign-templates`)
+      templatePath: path.join(Config.paths.appData, `/private/${uid}/campaign-templates`)
     }
   };
 
@@ -417,7 +420,7 @@ schema.methods.createPreviewEmail = function(template, body) {
         return EmailFactory.create(params);
       })
       .then(email => {
-        let previewPath = path.join(Config.appDataPath, `/public/${uid}/campaign-previews`);
+        let previewPath = path.join(Config.paths.appData, `/public/${uid}/campaign-previews`);
         fs.writeFile(path.join(previewPath, `${template}-preview.html`), email.html, err => {
           if (err) {
             reject(err);

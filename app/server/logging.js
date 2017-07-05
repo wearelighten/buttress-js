@@ -63,7 +63,7 @@ winston.add(winston.transports.Console, {
 winston.add(winston.transports.Rotate, {
   name: 'debug-file',
   json: false,
-  file: `${Config.logPath}/log-debug.log`,
+  file: `${Config.paths.logs}/log-debug.log`,
   level: 'debug',
   size: '1m',
   keep: 2,
@@ -73,7 +73,7 @@ winston.add(winston.transports.Rotate, {
 winston.add(winston.transports.Rotate, {
   name: 'info-file',
   json: false,
-  file: `${Config.logPath}/log-info.log`,
+  file: `${Config.paths.logs}/log-info.log`,
   size: '1m',
   keep: 5,
   colorize: 'all',
@@ -83,7 +83,7 @@ winston.add(winston.transports.Rotate, {
 winston.add(winston.transports.Rotate, {
   name: 'error-file',
   json: false,
-  file: `${Config.logPath}/log-err.log`,
+  file: `${Config.paths.logs}/log-err.log`,
   size: '1m',
   keep: 10,
   level: 'error',
@@ -162,7 +162,8 @@ module.exports.logWarn = warn => {
  * @param {string} err - error object to log
  */
 module.exports.logError = err => {
-  _log(err, LogLevel.ERR);
+  _log(err.message, LogLevel.ERR);
+  _log(err.stack, LogLevel.ERR);
 };
 
 /**
@@ -338,7 +339,8 @@ module.exports.Promise.logArrayProp = (log, prop, level) => {
 module.exports.Promise.logError = () => {
   const level = LogLevel.ERR;
   return err => {
-    _log(err, level);
+    _log(err.message, level);
+    _log(err.stack, level);
     return err;
   };
 };

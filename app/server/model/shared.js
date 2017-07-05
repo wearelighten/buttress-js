@@ -95,7 +95,12 @@ let _doUpdate = (entity, body, pathContext) => {
       }
       case 'vector-add': {
         const vector = entity.get(body.path);
+        if (body.value instanceof Object && body.value.id) {
+          body.value._id = body.value.id;
+          delete body.value.id;
+        }
         vector.push(body.value);
+
         response = vector[vector.length - 1];
         if (response && response.toObject) {
           response = response.toObject();
@@ -183,8 +188,8 @@ module.exports.updateByPath = function(pathContext) {
  * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
  */
 module.exports.addOrUpdateMetadata = function(key, value) {
-  Logging.log(key, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(value, Logging.Constants.LogLevel.DEBUG);
+  Logging.logSilly(key);
+  Logging.logSilly(value);
 
   let exists = this.metadata.find(m => m.key === key);
   if (exists) {

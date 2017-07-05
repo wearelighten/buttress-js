@@ -96,7 +96,7 @@ const __initMaster = express => {
   net.createServer({pauseOnConnect: true}, connection => {
     const worker = _workers[__indexFromIP(connection.remoteAddress, processes)];
     worker.send('sticky-session:connection', connection);
-  }).listen(Config.socket.listenPort);
+  }).listen(Config.listenPorts.sock);
 };
 
 /* ********************************************************************************

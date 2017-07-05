@@ -198,7 +198,7 @@ schema.methods.addOrUpdatePermission = function(route, permission) {
  */
 schema.methods.mkDataDir = function(name, isPublic) {
   var uid = this.getPublicUID();
-  var baseName = `${Config.appDataPath}/${isPublic ? 'public' : 'private'}/${uid}`;
+  var baseName = `${Config.paths.appData}/${isPublic ? 'public' : 'private'}/${uid}`;
 
   return new Promise((resolve, reject) => {
     fs.mkdir(baseName, err => {

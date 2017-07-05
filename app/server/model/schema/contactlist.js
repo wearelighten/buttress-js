@@ -150,8 +150,7 @@ schema.statics.validate = body => {
  */
 const __addContactlist = (campaign, body) => {
   return prev => {
-    const cl = new ModelDef({
-      _id: body.id,
+    const md = new ModelDef({
       name: body.name,
       _app: Model.authApp._id,
       campaignId: body.campaignId,
@@ -160,8 +159,12 @@ const __addContactlist = (campaign, body) => {
       assignedToUserId: body.assignedToUserId
     });
 
-    return cl.save()
-      .then(cl => prev.concat([cl]));
+    if (body.id) {
+      md._id = body.id;
+    }
+
+    return md.save()
+      .then(o => prev.concat([o]));
   };
 };
 

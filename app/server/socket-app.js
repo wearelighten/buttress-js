@@ -25,7 +25,7 @@ Bootstrap
   .then(isMaster => {
     if (isMaster) {
       Logging.log(`${Config.app.title} Socket Master v${Config.app.version} listening on port ` +
-        `${Config.socket.listenPort} in ${Config.env} mode.`);
+        `${Config.listenPorts.sock} in ${Config.env} mode.`);
     } else {
       Logging.log(`${Config.app.title} Socket Worker v${Config.app.version} in ${Config.env} mode.`);
     }
