@@ -187,7 +187,7 @@ schema.virtual('details').get(function() {
     outcome: this.outcome,
     contactListId: this.contactListId,
     companyId: this.companyId,
-    ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
+    ownerId: this.ownerId,
     connections: this.connections,
     intelApproval: this.intelApproval,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
@@ -239,7 +239,7 @@ const __add = body => {
   return prev => {
     const md = new ModelDef({
       _app: Model.authApp._id,
-      _owner: body.ownerId,
+      ownerId: body.ownerId,
       name: body.name,
       contactListId: body.contactListId,
       companyId: body.companyId
