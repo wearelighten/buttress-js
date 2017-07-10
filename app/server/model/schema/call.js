@@ -120,11 +120,7 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   },
-  _person: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Person'
-  },
-  _owner: {
+  ownerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
@@ -191,7 +187,6 @@ schema.virtual('details').get(function() {
     outcome: this.outcome,
     contactListId: this.contactListId,
     companyId: this.companyId,
-    personId: this._person && this._person._id ? this._person._id : this._person,
     ownerId: this._owner && this._owner._id ? this._owner._id : this._owner,
     connections: this.connections,
     intelApproval: this.intelApproval,
@@ -215,7 +210,7 @@ const __doValidation = body => {
     invalid: []
   };
 
-  if (!body.companyId && !body.personId) {
+  if (!body.companyId) {
     res.isValid = false;
     res.missing.push('data');
   }
@@ -247,8 +242,7 @@ const __add = body => {
       _owner: body.ownerId,
       name: body.name,
       contactListId: body.contactListId,
-      companyId: body.companyId,
-      _person: body.personId
+      companyId: body.companyId
     });
 
     if (body.id) {
