@@ -2,7 +2,7 @@
 Realtime datastore for business software.
 
 # What's New
-### version: 1.0.4
+### version: 1.0.5
 -  API compatibility fixes
 
 ### 1.0.2
