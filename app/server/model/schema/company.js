@@ -472,7 +472,7 @@ const PATH_CONTEXT = {
   '^locations$': {type: 'vector-add', values: []},
   '^locations.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^locations.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|address|county|city|postCode)$': {type: 'scalar', values: []}
+  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|email|address|county|city|postCode)$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);

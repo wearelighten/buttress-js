@@ -167,11 +167,11 @@ class BulkAddCompanies extends Route {
         reject({statusCode: 400, message: `Invalid data: send an array`});
         return;
       }
-      if (this.req.body.companies.length <= 1) {
-        this.log(`ERROR: For single companies use the other API`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Invalid data: send more than one`});
-        return;
-      }
+      // if (this.req.body.companies.length <= 1) {
+      //   this.log(`ERROR: For single companies use the other API`, Route.LogLevel.ERR);
+      //   reject({statusCode: 400, message: `Invalid data: send more than one`});
+      //   return;
+      // }
       if (this.req.body.companies.length > 301) {
         this.log(`ERROR: No more than 300`, Route.LogLevel.ERR);
         reject({statusCode: 400, message: `Invalid data: send no more than 300 companies at a time`});
