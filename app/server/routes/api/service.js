@@ -3,8 +3,8 @@
 /**
  * ButtressJS - Realtime datastore for business software
  *
- * @file appointment.js
- * @description Company API specification
+ * @file service.js
+ * @description Service API specification
  * @module API
  * @author Chris Bates-Keegan
  *
@@ -18,11 +18,11 @@ const Logging = require('../../logging');
 let routes = [];
 
 /**
- * @class GetAppointmentList
+ * @class GetServiceList
  */
-class GetAppointmentList extends Route {
+class GetServiceList extends Route {
   constructor() {
-    super('appointment', 'GET APPOINTMENT LIST');
+    super('service', 'GET SERVICE LIST');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.LIST;
@@ -33,17 +33,17 @@ class GetAppointmentList extends Route {
   }
 
   _exec() {
-    return Model.Appointment.getAll();
+    return Model.Service.getAll();
   }
 }
-routes.push(GetAppointmentList);
+routes.push(GetServiceList);
 
 /**
  * @class GetAllMetadata
  */
 class GetAllMetadata extends Route {
   constructor() {
-    super('appointment/metadata/all', 'GET ALL APPOINTMENT METADATA');
+    super('service/metadata/all', 'GET ALL SERVICE METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
@@ -54,51 +54,51 @@ class GetAllMetadata extends Route {
   }
 
   _exec() {
-    return Model.Appointment.getAllMetadata();
+    return Model.Service.getAllMetadata();
   }
 }
 routes.push(GetAllMetadata);
 
 /**
- * @class GetAppointment
+ * @class GetService
  */
-class GetAppointment extends Route {
+class GetService extends Route {
   constructor() {
-    super('appointment/:id', 'GET APPOINTMENT');
+    super('service/:id', 'GET SERVICE');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.READ;
 
-    this._appointment = false;
+    this._service = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Appointment.findById(this.req.params.id)
-        .then(appointment => {
-          if (!appointment) {
-            this.log('ERROR: Invalid Appointment ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id)
+        .then(service => {
+          if (!service) {
+            this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
-          this._appointment = appointment;
+          this._service = service;
           resolve(true);
         });
     });
   }
 
   _exec() {
-    return Promise.resolve(this._appointment.details);
+    return Promise.resolve(this._service.details);
   }
 }
-routes.push(GetAppointment);
+routes.push(GetService);
 
 /**
- * @class AddAppointment
+ * @class AddService
  */
-class AddAppointment extends Route {
+class AddService extends Route {
   constructor() {
-    super('appointment', 'ADD APPOINTMENT');
+    super('service', 'ADD SERVICE');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
@@ -109,10 +109,21 @@ class AddAppointment extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      let validation = Model.Appointment.validate(this.req.body);
+      let validation = Model.Service.validate(this.req.body);
       if (!validation.isValid) {
-        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `SERVICE: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `SERVICE: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: SERVICE: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `SERVICE: Unhandled error.`});
         return;
       }
 
@@ -121,23 +132,23 @@ class AddAppointment extends Route {
   }
 
   _exec() {
-    return Model.Appointment.add(this.req.body)
+    return Model.Service.add(this.req.body)
       .then(arr => arr[0])
       .then(Helpers.Promise.prop('details'));
   }
 }
-routes.push(AddAppointment);
+routes.push(AddService);
 
 /**
- * @class UpdateAppointment
+ * @class UpdateService
  */
-class UpdateAppointment extends Route {
+class UpdateService extends Route {
   constructor() {
-    super('appointment/:id', 'UPDATE APPOINTMENT');
+    super('service/:id', 'UPDATE SERVICE');
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._appointment = null;
+    this._service = null;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
@@ -145,78 +156,78 @@ class UpdateAppointment extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      let validation = Model.Appointment.validateUpdate(this.req.body);
+      let validation = Model.Service.validateUpdate(this.req.body);
       if (!validation.isValid) {
         if (validation.isPathValid === false) {
           this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `APPOINTMENT: Update path is invalid: ${validation.invalidPath}`});
+          reject({statusCode: 400, message: `SERVICE: Update path is invalid: ${validation.invalidPath}`});
           return;
         }
         if (validation.isValueValid === false) {
           this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `APPOINTMENT: Update value is invalid: ${validation.invalidValue}`});
+          reject({statusCode: 400, message: `SERVICE: Update value is invalid: ${validation.invalidValue}`});
           return;
         }
       }
 
-      Model.Appointment.findById(this.req.params.id)
-      .then(appointment => {
-        if (!appointment) {
-          this.log('ERROR: Invalid Appointment ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id)
+      .then(service => {
+        if (!service) {
+          this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._appointment = appointment;
+        this._service = service;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._appointment.updateByPath(this.req.body);
+    return this._service.updateByPath(this.req.body);
   }
 }
-routes.push(UpdateAppointment);
+routes.push(UpdateService);
 
 /**
- * @class DeleteAppointment
+ * @class DeleteService
  */
-class DeleteAppointment extends Route {
+class DeleteService extends Route {
   constructor() {
-    super('appointment/:id', 'DELETE APPOINTMENT');
+    super('service/:id', 'DELETE SERVICE');
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
-    this._appointment = false;
+    this._service = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Appointment.findById(this.req.params.id)
-        .then(appointment => {
-          if (!appointment) {
-            this.log('ERROR: Invalid Appointment ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id)
+        .then(service => {
+          if (!service) {
+            this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
-          this._appointment = appointment;
+          this._service = service;
           resolve(true);
         });
     });
   }
 
   _exec() {
-    return this._appointment.rm().then(() => true);
+    return this._service.rm().then(() => true);
   }
 }
-routes.push(DeleteAppointment);
+routes.push(DeleteService);
 
 /**
- * @class DeleteAllAppointments
+ * @class DeleteAllServices
  */
-class DeleteAllAppointments extends Route {
+class DeleteAllServices extends Route {
   constructor() {
-    super('appointment', 'DELETE ALL APPOINTMENTS');
+    super('service', 'DELETE ALL SERVICES');
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.SUPER;
     this.permissions = Route.Constants.Permissions.DELETE;
@@ -227,33 +238,33 @@ class DeleteAllAppointments extends Route {
   }
 
   _exec() {
-    return Model.Appointment.rmAll().then(() => true);
+    return Model.Service.rmAll().then(() => true);
   }
 }
-routes.push(DeleteAllAppointments);
+routes.push(DeleteAllServices);
 
 /**
  * @class AddMetadata
  */
 class AddMetadata extends Route {
   constructor() {
-    super('appointment/:id/metadata/:key', 'ADD APPOINTMENT METADATA');
+    super('service/:id/metadata/:key', 'ADD SERVICE METADATA');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
 
-    this._appointment = false;
+    this._service = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Appointment.findById(this.req.params.id).then(appointment => {
-        if (!appointment) {
-          this.log('ERROR: Invalid Appointment ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id).then(service => {
+        if (!service) {
+          this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        if (`${appointment._app}` !== `${this.req.authApp._id}`) {
+        if (`${service._app}` !== `${this.req.authApp._id}`) {
           this.log('ERROR: Not authorised', Route.LogLevel.ERR);
           reject({statusCode: 401});
           return;
@@ -268,14 +279,14 @@ class AddMetadata extends Route {
           return;
         }
 
-        this._appointment = appointment;
+        this._service = service;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._appointment.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
+    return this._service.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
   }
 }
 routes.push(AddMetadata);
@@ -285,7 +296,7 @@ routes.push(AddMetadata);
  */
 class GetMetadata extends Route {
   constructor() {
-    super('appointment/:id/metadata/:key?', 'GET APPOINTMENT METADATA');
+    super('service/:id/metadata/:key?', 'GET SERVICE METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
@@ -297,27 +308,27 @@ class GetMetadata extends Route {
       this._allMetadata = null;
 
       Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
-      Model.Appointment.findById(this.req.params.id).then(appointment => {
-        if (!appointment) {
-          this.log('ERROR: Invalid Appointment ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id).then(service => {
+        if (!service) {
+          this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        if (`${appointment._app}` !== `${this.req.authApp._id}`) {
+        if (`${service._app}` !== `${this.req.authApp._id}`) {
           this.log('ERROR: Not authorised', Route.LogLevel.ERR);
           reject({statusCode: 401});
           return;
         }
         // Logging.log(this._metadata.value, Route.LogLevel.INFO);
         if (this.req.params.key) {
-          this._metadata = appointment.findMetadata(this.req.params.key);
+          this._metadata = service.findMetadata(this.req.params.key);
           if (this._metadata === false) {
-            this.log('WARN: Appointment Metadata Not Found', Route.LogLevel.ERR);
+            this.log('WARN: Service Metadata Not Found', Route.LogLevel.ERR);
             reject({statusCode: 404});
             return;
           }
         } else {
-          this._allMetadata = appointment.metadata.reduce((prev, curr) => {
+          this._allMetadata = service.metadata.reduce((prev, curr) => {
             prev[curr.key] = JSON.parse(curr.value);
             return prev;
           }, {});
@@ -339,36 +350,36 @@ routes.push(GetMetadata);
  */
 class DeleteMetadata extends Route {
   constructor() {
-    super('appointment/:id/metadata/:key', 'DELETE APPOINTMENT METADATA');
+    super('service/:id/metadata/:key', 'DELETE SERVICE METADATA');
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
-    this._appointment = false;
+    this._service = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Appointment
+      Model.Service
         .findById(this.req.params.id).select('id, _app')
-        .then(appointment => {
-          if (!appointment) {
-            this.log('ERROR: Invalid Appointment ID', Route.LogLevel.ERR);
-            reject({statusCode: 400, message: `Invalid Appointment ID: ${this.req.params.id}`});
+        .then(service => {
+          if (!service) {
+            this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
+            reject({statusCode: 400, message: `Invalid Service ID: ${this.req.params.id}`});
             return;
           }
-          if (`${appointment._app}` !== `${this.req.authApp._id}`) {
+          if (`${service._app}` !== `${this.req.authApp._id}`) {
             this.log('ERROR: Not authorised', Route.LogLevel.ERR);
             reject({statusCode: 401});
             return;
           }
-          this._appointment = appointment;
+          this._service = service;
           resolve(true);
         }, err => reject({statusCode: 400, message: err.message}));
     });
   }
 
   _exec() {
-    return this._appointment.rmMetadata(this.req.params.key);
+    return this._service.rmMetadata(this.req.params.key);
   }
 }
 routes.push(DeleteMetadata);

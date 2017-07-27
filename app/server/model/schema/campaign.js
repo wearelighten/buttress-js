@@ -438,18 +438,19 @@ schema.methods.createPreviewEmail = function(template, body) {
  * METADATA
  *
  **********************************************************************************/
+const collection = Model.mongoDb.collection('campaigns');
 
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
-const collection = Model.mongoDb.collection('campaigns');
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 /**

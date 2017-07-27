@@ -182,7 +182,7 @@ schema.statics.add = (campaign, body) => {
 
 const collection = Model.mongoDb.collection('contactlists');
 schema.statics.getAll = () => {
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 schema.statics.rmAll = () => {
   return ModelDef.remove({});
@@ -215,6 +215,7 @@ schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
 ModelDef = mongoose.model('Contactlist', schema);
 

@@ -39,6 +39,27 @@ class GetCallList extends Route {
 routes.push(GetCallList);
 
 /**
+ * @class GetAllMetadata
+ */
+class GetAllMetadata extends Route {
+  constructor() {
+    super('call/metadata/all', 'GET ALL CALL METADATA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.GET;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Call.getAllMetadata();
+  }
+}
+routes.push(GetAllMetadata);
+
+/**
  * @class GetCall
  */
 class GetCall extends Route {

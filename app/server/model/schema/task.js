@@ -255,7 +255,7 @@ const collection = Model.mongoDb.collection('tasks');
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 /**
@@ -263,7 +263,7 @@ schema.statics.getAll = () => {
  */
 schema.statics.getAllReminders = () => {
   Logging.log(`getAllReminders: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return collection.find({'_app': Model.authApp._id, 'reminder.status': 'pending'});
+  return collection.find({'_app': Model.authApp._id, 'reminder.status': 'pending'}, {metadata: 0});
 };
 
 schema.statics.rmAll = () => {
@@ -310,6 +310,7 @@ schema.methods.rm = function() {
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
 /* ********************************************************************************
  *

@@ -294,10 +294,12 @@ schema.methods.rm = function() {
  * METADATA
  *
  **********************************************************************************/
+const collection = Model.mongoDb.collection('opportunities');
 
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
 /* ********************************************************************************
  *

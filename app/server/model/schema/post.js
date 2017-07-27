@@ -210,7 +210,7 @@ const collection = Model.mongoDb.collection('posts');
  */
 schema.statics.getAll = () => {
   Logging.logSilly(`getAll: ${Model.authApp._id}`);
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 schema.statics.rmAll = () => {
@@ -257,6 +257,7 @@ schema.methods.rm = function() {
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
 /* ********************************************************************************
  *

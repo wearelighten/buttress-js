@@ -272,7 +272,7 @@ const collection = Model.mongoDb.collection('calls');
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 schema.statics.rmAll = () => {
@@ -324,6 +324,7 @@ schema.methods.rm = function() {
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
 ModelDef = mongoose.model('Call', schema);
 

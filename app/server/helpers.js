@@ -47,8 +47,14 @@ class JSONStringifyStream extends Transform {
 
   _transform(chunk, encoding, cb) {
     const __replacer = (key, value) => {
-      if (key === '_id' || key === '_app' || key === '__v' || key === 'metadata') {
+      if (key === '_id' || key === '_app' || key === '__v') {
         return undefined;
+      }
+      if (key === 'metadata') {
+        return key.reduce((metadata, entry) => {
+          metadata[entry.key] = JSON.parse(entry.value);
+          return metadata;
+        }, {});
       }
       if (value instanceof Array) {
         return value.map(c => {
@@ -65,7 +71,6 @@ class JSONStringifyStream extends Transform {
     }
 
     const str = JSON.stringify(chunk, __replacer);
-    // const str = JSON.stringify(chunk);
 
     if (this._first) {
       this._first = false;

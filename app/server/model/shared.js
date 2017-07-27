@@ -12,6 +12,7 @@
  */
 
 const Logging = require('../logging');
+const Model = require('./index');
 
 /* ********************************************************************************
  *
@@ -199,6 +200,12 @@ module.exports.addOrUpdateMetadata = function(key, value) {
   }
 
   return this.save().then(u => ({key: key, value: JSON.parse(value)}));
+};
+
+module.exports.getAllMetadata = function(collection) {
+  return function() {
+    collection.find({_app: Model.authApp._id}, {metadata: 1});
+  };
 };
 
 module.exports.findMetadata = function(key) {

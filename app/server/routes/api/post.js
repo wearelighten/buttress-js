@@ -39,6 +39,27 @@ class GetPostList extends Route {
 routes.push(GetPostList);
 
 /**
+ * @class GetAllMetadata
+ */
+class GetAllMetadata extends Route {
+  constructor() {
+    super('post/metadata/all', 'GET ALL POST METADATA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.GET;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Post.getAllMetadata();
+  }
+}
+routes.push(GetAllMetadata);
+
+/**
  * @class GetPost
  */
 class GetPost extends Route {

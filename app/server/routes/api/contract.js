@@ -40,6 +40,27 @@ class GetContractList extends Route {
 routes.push(GetContractList);
 
 /**
+ * @class GetAllMetadata
+ */
+class GetAllMetadata extends Route {
+  constructor() {
+    super('contract/metadata/all', 'GET ALL CONTRACT METADATA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.GET;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Contract.getAllMetadata();
+  }
+}
+routes.push(GetAllMetadata);
+
+/**
  * @class GetContract
  */
 class GetContract extends Route {

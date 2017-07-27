@@ -3,8 +3,8 @@
 /**
  * ButtressJS - Realtime datastore for business software
  *
- * @file document.js
- * @description Document model definition.
+ * @file service.js
+ * @description Service model definition.
  * @module Model
  * @exports model, schema, constants
  * @author Chris Bates-Keegan
@@ -31,27 +31,6 @@ let ModelDef = null;
  **********************************************************************************/
 let constants = {};
 
-const types = [
-  'free',
-  'company',
-  'campaign',
-  'contact-list',
-  'call',
-  'appointment',
-  'contract'
-];
-const Type = {
-  FREE: types[0],
-  COMPANY: types[1],
-  CAMPAIGN: types[2],
-  CONTACT_LIST: types[3],
-  CALL: types[4],
-  APPOINTMENT: types[5],
-  CONTRACT: types[6]
-};
-
-constants.Type = Type;
-
 /* ********************************************************************************
  *
  * SCHEMA
@@ -62,38 +41,15 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
   },
-  authApp: {
-    type: String,
-    default: 'google'
-  },
   name: String,
+  reference: String,
   tag: String,
-  documentMetadata: {
-    id: String,
-    name: String,
-    description: String,
-    lastModified: {
-      type: Date,
-      default: Date.create
-    },
-    iconUrl: String,
-    mimeType: String,
-    fileSizeBytes: Number
-  },
+  serviceType: String,
+  salesStatus: String,
+  status: String,
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
-  },
-  entityType: {
-    type: String,
-    enum: types
-  },
-  entityId: {
-    type: mongoose.Schema.Types.ObjectId
-  },
-  ownerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
   },
   metadata: [{key: String, value: String}],
   notes: [{
@@ -118,12 +74,12 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
+    reference: this.reference,
     tag: this.tag,
-    entityType: this.entityType,
-    entityId: this.entityId,
+    serviceType: this.serviceType,
+    salesStatus: this.salesStatus,
+    status: this.status,
     companyId: this.companyId,
-    documentMetadata: this.documentMetadata,
-    ownerId: this.ownerId && this.ownerId._id ? this.ownerId._id : this.ownerId,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
@@ -144,38 +100,17 @@ const __doValidation = body => {
     invalid: []
   };
 
-  if (!body.ownerId) {
+  if (!body.companyId) {
     res.isValid = false;
-    res.missing.push('ownerId');
+    res.missing.push('companyId');
   }
   if (!body.name) {
     res.isValid = false;
     res.missing.push('name');
   }
-
-  if (!body.documentMetadata) {
+  if (!body.serviceType) {
     res.isValid = false;
-    res.missing.push('documentMetadata');
-  }
-  if (!body.documentMetadata.id) {
-    res.isValid = false;
-    res.missing.push('documentMetadata.id');
-  }
-
-  if (!body.companyId) {
-    res.isValid = false;
-    res.missing.push('companyId');
-  }
-
-  if (body.entityType) {
-    if (types.indexOf(body.entityType) === -1) {
-      res.isValid = false;
-      res.invalid.push('type');
-    }
-    if (body.entityType !== Type.FREE && !body.entityId) {
-      res.isValid = false;
-      res.missing.push('entityId');
-    }
+    res.missing.push('serviceType');
   }
 
   return res;
@@ -199,13 +134,14 @@ const __add = body => {
     Logging.logDebug(body);
     const md = new ModelDef({
       _app: Model.authApp._id,
-      ownerId: body.ownerId,
-      name: body.name,
-      tag: body.tag ? body.tag : '',
       companyId: body.companyId,
-      entityType: body.entityType,
-      entityId: body.entityId,
-      documentMetadata: body.documentMetadata
+      name: body.name,
+      reference: body.reference ? body.reference : '',
+      tag: body.tag ? body.tag : '',
+      serviceType: body.serviceType,
+      salesStatus: body.salesStatus,
+      status: body.status,
+      notes: body.notes
     });
 
     if (body.id) {
@@ -234,12 +170,11 @@ const collection = Model.mongoDb.collection('documents');
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
-  Logging.logSilly(`getAll: ${Model.authApp._id}`);
   return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 schema.statics.rmAll = () => {
-  return ModelDef.remove({});
+  return ModelDef.remove({_app: Model.authApp._id});
 };
 
 /* ********************************************************************************
@@ -249,7 +184,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(name|tag|entityType|entityId|companyId|documentMetadata)$': {type: 'scalar', values: []},
+  '^(name|tag|reference|serviceType|companyId|salesStatus|status)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
@@ -287,7 +222,7 @@ schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
  * EXPORTS
  *
  **********************************************************************************/
-ModelDef = mongoose.model('Document', schema);
+ModelDef = mongoose.model('Service', schema);
 
 module.exports.constants = constants;
 module.exports.schema = schema;

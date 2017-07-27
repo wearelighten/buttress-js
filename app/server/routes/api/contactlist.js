@@ -38,6 +38,27 @@ class GetContactListList extends Route {
 routes.push(GetContactListList);
 
 /**
+ * @class GetAllMetadata
+ */
+class GetAllMetadata extends Route {
+  constructor() {
+    super('contact-list/metadata/all', 'GET ALL CONTACT LIST METADATA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.GET;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Contactlist.getAllMetadata();
+  }
+}
+routes.push(GetAllMetadata);
+
+/**
  * @class GetContactList
  */
 class GetContactList extends Route {

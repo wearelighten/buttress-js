@@ -39,6 +39,27 @@ class GetCompanyList extends Route {
 routes.push(GetCompanyList);
 
 /**
+ * @class GetAllMetadata
+ */
+class GetAllMetadata extends Route {
+  constructor() {
+    super('company/metadata/all', 'GET ALL COMPANY METADATA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.GET;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Company.getAllMetadata();
+  }
+}
+routes.push(GetAllMetadata);
+
+/**
  * @class GetCompany
  */
 class GetCompany extends Route {
