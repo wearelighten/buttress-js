@@ -127,10 +127,6 @@ schema.statics.add = (body, owner) => {
       _dataOwner: owner
     });
 
-    if (body.id) {
-      md._id = body.id;
-    }
-
     md.save().then(res => resolve(res.details), reject);
   });
 };

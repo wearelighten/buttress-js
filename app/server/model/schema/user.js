@@ -255,7 +255,7 @@ schema.statics.getSimplified = () => {
  * @return {Promise} - resolves to a User object or null
  */
 schema.statics.getByUsername = username => {
-  return ModelDef.findOne({username: username}, {metadata: 0}).select('id');
+  return ModelDef.findOne({username: username}).select('id');
 };
 
 /**
@@ -266,7 +266,7 @@ schema.statics.getByUsername = username => {
 schema.statics.getByAppId = (appName, appUserId) => {
   Logging.log(`getByAppId: ${appName} - ${appUserId}`, Logging.Constants.LogLevel.VERBOSE);
 
-  return ModelDef.findOne({'auth.app': appName, 'auth.appId': appUserId}, {metadata: 0}).select('id');
+  return ModelDef.findOne({'auth.app': appName, 'auth.appId': appUserId}).select('id');
 };
 
 schema.methods.attachToPerson = function(person, details) {
