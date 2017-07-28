@@ -12,6 +12,7 @@
  */
 
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
@@ -254,6 +255,9 @@ const __doValidation = body => {
     res.missing.push('contact.role');
   }
 
+  body.location._id = (new ObjectId()).toHexString();
+  body.contact._id = (new ObjectId()).toHexString();
+
   return res;
 };
 
@@ -283,35 +287,35 @@ const __addCompany = body => {
 
     // const contact = Model.Contact.create(body.contact);
 
-    const md = new ModelDef({
+    const md = {
       name: body.name,
-      companyType: body.companyType,
-      parentCompanyId: body.parentCompanyId,
-      childType: body.childType,
-      siccode: body.siccode,
-      reference: body.reference,
-      description: body.description,
-      source: body.source,
-      flags: body.flags,
-      memberships: body.memberships,
+      companyType: body.companyType ? body.companyType : '',
+      parentCompanyId: body.parentCompanyId ? body.parentCompanyId : undefined,
+      childType: body.childType ? body.childType : '',
+      siccode: body.siccode ? body.siccode : '',
+      reference: body.reference ? body.reference : '',
+      description: body.description ? body.description : '',
+      source: body.source ? body.source : '',
+      flags: body.flags ? body.flags : '',
+      memberships: body.memberships ? body.memberships : '',
       companyNumber: body.number ? body.number : body.companyNumber,
-      numEmployees: body.numEmployees,
-      employeeBand: body.employeeBand,
-      annualTurnover: body.annualTurnover,
-      turnoverBand: body.turnoverBand,
-      profitPreTax: body.profitPreTax,
-      netWorth: body.netWorth,
+      numEmployees: body.numEmployees ? body.numEmployees : 0,
+      employeeBand: body.employeeBand ? body.employeeBand : '1-4',
+      annualTurnover: body.annualTurnover ? body.annualTurnover : 0,
+      turnoverBand: body.turnoverBand ? body.turnoverBand : '0-99k',
+      profitPreTax: body.profitPreTax ? body.profitPreTax : 0,
+      netWorth: body.netWorth ? body.netWorth : 0,
       financeAnnualEndDate: body.financeAnnualEndDate,
-      vatExempt: body.vatExempt,
-      vatRegistrationNumber: body.vatRegistrationNumber,
-      sector: body.sector,
-      subsector: body.subsector,
-      website: body.website,
+      vatExempt: body.vatExempt ? body.vatExempt : false,
+      vatRegistrationNumber: body.vatRegistrationNumber ? body.vatRegistrationNumber : '',
+      sector: body.sector ? body.sector : '',
+      subsector: body.subsector ? body.subsector : '',
+      website: body.website ? body.website : '',
       locations: [body.location],
       contacts: [body.contact],
-      notes: body.notes,
+      notes: body.notes ? body.notes : [],
       _app: Model.authApp._id
-    });
+    };
 
     if (body.id) {
       md._id = body.id;
@@ -320,7 +324,7 @@ const __addCompany = body => {
     md.primaryContact = md.contacts[0]._id;
     md.primaryLocation = md.locations[0]._id;
 
-    return Promise.resolve(prev.concat([md.toObject()]));
+    return Promise.resolve(prev.concat([md]));
   };
 };
 
