@@ -51,6 +51,9 @@ schema.add({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   },
+  locationId: {
+    type: mongoose.Schema.Types.ObjectId
+  },
   metadata: [{key: String, value: String}],
   notes: [{
     userId: {
@@ -184,7 +187,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(name|tag|reference|serviceType|companyId|salesStatus|status)$': {type: 'scalar', values: []},
+  '^(name|tag|reference|serviceType|companyId|locationId|salesStatus|status)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
