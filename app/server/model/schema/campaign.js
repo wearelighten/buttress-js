@@ -14,6 +14,7 @@
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
@@ -199,7 +200,7 @@ const __addCampaign = body => {
     });
 
     if (body.id) {
-      md._id = body.id;
+      md._id = new ObjectId(body.id);
     }
 
     return md.save()

@@ -78,7 +78,7 @@ class GetCompany extends Route {
       Model.Company.findById(this.req.params.id)
         .then(company => {
           if (!company) {
-            this.log('ERROR: Invalid Company ID', Route.LogLevel.ERR);
+            this.log(`ERROR: Invalid Company ID: ${this.req.params.id}`, Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
