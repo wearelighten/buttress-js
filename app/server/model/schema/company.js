@@ -22,6 +22,7 @@ const Shared = require('../shared');
 const schema = new mongoose.Schema();
 let ModelDef = null;
 const constants = {};
+const collection = Model.mongoDb.collection('companies');
 
 /* ********************************************************************************
  *
@@ -222,41 +223,68 @@ const __doValidation = body => {
     res.isValid = false;
     res.invalid.push('companyType');
   }
-  if (!body.location) {
+  if (!body.location && !body.locations) {
     res.isValid = false;
     res.missing.push('location');
   }
-  if (!body.location.name) {
-    res.isValid = false;
-    res.missing.push('location.name');
+  if (body.location) {
+    body.location._id = body.location.id ? body.location.id : (new ObjectId()).toHexString();
+    delete body.location.id;
+    if (!body.location.name) {
+      res.isValid = false;
+      res.missing.push('location.name');
+    }
+    if (!body.location.postCode) {
+      res.isValid = false;
+      res.missing.push('location.postCode');
+    }
   }
-  // if (!body.location.address) {
-  //   res.isValid = false;
-  //   res.missing.push('location.address');
-  // }
-  if (!body.location.postCode) {
-    res.isValid = false;
-    res.missing.push('location.postCode');
+  if (body.locations) {
+    body.locations.forEach((l, idx) => {
+      l._id = l.id ? new ObjectId(l.id) : (new ObjectId()).toHexString();
+      delete l.id;
+      if (!l.name) {
+        res.isValid = false;
+        res.missing.push(`locations.${idx}.name`);
+      }
+      if (!l.postCode) {
+        res.isValid = false;
+        res.missing.push(`locations.${idx}.postCode`);
+      }
+    });
   }
-  // if (!body.location.phoneNumber) {
-  //   res.isValid = false;
-  //   res.missing.push('location.phoneNumber');
-  // }
-  if (!body.contact) {
+
+  if (!body.contact && !body.contacts) {
     res.isValid = false;
     res.missing.push('contact');
   }
-  if (!body.contact.name) {
-    res.isValid = false;
-    res.missing.push('contact.name');
-  }
-  if (!body.contact.role) {
-    res.isValid = false;
-    res.missing.push('contact.role');
+  if (body.contact) {
+    body.contact._id = body.contact.id ? body.contact.id : (new ObjectId()).toHexString();
+    delete body.contact.id;
+    if (!body.contact.name) {
+      res.isValid = false;
+      res.missing.push('contact.name');
+    }
+    if (!body.contact.role) {
+      res.isValid = false;
+      res.missing.push('contact.role');
+    }
   }
 
-  body.location._id = (new ObjectId()).toHexString();
-  body.contact._id = (new ObjectId()).toHexString();
+  if (body.contacts) {
+    body.contacts.forEach((c, idx) => {
+      c._id = c.id ? new ObjectId(c.id) : (new ObjectId()).toHexString();
+      delete c.id;
+      if (!c.name) {
+        res.isValid = false;
+        res.missing.push(`contacts.${idx}.name`);
+      }
+      if (!c.role) {
+        res.isValid = false;
+        res.missing.push(`contacts.${idx}.role`);
+      }
+    });
+  }
 
   return res;
 };
@@ -311,14 +339,14 @@ const __addCompany = body => {
       sector: body.sector ? body.sector : '',
       subsector: body.subsector ? body.subsector : '',
       website: body.website ? body.website : '',
-      locations: [body.location],
-      contacts: [body.contact],
+      locations: body.locations ? body.locations : [body.location],
+      contacts: body.contacts ? body.contacts : [body.contact],
       notes: body.notes ? body.notes : [],
       _app: Model.authApp._id
     };
 
     if (body.id) {
-      md._id = body.id;
+      md._id = new ObjectId(body.id);
     }
 
     md.primaryContact = md.contacts[0]._id;
@@ -340,13 +368,24 @@ schema.statics.add = body => {
   }, Promise.resolve([]))
   .then(companies => {
     return new Promise((resolve, reject) => {
-      ModelDef.collection.insert(companies, (err, res) => {
+      Logging.logSilly(`Writing: ${companies[0]._id}`);
+      const ops = companies.map(c => {
+        return {
+          insertOne: {
+            document: c
+          }
+        };
+      });
+      collection.bulkWrite(ops, (err, res) => {
         if (err) {
           reject(err);
           return;
         }
 
-        resolve(res.ops.map(c => c._id));
+        const insertedIds = Object.values(res.insertedIds);
+
+        Logging.logSilly(`Written: ${insertedIds[0]._id}`);
+        resolve(insertedIds);
       });
     });
   });
@@ -520,8 +559,6 @@ schema.statics.rmBulk = ids => {
 schema.statics.rmAll = () => {
   return ModelDef.remove({});
 };
-
-const collection = Model.mongoDb.collection('companies');
 
 /**
  * @return {Promise} - resolves to an array of Companies
