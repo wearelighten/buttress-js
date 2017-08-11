@@ -24,6 +24,7 @@ const Logging = require('../../logging');
  **********************************************************************************/
 let schema = new mongoose.Schema();
 let ModelDef = null;
+const collection = Model.mongoDb.collection('services');
 
 /* ********************************************************************************
  *
@@ -184,7 +185,6 @@ schema.statics.add = body => {
   }, Promise.resolve([]));
 };
 
-const collection = Model.mongoDb.collection('documents');
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
