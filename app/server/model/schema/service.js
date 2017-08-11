@@ -43,6 +43,7 @@ schema.add({
     ref: 'App'
   },
   name: String,
+  description: String,
   reference: String,
   tag: String,
   serviceType: String,
@@ -51,6 +52,14 @@ schema.add({
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
+  },
+  ownerUserId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  assignedToUserId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   },
   locationId: {
     type: mongoose.Schema.Types.ObjectId
@@ -78,12 +87,15 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
+    description: this.description,
     reference: this.reference,
     tag: this.tag,
     serviceType: this.serviceType,
     salesStatus: this.salesStatus,
     status: this.status,
     companyId: this.companyId,
+    ownerUserId: this.ownerUserId,
+    assignedToUserId: this.assignedToUserId,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
@@ -138,8 +150,11 @@ const __add = body => {
     Logging.logDebug(body);
     const md = new ModelDef({
       _app: Model.authApp._id,
+      ownerUserId: body.ownerUserId,
+      assignedToUserId: body.assignedToUserId,
       companyId: body.companyId,
       name: body.name,
+      description: body.description,
       reference: body.reference ? body.reference : '',
       tag: body.tag ? body.tag : '',
       serviceType: body.serviceType,
@@ -188,7 +203,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(name|tag|reference|serviceType|companyId|locationId|salesStatus|status)$': {type: 'scalar', values: []},
+  '^(ownerUserId|assignedToUserId|name|description|tag|reference|serviceType|companyId|locationId|salesStatus|status)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
