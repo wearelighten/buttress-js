@@ -118,6 +118,7 @@ schema.add({
     type: String,
     default: ''
   },
+  salesStatus: String,
   source: String,
   companyNumber: Number,
   numEmployees: Number,
@@ -320,6 +321,7 @@ const __addCompany = body => {
       companyType: body.companyType ? body.companyType : '',
       parentCompanyId: body.parentCompanyId ? body.parentCompanyId : undefined,
       childType: body.childType ? body.childType : '',
+      salesStatus: body.salesStatus ? body.salesStatus : '',
       siccode: body.siccode ? body.siccode : '',
       reference: body.reference ? body.reference : '',
       description: body.description ? body.description : '',
@@ -398,13 +400,8 @@ schema.statics.add = body => {
  *********************************************************************************/
 
 schema.virtual('details').get(function() {
-  // Logging.logDebug(this.locations[this.primaryLocation].details);
-
   const _locations = this.locations.map(l => {
-    // const _address = addressit(l.address, {locale: 'en-GB'});
-    // const regions = _address.regions;
-    Logging.log(l.address, Logging.Constants.LogLevel.SILLY);
-    // Logging.log(_address, Logging.Constants.LogLevel.DEBUG);
+    Logging.logSilly(l.address);
     return {
       id: l._id,
       name: l.name,
@@ -414,33 +411,11 @@ schema.virtual('details').get(function() {
       county: l.county,
       postCode: l.postCode,
       phoneNumber: l.phoneNumber
-      // address: {
-      //   full: l.address,
-      //   unit: _address.unit,
-      //   number: _address.number,
-      //   street: _address.street,
-      //   town: regions.length >= 2 ? regions.shift() : '',
-      //   city: regions.length >= 1 ? regions.shift() : '',
-      //   county: _address.state,
-      //   postcode: _address.postalcode
-      // }
     };
   });
 
   const _contacts = this.contacts.map(c => {
-    // const name = humanname.parse(c.name);
-    // const formalName =
-    //   `${name.title ? name.title + ' ' : ''}${name.firstName} ${name.initials ? name.initials + ' ' : ''}${name.lastName}`;
     return {
-      // name: {
-      //   full: c.name,
-      //   formal: formalName,
-      //   title: name.title,
-      //   forename: name.firstName,
-      //   initials: name.initials,
-      //   surname: name.lastName,
-      //   suffix: name.suffix
-      // },
       id: c._id,
       name: c.name,
       tag: '',
@@ -456,6 +431,7 @@ schema.virtual('details').get(function() {
     companyType: this.companyType,
     parentCompanyId: this.parentCompanyId,
     childType: this.childType,
+    salesStatus: this.salesStatus,
     description: this.description,
     siccode: this.siccode,
     reference: this.reference,
@@ -498,7 +474,7 @@ schema.virtual('details').get(function() {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(name|parentCompanyId|childType|companyType|reference|description|siccode|numEmployees|annualTurnover|profitPreTax|financeEndDate|netWorth|source|memberships|flags|vatExempt|vatRegistrationNumber|companyNumber)$': {type: 'scalar', values: []}, // eslint-disable-line max-len
+  '^(name|parentCompanyId|childType|companyType|salesStatus|reference|description|siccode|numEmployees|annualTurnover|profitPreTax|financeEndDate|netWorth|source|memberships|flags|vatExempt|vatRegistrationNumber|companyNumber)$': {type: 'scalar', values: []}, // eslint-disable-line max-len
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
