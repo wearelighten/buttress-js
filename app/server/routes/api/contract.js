@@ -158,11 +158,11 @@ class BulkAddContracts extends Route {
         reject({statusCode: 400, message: `Invalid data: send an array of contracts`});
         return;
       }
-      if (this.req.body.contracts.length > 301) {
-        this.log(`ERROR: No more than 300 contracts`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Invalid data: send no more than 300 contracts at a time`});
-        return;
-      }
+      // if (this.req.body.contracts.length > 301) {
+      //   this.log(`ERROR: No more than 300 contracts`, Route.LogLevel.ERR);
+      //   reject({statusCode: 400, message: `Invalid data: send no more than 300 contracts at a time`});
+      //   return;
+      // }
 
       let validation = Model.Contract.validate(this.req.body.contracts);
       if (!validation.isValid) {
@@ -281,7 +281,7 @@ routes.push(DeleteContract);
 class BulkDeleteContracts extends Route {
   constructor() {
     super('contract/bulk/delete', 'BULK DELETE CONTRACTS');
-    this.verb = Route.Constants.Verbs.DEL;
+    this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
     this._ids = [];
@@ -289,23 +289,22 @@ class BulkDeleteContracts extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      this._ids = this.req.query.ids;
+      this._ids = this.req.body;
       if (!this._ids) {
         this.log('ERROR: No contract IDs provided', Route.LogLevel.ERR);
         reject({statusCode: 400, message: 'ERROR: No contract IDs provided'});
         return;
       }
-      this._ids = this._ids.split(',');
       if (!this._ids.length) {
         this.log('ERROR: No contract IDs provided', Route.LogLevel.ERR);
         reject({statusCode: 400, message: 'ERROR: No contract IDs provided'});
         return;
       }
-      if (this._ids.length > 300) {
-        this.log('ERROR: No more than 300 contract IDs are supported', Route.LogLevel.ERR);
-        reject({statusCode: 400, message: 'ERROR: No more than 300 contract IDs are supported'});
-        return;
-      }
+      // if (this._ids.length > 300) {
+      //   this.log('ERROR: No more than 300 contract IDs are supported', Route.LogLevel.ERR);
+      //   reject({statusCode: 400, message: 'ERROR: No more than 300 contract IDs are supported'});
+      //   return;
+      // }
       resolve(true);
     });
   }

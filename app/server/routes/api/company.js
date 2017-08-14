@@ -189,11 +189,11 @@ class BulkAddCompanies extends Route {
         reject({statusCode: 400, message: `Invalid data: send an array`});
         return;
       }
-      if (this.req.body.companies.length > 301) {
-        this.log(`ERROR: No more than 300`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Invalid data: send no more than 300 companies at a time`});
-        return;
-      }
+      // if (this.req.body.companies.length > 601) {
+      //   this.log(`ERROR: No more than 300`, Route.LogLevel.ERR);
+      //   reject({statusCode: 400, message: `Invalid data: send no more than 300 companies at a time`});
+      //   return;
+      // }
 
       let validation = Model.Company.validate(this.req.body.companies);
       if (!validation.isValid) {
@@ -346,7 +346,7 @@ routes.push(DeleteCompany);
 class BulkDeleteCompanies extends Route {
   constructor() {
     super('company/bulk/delete', 'BULK DELETE COMPANIES');
-    this.verb = Route.Constants.Verbs.DEL;
+    this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
     this._ids = [];
@@ -354,23 +354,22 @@ class BulkDeleteCompanies extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      this._ids = this.req.query.ids;
+      this._ids = this.req.body;
       if (!this._ids) {
         this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
         reject({statusCode: 400, message: 'ERROR: No company IDs provided'});
         return;
       }
-      this._ids = this._ids.split(',');
       if (!this._ids.length) {
         this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
         reject({statusCode: 400, message: 'ERROR: No company IDs provided'});
         return;
       }
-      if (this._ids.length > 300) {
-        this.log('ERROR: No more than 300 company IDs are supported', Route.LogLevel.ERR);
-        reject({statusCode: 400, message: 'ERROR: No more than 300 company IDs are supported'});
-        return;
-      }
+      // if (this._ids.length > 600) {
+      //   this.log('ERROR: No more than 300 company IDs are supported', Route.LogLevel.ERR);
+      //   reject({statusCode: 400, message: 'ERROR: No more than 300 company IDs are supported'});
+      //   return;
+      // }
       resolve(true);
     });
   }

@@ -157,11 +157,11 @@ class BulkAddServices extends Route {
         reject({statusCode: 400, message: `Invalid data: send an array`});
         return;
       }
-      if (this.req.body.services.length > 301) {
-        this.log(`ERROR: No more than 300`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Invalid data: send no more than 300 services at a time`});
-        return;
-      }
+      // if (this.req.body.services.length > 301) {
+      //   this.log(`ERROR: No more than 300`, Route.LogLevel.ERR);
+      //   reject({statusCode: 400, message: `Invalid data: send no more than 300 services at a time`});
+      //   return;
+      // }
 
       let validation = Model.Service.validate(this.req.body.services);
       if (!validation.isValid) {
@@ -279,7 +279,7 @@ routes.push(DeleteService);
 class BulkDeleteServices extends Route {
   constructor() {
     super('service/bulk/delete', 'BULK DELETE SERVICES');
-    this.verb = Route.Constants.Verbs.DEL;
+    this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
     this._ids = [];
@@ -287,13 +287,12 @@ class BulkDeleteServices extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      this._ids = this.req.query.ids;
+      this._ids = this.req.body;
       if (!this._ids) {
         this.log('ERROR: No service IDs provided', Route.LogLevel.ERR);
         reject({statusCode: 400, message: 'ERROR: No service IDs provided'});
         return;
       }
-      this._ids = this._ids.split(',');
       if (!this._ids.length) {
         this.log('ERROR: No service IDs provided', Route.LogLevel.ERR);
         reject({statusCode: 400, message: 'ERROR: No service IDs provided'});
