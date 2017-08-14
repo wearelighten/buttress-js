@@ -133,11 +133,63 @@ class AddService extends Route {
 
   _exec() {
     return Model.Service.add(this.req.body)
-      .then(arr => arr[0])
-      .then(Helpers.Promise.prop('details'));
+    .then(serviceIds => Model.Service.findById(serviceIds[0]))
+    .then(service => service.details);
   }
 }
 routes.push(AddService);
+
+/**
+ * @class BulkAddServices
+ */
+class BulkAddServices extends Route {
+  constructor() {
+    super('service/bulk/add', 'BULK ADD SERVICES');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      // Logging.logDebug(JSON.stringify(this.req.body.services));
+      if (this.req.body.services instanceof Array === false) {
+        this.log(`ERROR: You need to supply an array of services`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send an array`});
+        return;
+      }
+      if (this.req.body.services.length > 301) {
+        this.log(`ERROR: No more than 300`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send no more than 300 services at a time`});
+        return;
+      }
+
+      let validation = Model.Service.validate(this.req.body.services);
+      if (!validation.isValid) {
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `SERVICE: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `SERVICE: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: SERVICE: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `SERVICE: Unhandled error.`});
+        return;
+      }
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Service.add(this.req.body.services);
+  }
+}
+routes.push(BulkAddServices);
 
 /**
  * @class UpdateService
@@ -221,6 +273,47 @@ class DeleteService extends Route {
   }
 }
 routes.push(DeleteService);
+
+/**
+ * @class BulkDeleteServices
+ */
+class BulkDeleteServices extends Route {
+  constructor() {
+    super('service/bulk/delete', 'BULK DELETE SERVICES');
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.DELETE;
+    this._ids = [];
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      this._ids = this.req.query.ids;
+      if (!this._ids) {
+        this.log('ERROR: No service IDs provided', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'ERROR: No service IDs provided'});
+        return;
+      }
+      this._ids = this._ids.split(',');
+      if (!this._ids.length) {
+        this.log('ERROR: No service IDs provided', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'ERROR: No service IDs provided'});
+        return;
+      }
+      if (this._ids.length > 300) {
+        this.log('ERROR: No more than 300 service IDs are supported', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'ERROR: No more than 300 service IDs are supported'});
+        return;
+      }
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Service.rmBulk(this._ids).then(() => true);
+  }
+}
+routes.push(BulkDeleteServices);
 
 /**
  * @class DeleteAllServices

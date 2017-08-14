@@ -24,6 +24,7 @@ const Logging = require('../../logging');
  **********************************************************************************/
 const schema = new mongoose.Schema();
 let ModelDef = null;
+const collection = Model.mongoDb.collection('contracts');
 
 /* ********************************************************************************
  *
@@ -230,8 +231,7 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
-    Logging.logSilly(body);
-    const md = new ModelDef({
+    const md = {
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       assignedToUserId: body.assignedToUserId,
@@ -249,15 +249,15 @@ const __add = body => {
       // receivedDates: body.receivedDates ? body.receivedDates : new Array(body.partyIds.length),
       executionDate: body.executionDate,
       startDate: body.startDate,
-      endDate: body.endDate
-    });
+      endDate: body.endDate,
+      notes: body.notes ? body.notes : []
+    };
 
     if (body.id) {
       md._id = new ObjectId(body.id);
     }
 
-    return md.save()
-      .then(o => prev.concat([o]));
+    return prev.concat([md]);
   };
 };
 
@@ -270,16 +270,44 @@ schema.statics.add = body => {
     return promise
       .then(__add(item))
       .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
+  }, Promise.resolve([]))
+  .then(contracts => {
+    return new Promise((resolve, reject) => {
+      const ops = contracts.map(c => {
+        return {
+          insertOne: {
+            document: c
+          }
+        };
+      });
+      collection.bulkWrite(ops, (err, res) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        const insertedIds = Object.values(res.insertedIds);
+        resolve(insertedIds);
+      });
+    });
+  });
 };
 
-const collection = Model.mongoDb.collection('contracts');
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
   Logging.logSilly(`getAll: ${Model.authApp._id}`);
   return collection.find({_app: Model.authApp._id}, {metadata: 0});
+};
+
+/**
+ * @param {Array} ids - Array of company ids to delete
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.statics.rmBulk = ids => {
+  Logging.logSilly(`DELETING: ${ids}`);
+  return ModelDef.remove({_id: {$in: ids}}).exec();
 };
 
 schema.statics.rmAll = () => {

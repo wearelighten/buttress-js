@@ -148,11 +148,10 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
-    Logging.logDebug(body);
-    const md = new ModelDef({
+    const md = {
       _app: Model.authApp._id,
-      ownerUserId: body.ownerUserId,
-      assignedToUserId: body.assignedToUserId,
+      ownerUserId: body.ownerUserId ? new ObjectId(body.ownerUserId) : undefined,
+      assignedToUserId: body.assignedToUserId ? new ObjectId(body.assignedToUserId) : undefined,
       companyId: body.companyId,
       name: body.name,
       description: body.description,
@@ -161,15 +160,14 @@ const __add = body => {
       serviceType: body.serviceType,
       salesStatus: body.salesStatus,
       status: body.status,
-      notes: body.notes
-    });
+      notes: body.notes ? body.notes : []
+    };
 
     if (body.id) {
       md._id = new ObjectId(body.id);
     }
 
-    return md.save()
-      .then(o => prev.concat([o]));
+    return prev.concat([md]);
   };
 };
 
@@ -182,7 +180,27 @@ schema.statics.add = body => {
     return promise
       .then(__add(item))
       .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
+  }, Promise.resolve([]))
+  .then(services => {
+    return new Promise((resolve, reject) => {
+      const ops = services.map(c => {
+        return {
+          insertOne: {
+            document: c
+          }
+        };
+      });
+      collection.bulkWrite(ops, (err, res) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        const insertedIds = Object.values(res.insertedIds);
+        resolve(insertedIds);
+      });
+    });
+  });
 };
 
 /**
@@ -223,6 +241,19 @@ schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
  */
 schema.methods.rm = function() {
   return ModelDef.remove({_id: this._id});
+};
+
+/**
+ * @param {Array} ids - Array of company ids to delete
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.statics.rmBulk = ids => {
+  Logging.logSilly(`DELETING: ${ids}`);
+  return ModelDef.remove({_id: {$in: ids}}).exec();
+};
+
+schema.statics.rmAll = () => {
+  return ModelDef.remove({});
 };
 
 /* ********************************************************************************

@@ -164,7 +164,8 @@ class AddCompany extends Route {
 
   _exec() {
     return Model.Company.add(this.req.body)
-      .then(arr => arr[0]);
+    .then(companyIds => Model.Company.findById(companyIds[0]))
+    .then(company => company.details);
   }
 }
 routes.push(AddCompany);
@@ -188,11 +189,6 @@ class BulkAddCompanies extends Route {
         reject({statusCode: 400, message: `Invalid data: send an array`});
         return;
       }
-      // if (this.req.body.companies.length <= 1) {
-      //   this.log(`ERROR: For single companies use the other API`, Route.LogLevel.ERR);
-      //   reject({statusCode: 400, message: `Invalid data: send more than one`});
-      //   return;
-      // }
       if (this.req.body.companies.length > 301) {
         this.log(`ERROR: No more than 300`, Route.LogLevel.ERR);
         reject({statusCode: 400, message: `Invalid data: send no more than 300 companies at a time`});
@@ -201,20 +197,22 @@ class BulkAddCompanies extends Route {
 
       let validation = Model.Company.validate(this.req.body.companies);
       if (!validation.isValid) {
-        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `COMPANY: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `COMPANY: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: COMPANY: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `COMPANY: Unhandled error.`});
         return;
       }
-
-      Model.Company.isDuplicate(this.req.body)
-        .then(res => {
-          if (res === true) {
-            this.log('ERROR: Duplicate company', Route.LogLevel.ERR);
-            reject({statusCode: 400});
-            return;
-          }
-          resolve(true);
-        });
+      resolve(true);
     });
   }
 
