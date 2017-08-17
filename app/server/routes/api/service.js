@@ -132,8 +132,7 @@ class AddService extends Route {
 
   _exec() {
     return Model.Service.add(this.req.body)
-    .then(serviceIds => Model.Service.findById(serviceIds[0]))
-    .then(service => service.details);
+    .then(serviceIds => Model.Service.getFromId(serviceIds[0]));
   }
 }
 routes.push(AddService);
