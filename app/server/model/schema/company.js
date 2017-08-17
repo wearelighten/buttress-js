@@ -224,10 +224,10 @@ const __doValidation = body => {
     res.isValid = false;
     res.invalid.push('companyType');
   }
-  if (!body.location && !body.locations) {
-    res.isValid = false;
-    res.missing.push('location');
-  }
+  // if (!body.location && !body.locations) {
+  //   res.isValid = false;
+  //   res.missing.push('location');
+  // }
   if (body.location) {
     body.location._id = body.location.id ? body.location.id : (new ObjectId()).toHexString();
     delete body.location.id;
@@ -285,6 +285,13 @@ const __doValidation = body => {
         res.missing.push(`contacts.${idx}.role`);
       }
     });
+  }
+
+  let app = Shared.validateAppProperties('companies', body);
+  if (app.isValid === false) {
+    res.isValid = false;
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.invalid.concat(app.missing);
   }
 
   return res;
@@ -352,9 +359,13 @@ const __addCompany = body => {
     }
 
     md.primaryContact = md.contacts[0]._id;
-    md.primaryLocation = md.locations[0]._id;
+    if (md.locations.length) {
+      md.primaryLocation = md.locations[0]._id;
+    }
 
-    return Promise.resolve(prev.concat([md]));
+    const validated = Shared.applyAppProperties('companies', body);
+    return prev.concat([Object.assign(md, validated)]);
+    // return Promise.resolve(prev.concat([md]));
   };
 };
 

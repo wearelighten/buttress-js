@@ -213,6 +213,13 @@ const __doValidation = body => {
     res.missing.push('contractType');
   }
 
+  let app = Shared.validateAppProperties('contracts', body);
+  if (app.isValid === false) {
+    res.isValid = false;
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.invalid.concat(app.missing);
+  }
+
   return res;
 };
 
@@ -257,7 +264,9 @@ const __add = body => {
       md._id = new ObjectId(body.id);
     }
 
-    return prev.concat([md]);
+    const validated = Shared.applyAppProperties('contracts', body);
+    return prev.concat([Object.assign(md, validated)]);
+    // return prev.concat([md]);
   };
 };
 

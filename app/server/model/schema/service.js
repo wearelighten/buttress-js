@@ -130,6 +130,13 @@ const __doValidation = body => {
     res.missing.push('serviceType');
   }
 
+  let app = Shared.validateAppProperties('services', body);
+  if (app.isValid === false) {
+    res.isValid = false;
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.invalid.concat(app.missing);
+  }
+
   return res;
 };
 
@@ -167,7 +174,9 @@ const __add = body => {
       md._id = new ObjectId(body.id);
     }
 
-    return prev.concat([md]);
+    const validated = Shared.applyAppProperties('services', body);
+
+    return prev.concat([Object.assign(md, validated)]);
   };
 };
 
@@ -203,6 +212,20 @@ schema.statics.add = body => {
   });
 };
 
+/**
+ * @param {String} id - Object id as a hex string
+ * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+ */
+schema.statics.getFromId = id => {
+  return new Promise(resolve => {
+    collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
+      if (err) throw err;
+      doc.id = doc._id;
+      delete doc._id;
+      resolve(doc);
+    });
+  });
+};
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */

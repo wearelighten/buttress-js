@@ -16,6 +16,141 @@ const Model = require('./index');
 
 /* ********************************************************************************
  *
+ * APP-SPECIFIC SCHEMA
+ *
+ **********************************************************************************/
+
+const __schema = {};
+const __values = {};
+
+const _validateAppProperties = function(collection, body) {
+  const res = {
+    isValid: true,
+    invalid: [],
+    missing: []
+  };
+
+  if (!Model.authApp.schema) {
+    Logging.logSilly(`App property validation: no registered schema for ${Model.authApp.id}`);
+    return res;
+  }
+  const appSchema = Model.authApp.__schema;
+  const schema = appSchema.find(r => r.collection === collection);
+  if (!schema) {
+    Logging.logSilly(`App property validation: no registered schema for ${collection}`);
+    return res;
+  }
+  // console.log(schema);
+
+  const __buildFlattenedSchema = (property, parent, path, flattened) => {
+    // if (/^__/.test(property)) continue; // ignore internals
+    path.push(property);
+
+    let isRoot = true;
+    for (let childProp in parent[property]) {
+      if (!parent[property].hasOwnProperty(childProp)) continue;
+      if (/^__/.test(childProp)) {
+        continue;
+      }
+
+      isRoot = false;
+      __buildFlattenedSchema(childProp, parent[property], path, flattened);
+    }
+
+    if (isRoot === true) {
+      flattened[path.join('.')] = parent[property];
+      path.pop();
+      return;
+    }
+
+    path.pop();
+    return;
+  };
+
+  __schema[collection] = {};
+  let path = [];
+  for (let property in schema.properties) {
+    if (!schema.properties.hasOwnProperty(property)) continue;
+    __buildFlattenedSchema(property, schema.properties, path, __schema[collection]);
+  }
+
+  Logging.logSilly(__schema[collection]);
+
+  const __buildFlattenedProps = (property, parent, path, flattened) => {
+    // if (/^__/.test(property)) continue; // ignore internals
+    path.push(property);
+    if (typeof parent[property] !== 'object') {
+      flattened.push({
+        path: path.join('.'),
+        value: parent[property]
+      });
+      path.pop();
+      return;
+    }
+
+    for (let childProp in parent[property]) {
+      if (!parent[property].hasOwnProperty(childProp)) continue;
+      __buildFlattenedProps(childProp, parent[property], path, flattened);
+    }
+
+    path.pop();
+    return;
+  };
+
+  __values[collection] = [];
+  path = [];
+  for (let property in body) {
+    if (!body.hasOwnProperty(property)) continue;
+    __buildFlattenedProps(property, body, path, __values[collection]);
+  }
+
+  Logging.logSilly(__values[collection]);
+
+  for (let property in __schema[collection]) {
+    if (!__schema[collection].hasOwnProperty(property)) continue;
+    const propVal = __values[collection].find(v => v.path === property);
+    const config = __schema[collection][property];
+    if (!propVal) {
+      if (config.__required) {
+        res.isValid = false;
+        res.missing.push(property);
+      }
+      continue;
+    }
+    if (typeof propVal.value !== config.__type) {
+      Logging.logWarn(`Invalid type provided for ${property}: ${propVal.value} [${typeof propVal.value}]`);
+      res.isValid = false;
+      res.invalid.push(property);
+      continue;
+    }
+  }
+
+  return res;
+};
+
+/**
+ * @param {String} collection - name of the collection
+ * @return {Object} - returns an object with only validated properties
+ */
+const _applyAppProperties = function(collection) {
+  const schema = __schema[collection]; // built during validation phase
+  const values = __values[collection]; // built during validation phase
+
+  const res = {};
+  for (let property in schema) {
+    if (!schema.hasOwnProperty(property)) continue;
+    const propVal = values.find(v => v.path === property);
+    if (!propVal) continue;
+    res[property] = propVal.value;
+  }
+  return res;
+};
+
+module.exports.validateAppProperties = _validateAppProperties;
+module.exports.applyAppProperties = _applyAppProperties;
+
+/* ********************************************************************************
+ *
  * UPDATE BY PATH
  *
  **********************************************************************************/
