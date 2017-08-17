@@ -59,17 +59,17 @@ const __systemInstall = () => {
   return Model.Organisation.find({})
     .then(orgs => {
       if (orgs.length > 0) {
-        return Promise.resolve(true); // If any organisations, assume we've got a Super Admin app
+        return true; // If any organisations, assume we've got a Super Admin app
       }
       return Model.Organisation.add({
-        name: 'Coders for Labour',
-        type: Model.Constants.Organisation.Type.POLITICAL
+        name: 'Lighten',
+        type: Model.Constants.Organisation.Type.COMPANY
       });
     })
     .then(org => {
       if (org === true) {
         Logging.logSilly('ORGANISATION EXISTED');
-        return Promise.resolve(true);
+        return true;
       }
 
       Logging.logDebug('ORGANISATION ADDED');
@@ -77,14 +77,14 @@ const __systemInstall = () => {
 
       return Model.Group.add({
         name: 'Rhizome Admin',
-        type: Model.Constants.Group.Type.VOLUNTEERS,
+        type: Model.Constants.Group.Type.STAFF,
         orgId: org.id
       });
     })
     .then(group => {
       if (group === true) {
         Logging.logSilly('GROUP EXISTED');
-        return Promise.resolve(true);
+        return true;
       }
       Logging.logDebug('GROUP ADDED');
       Logging.logDebug(group.id);
@@ -101,7 +101,7 @@ const __systemInstall = () => {
     .then(res => {
       if (res === true) {
         Logging.logSilly('APP EXISTED');
-        return Promise.resolve(true);
+        return true;
       }
       Logging.logDebug('APP ADDED');
       Logging.logDebug(res.app.id);
@@ -151,8 +151,7 @@ const __initWorker = () => {
       Model.init(db);
 
       let tasks = [
-        Routes.init(app),
-        __systemInstall()
+        Routes.init(app)
       ];
 
       app.listen(Config.listenPorts.rest);
@@ -169,13 +168,20 @@ const __initWorker = () => {
  **********************************************************************************/
 const __initMaster = () => {
   const isPrimary = Config.rest.app === 'primary';
+  let p = Promise.resolve();
+
   if (isPrimary) {
     Logging.logVerbose(`Primary Master REST`);
+    p = __nativeMongoConnect()
+      .then(db => {
+        Model.init(db);
+        return __systemInstall();
+      });
   } else {
     Logging.logVerbose(`Secondary Master REST`);
   }
 
-  __spawnWorkers();
+  p.then(__spawnWorkers);
 
   return Promise.resolve();
 };
