@@ -13,6 +13,7 @@
 
 const Logging = require('../logging');
 const Model = require('./index');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -106,10 +107,69 @@ const _validateAppProperties = function(collection, body) {
 
   Logging.logSilly(__values[collection]);
 
+  const __getDefault = config => {
+    let res;
+    switch (config.__type) {
+      default:
+      case 'string':
+      case 'number':
+      case 'array':
+        res = config.__default;
+        break;
+      case 'date':
+        if (config.__default === null) {
+          res = null;
+        } else if (config.__default) {
+          res = new Date(config.__default);
+        } else {
+          res = new Date();
+        }
+    }
+    return res;
+  };
+
+  const __validateProp = (prop, config) => {
+    const type = typeof prop.value;
+    let valid = false;
+
+    switch (config.__type) {
+      default:
+      case 'number':
+      case 'object':
+        valid = type === config.__type;
+        break;
+      case 'string':
+        valid = type === config.__type;
+        if (config.__enum && Array.isArray(config.__enum)) {
+          valid = config.__enum.indexOf(prop.value) !== -1;
+        }
+        break;
+      case 'array':
+        valid = Array.isArray(prop.value);
+        break;
+      case 'date':
+        if (prop.value === null) {
+          valid = true;
+        } else {
+          valid = Sugar.Date.isValid(prop.value);
+        }
+        break;
+    }
+
+    return valid;
+  };
+
   for (let property in __schema[collection]) {
     if (!__schema[collection].hasOwnProperty(property)) continue;
-    const propVal = __values[collection].find(v => v.path === property);
+    let propVal = __values[collection].find(v => v.path === property);
     const config = __schema[collection][property];
+    if (!propVal && config.__default !== undefined) {
+      propVal = {
+        path: property,
+        value: __getDefault(config)
+      };
+      __values[collection].push(propVal);
+    }
     if (!propVal) {
       if (config.__required) {
         res.isValid = false;
@@ -117,11 +177,10 @@ const _validateAppProperties = function(collection, body) {
       }
       continue;
     }
-    if (typeof propVal.value !== config.__type) {
-      Logging.logWarn(`Invalid type provided for ${property}: ${propVal.value} [${typeof propVal.value}]`);
+    if (!__validateProp(propVal, config)) {
+      Logging.logWarn(`Invalid ${property}: ${propVal.value} [${typeof propVal.value}]`);
       res.isValid = false;
       res.invalid.push(property);
-      continue;
     }
   }
 
