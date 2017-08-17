@@ -356,6 +356,40 @@ class AddAppPermission extends Route {
 routes.push(AddAppPermission);
 
 /**
+ * @class UpdateAppSchema
+ */
+class UpdateAppSchema extends Route {
+  constructor() {
+    super('app/schema', 'UPDATE APP SCHEMA');
+    this.verb = Route.Constants.Verbs.PUT;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.WRITE;
+
+    this._app = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      Model.App.findById(this.req.authApp._id).then(app => {
+        if (!app) {
+          this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
+          reject({statusCode: 400});
+          return;
+        }
+
+        this._app = app;
+        resolve(true);
+      });
+    });
+  }
+
+  _exec() {
+    return this._app.updateSchema(this.req.body);
+  }
+}
+routes.push(UpdateAppSchema);
+
+/**
  * @class AddAppMetadata
  */
 class AddAppMetadata extends Route {
