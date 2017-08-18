@@ -24,7 +24,8 @@ const Logging = require('../../logging');
  **********************************************************************************/
 let schema = new mongoose.Schema();
 let ModelDef = null;
-const collection = Model.mongoDb.collection('services');
+const collectionName = 'services';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -130,7 +131,7 @@ const __doValidation = body => {
     res.missing.push('serviceType');
   }
 
-  let app = Shared.validateAppProperties('services', body);
+  let app = Shared.validateAppProperties(collectionName, body);
   if (app.isValid === false) {
     res.isValid = false;
     res.invalid = res.invalid.concat(app.invalid);
@@ -167,50 +168,20 @@ const __add = body => {
       serviceType: body.serviceType,
       salesStatus: body.salesStatus,
       status: body.status,
-      notes: body.notes ? body.notes : []
+      notes: body.notes ? body.notes : [],
+      metadata: []
     };
 
     if (body.id) {
       md._id = new ObjectId(body.id);
     }
 
-    const validated = Shared.applyAppProperties('services', body);
-
+    const validated = Shared.applyAppProperties(collectionName, body);
     return prev.concat([Object.assign(md, validated)]);
   };
 };
 
-schema.statics.add = body => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__add(item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]))
-  .then(services => {
-    return new Promise((resolve, reject) => {
-      const ops = services.map(c => {
-        return {
-          insertOne: {
-            document: c
-          }
-        };
-      });
-      collection.bulkWrite(ops, (err, res) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        const insertedIds = Object.values(res.insertedIds);
-        resolve(insertedIds);
-      });
-    });
-  });
-};
+schema.statics.add = Shared.add(collection, __add);
 
 /**
  * @param {String} id - Object id as a hex string
@@ -250,8 +221,8 @@ const PATH_CONTEXT = {
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
 
 /* ********************************************************************************
  *

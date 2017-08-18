@@ -158,15 +158,7 @@ class AddCampaign extends Route {
   }
 
   _exec() {
-    return new Promise((resolve, reject) => {
-      Model.Campaign.add(this.req.body)
-        .then(c => {
-          this.activityTitle = c[0].name;
-          return c[0];
-        })
-        .then(Helpers.Promise.prop('details'))
-        .then(resolve, reject);
-    });
+    return Model.Campaign.add(this.req.body);
   }
 }
 routes.push(AddCampaign);

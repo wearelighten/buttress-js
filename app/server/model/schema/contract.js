@@ -24,7 +24,8 @@ const Logging = require('../../logging');
  **********************************************************************************/
 const schema = new mongoose.Schema();
 let ModelDef = null;
-const collection = Model.mongoDb.collection('contracts');
+const collectionName = 'contracts';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -213,7 +214,7 @@ const __doValidation = body => {
     res.missing.push('contractType');
   }
 
-  let app = Shared.validateAppProperties('contracts', body);
+  let app = Shared.validateAppProperties(collectionName, body);
   if (app.isValid === false) {
     res.isValid = false;
     res.invalid = res.invalid.concat(app.invalid);
@@ -244,6 +245,7 @@ const __add = body => {
       assignedToUserId: body.assignedToUserId,
       name: body.name,
       tag: body.tag,
+      status: Status.PENDING,
       contractType: body.contractType,
       contractMode: body.contractMode,
       entityId: body.entityId,
@@ -252,56 +254,23 @@ const __add = body => {
       services: body.services,
       parties: body.parties,
       documentIds: body.documentIds,
-      // submittedDates: body.submittedDates ? body.submittedDates : new Array(body.partyIds.length),
-      // receivedDates: body.receivedDates ? body.receivedDates : new Array(body.partyIds.length),
       executionDate: body.executionDate,
       startDate: body.startDate,
       endDate: body.endDate,
-      notes: body.notes ? body.notes : []
+      notes: body.notes ? body.notes : [],
+      metadata: []
     };
 
     if (body.id) {
       md._id = new ObjectId(body.id);
     }
 
-    const validated = Shared.applyAppProperties('contracts', body);
+    const validated = Shared.applyAppProperties(collectionName, body);
     return prev.concat([Object.assign(md, validated)]);
-    // return prev.concat([md]);
   };
 };
 
-schema.statics.add = body => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__add(item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]))
-  .then(contracts => {
-    return new Promise((resolve, reject) => {
-      const ops = contracts.map(c => {
-        return {
-          insertOne: {
-            document: c
-          }
-        };
-      });
-      collection.bulkWrite(ops, (err, res) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        const insertedIds = Object.values(res.insertedIds);
-        resolve(insertedIds);
-      });
-    });
-  });
-};
-
+schema.statics.add = Shared.add(collection, __add);
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
@@ -350,8 +319,8 @@ const PATH_CONTEXT = {
   '^references.([0-9]{1,3})$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
 
 /* ********************************************************************************
  *

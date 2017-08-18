@@ -132,9 +132,7 @@ class AddContract extends Route {
   }
 
   _exec() {
-    return Model.Contract.add(this.req.body)
-    .then(contractIds => Model.Contract.findById(contractIds[0]))
-    .then(contract => contract.details);
+    return Model.Contract.add(this.req.body);
   }
 }
 routes.push(AddContract);

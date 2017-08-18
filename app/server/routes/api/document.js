@@ -132,9 +132,7 @@ class AddDocument extends Route {
   }
 
   _exec() {
-    return Model.Document.add(this.req.body)
-      .then(arr => arr[0])
-      .then(Helpers.Promise.prop('details'));
+    return Model.Document.add(this.req.body);
   }
 }
 routes.push(AddDocument);

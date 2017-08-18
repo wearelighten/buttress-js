@@ -19,10 +19,16 @@ const Shared = require('../shared');
 // const humanname = require('humanname');
 // const addressit = require('addressit');
 
+/* ********************************************************************************
+ *
+ * LOCALS
+ *
+ **********************************************************************************/
 const schema = new mongoose.Schema();
 let ModelDef = null;
 const constants = {};
-const collection = Model.mongoDb.collection('companies');
+const collectionName = 'companies';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -287,7 +293,7 @@ const __doValidation = body => {
     });
   }
 
-  let app = Shared.validateAppProperties('companies', body);
+  let app = Shared.validateAppProperties(collectionName, body);
   if (app.isValid === false) {
     res.isValid = false;
     res.invalid = res.invalid.concat(app.invalid);
@@ -310,19 +316,8 @@ schema.statics.validate = body => {
  * @param {Object} body - body passed through from a POST request
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-const __addCompany = body => {
+const __add = body => {
   return prev => {
-    // Logging.logDebug(body);
-    // const loc = new Model.Location({
-    //   name: body.location.name,
-    //   address: Model.Address.create(body.location.address),
-    //   phoneNumber: body.location.phoneNumber
-    // });
-
-    // Logging.logDebug(loc.address.details);
-
-    // const contact = Model.Contact.create(body.contact);
-
     const md = {
       name: body.name,
       companyType: body.companyType ? body.companyType : '',
@@ -350,8 +345,9 @@ const __addCompany = body => {
       website: body.website ? body.website : '',
       locations: body.locations ? body.locations : [body.location],
       contacts: body.contacts ? body.contacts : [body.contact],
+      _app: Model.authApp._id,
       notes: body.notes ? body.notes : [],
-      _app: Model.authApp._id
+      metadata: []
     };
 
     if (body.id) {
@@ -363,46 +359,12 @@ const __addCompany = body => {
       md.primaryLocation = md.locations[0]._id;
     }
 
-    const validated = Shared.applyAppProperties('companies', body);
+    const validated = Shared.applyAppProperties(collectionName, body);
     return prev.concat([Object.assign(md, validated)]);
-    // return Promise.resolve(prev.concat([md]));
   };
 };
 
-schema.statics.add = body => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__addCompany(item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]))
-  .then(companies => {
-    return new Promise((resolve, reject) => {
-      Logging.logSilly(`Writing: ${companies[0]._id}`);
-      const ops = companies.map(c => {
-        return {
-          insertOne: {
-            document: c
-          }
-        };
-      });
-      collection.bulkWrite(ops, (err, res) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        const insertedIds = Object.values(res.insertedIds);
-
-        Logging.logSilly(`Written: ${insertedIds[0]._id}`);
-        resolve(insertedIds);
-      });
-    });
-  });
-};
+schema.statics.add = Shared.add(collection, __add);
 
 /* ********************************************************************************
  *
@@ -505,8 +467,8 @@ const PATH_CONTEXT = {
   '^locations.([0-9]{1,3}).(name|tag|phoneNumber|email|address|county|city|postCode)$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
 
 /* ********************************************************************************
  *

@@ -121,9 +121,7 @@ class AddCall extends Route {
   }
 
   _exec() {
-    return Model.Call.add(this.req.body)
-      .then(arr => arr[0])
-      .then(Helpers.Promise.prop('details'));
+    return Model.Call.add(this.req.body);
   }
 }
 routes.push(AddCall);

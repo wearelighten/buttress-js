@@ -14,7 +14,6 @@
 const mongoose = require('mongoose');
 const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
-const Logging = require('../../logging');
 const Shared = require('../shared');
 
 /* ********************************************************************************
@@ -25,6 +24,8 @@ const Shared = require('../shared');
 
 let schema = new mongoose.Schema();
 let ModelDef = null;
+const collectionName = 'contactlists';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -133,6 +134,13 @@ const __doValidation = body => {
     res.missing.push('user');
   }
 
+  let app = Shared.validateAppProperties(collectionName, body);
+  if (app.isValid === false) {
+    res.isValid = false;
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.invalid.concat(app.missing);
+  }
+
   return res;
 };
 
@@ -149,39 +157,34 @@ schema.statics.validate = body => {
  * @param {Object} body - body passed through from a POST request
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-const __addContactlist = (campaign, body) => {
+const __add = body => {
   return prev => {
-    const md = new ModelDef({
+    const md = {
       name: body.name,
       _app: Model.authApp._id,
       campaignId: body.campaignId,
       companyIds: body.companyIds,
       personIds: body.personIds,
-      assignedToUserId: body.assignedToUserId
-    });
+      assignedToUserId: body.assignedToUserId,
+      notes: body.notes ? body.notes : [],
+      metadata: []
+    };
 
     if (body.id) {
       md._id = new ObjectId(body.id);
     }
 
-    return md.save()
-      .then(o => prev.concat([o]));
+    const validated = Shared.applyAppProperties(collectionName, body);
+    return prev.concat([Object.assign(md, validated)]);
   };
 };
 
-schema.statics.add = (campaign, body) => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
+schema.statics.add = Shared.add(collection, __add);
+// schema.statics.addFromCampaign = (campaign, body) => {
+//   body.campaignId = campaign._id;
+//   return ModelDef.add(body);
+// };
 
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__addContactlist(campaign, item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
-};
-
-const collection = Model.mongoDb.collection('contactlists');
 schema.statics.getAll = () => {
   return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
@@ -204,8 +207,8 @@ const PATH_CONTEXT = {
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
 
 /* ********************************************************************************
  *

@@ -163,9 +163,7 @@ class AddCompany extends Route {
   }
 
   _exec() {
-    return Model.Company.add(this.req.body)
-    .then(companyIds => Model.Company.findById(companyIds[0]))
-    .then(company => company.details);
+    return Model.Company.add(this.req.body);
   }
 }
 routes.push(AddCompany);

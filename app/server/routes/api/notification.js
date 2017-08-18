@@ -99,9 +99,7 @@ class AddNotification extends Route {
   }
 
   _exec() {
-    return Model.Notification.add(this.req.body)
-      .then(arr => arr[0])
-      .then(Helpers.Promise.prop('details'));
+    return Model.Notification.add(this.req.body);
   }
 }
 routes.push(AddNotification);

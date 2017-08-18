@@ -138,12 +138,7 @@ class AddContactlist extends Route {
   }
 
   _exec() {
-    return this._campaign.addContactList(this.req.body)
-      .then(cl => {
-        this.activityTitle = cl.name;
-        return cl;
-      })
-      .then(Helpers.Promise.prop('details'));
+    return this._campaign.addContactList(this.req.body);
   }
 }
 routes.push(AddContactlist);

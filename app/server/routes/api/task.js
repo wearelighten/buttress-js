@@ -153,9 +153,7 @@ class AddTask extends Route {
   }
 
   _exec() {
-    return Model.Task.add(this.req.body)
-      .then(arr => arr[0])
-      .then(Helpers.Promise.prop('details'));
+    return Model.Task.add(this.req.body);
   }
 }
 routes.push(AddTask);

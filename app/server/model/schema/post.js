@@ -25,6 +25,8 @@ require('sugar');
  **********************************************************************************/
 let schema = new mongoose.Schema();
 let ModelDef = null;
+const collectionName = 'posts';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -155,6 +157,13 @@ const __doValidation = body => {
     res.invalid.push('type');
   }
 
+  let app = Shared.validateAppProperties(collectionName, body);
+  if (app.isValid === false) {
+    res.isValid = false;
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.invalid.concat(app.missing);
+  }
+
   return res;
 };
 
@@ -173,7 +182,7 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
-    const md = new ModelDef({
+    const md = {
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       text: body.text,
@@ -181,31 +190,23 @@ const __add = body => {
       url: body.url,
       tags: body.tags,
       postType: body.type,
-      entityId: body.entityId
-    });
+      entityId: body.entityId,
+      likeUserIds: [],
+      notes: body.notes ? body.notes : [],
+      metadata: []
+    };
 
     if (body.id) {
       md._id = new ObjectId(body.id);
     }
 
-    return md.save()
-      .then(o => prev.concat([o]));
+    const validated = Shared.applyAppProperties(collectionName, body);
+    return prev.concat([Object.assign(md, validated)]);
   };
 };
 
-schema.statics.add = body => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
+schema.statics.add = Shared.add(collection, __add);
 
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__add(item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
-};
-
-const collection = Model.mongoDb.collection('posts');
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
@@ -233,8 +234,8 @@ const PATH_CONTEXT = {
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
 
 /* ********************************************************************************
  *

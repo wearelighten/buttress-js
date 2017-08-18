@@ -132,9 +132,7 @@ class AddPost extends Route {
   }
 
   _exec() {
-    return Model.Post.add(this.req.body)
-      .then(arr => arr[0])
-      .then(Helpers.Promise.prop('details'));
+    return Model.Post.add(this.req.body);
   }
 }
 routes.push(AddPost);
