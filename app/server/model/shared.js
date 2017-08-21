@@ -163,12 +163,22 @@ const __getFlattenedBody = body => {
 };
 
 const __validateProp = (prop, config) => {
-  const type = typeof prop.value;
+  let type = typeof prop.value;
   let valid = false;
 
   switch (config.__type) {
     default:
     case 'number':
+      if (type === 'string') {
+        const number = parseInt(prop.value, 10);
+        if (Number.isNaN(number) === false) {
+          prop.value = number;
+          type = typeof prop.value;
+        }
+        Logging.logSilly(`${number} [${type}]`);
+      }
+      valid = type === config.__type;
+      break;
     case 'object':
       valid = type === config.__type;
       break;
@@ -242,6 +252,7 @@ const __validate = (schema, values) => {
     if (!propVal) {
       if (config.__required) {
         res.isValid = false;
+        Logging.logWarn(`Missing '__require'd ${property}`);
         res.missing.push(property);
       }
       continue;
@@ -253,6 +264,9 @@ const __validate = (schema, values) => {
       res.invalid.push(property);
     }
   }
+
+  Logging.logSilly(res.missing);
+  Logging.logSilly(res.invalid);
 
   return res;
 };
