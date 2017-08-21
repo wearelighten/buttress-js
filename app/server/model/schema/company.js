@@ -367,7 +367,9 @@ const __add = body => {
       md._id = new ObjectId(body.id);
     }
 
-    md.primaryContact = md.contacts[0]._id;
+    if (md.contacts.length) {
+      md.primaryContact = md.contacts[0]._id;
+    }
     if (md.locations.length) {
       md.primaryLocation = md.locations[0]._id;
     }
