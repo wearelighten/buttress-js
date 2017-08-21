@@ -318,6 +318,19 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
+    let contacts = [];
+    let locations = [];
+    if (body.locations) {
+      locations = body.locations;
+    } else if (body.location) {
+      locations = [body.location];
+    }
+    if (body.contacts) {
+      contacts = body.contacts;
+    } else if (body.contact) {
+      contacts = [body.contact];
+    }
+
     const md = {
       name: body.name,
       companyType: body.companyType ? body.companyType : '',
@@ -343,8 +356,8 @@ const __add = body => {
       sector: body.sector ? body.sector : '',
       subsector: body.subsector ? body.subsector : '',
       website: body.website ? body.website : '',
-      locations: body.locations ? body.locations : [body.location],
-      contacts: body.contacts ? body.contacts : [body.contact],
+      locations: locations,
+      contacts: contacts,
       _app: Model.authApp._id,
       notes: body.notes ? body.notes : [],
       metadata: []
