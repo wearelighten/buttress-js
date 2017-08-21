@@ -175,7 +175,7 @@ const __doValidation = body => {
   if (app.isValid === false) {
     res.isValid = false;
     res.invalid = res.invalid.concat(app.invalid);
-    res.missing = res.invalid.concat(app.missing);
+    res.missing = res.invamissinglid.concat(app.missing);
   }
 
   return res;
