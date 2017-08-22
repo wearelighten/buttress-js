@@ -185,7 +185,7 @@ const __validateProp = (prop, config) => {
     case 'string':
       valid = type === config.__type;
       if (config.__enum && Array.isArray(config.__enum)) {
-        valid = config.__enum.indexOf(prop.value) !== -1;
+        valid = !prop.value || config.__enum.indexOf(prop.value) !== -1;
       }
       break;
     case 'array':
