@@ -168,6 +168,21 @@ const __validateProp = (prop, config) => {
 
   switch (config.__type) {
     default:
+    case 'boolean':
+      if (type === 'string') {
+        const bool = prop.value === 'true' || prop.value === 'yes';
+        prop.value = bool;
+        type = typeof prop.value;
+        Logging.logSilly(`${bool} [${type}]`);
+      }
+      if (type === 'number') {
+        const bool = prop.value === 1;
+        prop.value = bool;
+        type = typeof prop.value;
+        Logging.logSilly(`${bool} [${type}]`);
+      }
+      valid = type === config.__type;
+      break;
     case 'number':
       if (type === 'string') {
         const number = parseInt(prop.value, 10);
@@ -178,6 +193,17 @@ const __validateProp = (prop, config) => {
         Logging.logSilly(`${number} [${type}]`);
       }
       valid = type === config.__type;
+      break;
+    case 'id':
+      if (type === 'string') {
+        try {
+          prop.value = new ObjectId(prop.value);
+        } catch (e) {
+          valid = false;
+          return;
+        }
+      }
+      valid = type === 'string';
       break;
     case 'object':
       valid = type === config.__type;
@@ -207,33 +233,35 @@ const __validateProp = (prop, config) => {
   return valid;
 };
 
+const __getPropDefault = config => {
+  let res;
+  switch (config.__type) {
+    default:
+    case 'boolean':
+    case 'string':
+    case 'number':
+    case 'array':
+    case 'object':
+    case 'id':
+      res = config.__default;
+      break;
+    case 'date':
+      if (config.__default === null) {
+        res = null;
+      } else if (config.__default) {
+        res = new Date(config.__default);
+      } else {
+        res = new Date();
+      }
+  }
+  return res;
+};
+
 const __validate = (schema, values) => {
   const res = {
     isValid: true,
     missing: [],
     invalid: []
-  };
-
-  const __getDefault = config => {
-    let res;
-    switch (config.__type) {
-      default:
-      case 'string':
-      case 'number':
-      case 'array':
-      case 'object':
-        res = config.__default;
-        break;
-      case 'date':
-        if (config.__default === null) {
-          res = null;
-        } else if (config.__default) {
-          res = new Date(config.__default);
-        } else {
-          res = new Date();
-        }
-    }
-    return res;
   };
 
   for (let property in schema) {
@@ -244,9 +272,10 @@ const __validate = (schema, values) => {
     if (!propVal && config.__default !== undefined) {
       propVal = {
         path: property,
-        value: __getDefault(config)
+        value: __getPropDefault(config)
       };
       values.push(propVal);
+      // console.log(propVal);
     }
 
     if (!propVal) {
@@ -313,10 +342,19 @@ const _applyAppProperties = function(collection, body) {
   const res = {};
   const objects = {};
   for (let property in flattenedSchema) {
-    if (!flattenedSchema.hasOwnProperty(property)) continue;
-    const propVal = flattenedBody.find(v => v.path === property);
-    if (!propVal) continue;
+    if (!flattenedSchema.hasOwnProperty(property)) continue; 
+    let propVal = flattenedBody.find(v => v.path === property);
     const config = flattenedSchema[property];
+
+    if (!propVal && config.__default !== undefined) {
+      propVal = {
+        path: property,
+        value: __getPropDefault(config)
+      };
+      // console.log(propVal);
+    }
+
+    if (!propVal) continue;
     __validateProp(propVal, config);
 
     const path = propVal.path.split('.');
@@ -332,7 +370,7 @@ const _applyAppProperties = function(collection, body) {
 
     res[root] = value;
   }
-  Logging.logSilly(res);
+  // console.log(res);
   return res;
 };
 
