@@ -342,7 +342,7 @@ const _applyAppProperties = function(collection, body) {
   const res = {};
   const objects = {};
   for (let property in flattenedSchema) {
-    if (!flattenedSchema.hasOwnProperty(property)) continue; 
+    if (!flattenedSchema.hasOwnProperty(property)) continue;
     let propVal = flattenedBody.find(v => v.path === property);
     const config = flattenedSchema[property];
 
