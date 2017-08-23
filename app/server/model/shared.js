@@ -185,7 +185,7 @@ const __validateProp = (prop, config) => {
       break;
     case 'number':
       if (type === 'string') {
-        const number = parseInt(prop.value, 10);
+        const number = Number(prop.value);
         if (Number.isNaN(number) === false) {
           prop.value = number;
           type = typeof prop.value;
