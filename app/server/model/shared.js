@@ -296,7 +296,7 @@ const __validate = (schema, values) => {
     if (!__validateProp(propVal, config)) {
       Logging.logWarn(`Invalid ${property}: ${propVal.value} [${typeof propVal.value}]`);
       res.isValid = false;
-      res.invalid.push(property);
+      res.invalid.push(`${property}:${propVal.value}[${typeof propVal.value}]`);
     }
   }
 
