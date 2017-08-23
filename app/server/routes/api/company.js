@@ -100,7 +100,7 @@ routes.push(GetCompany);
 class BulkGetCompanies extends Route {
   constructor() {
     super('company/bulk/load', 'BULK GET COMPANIES');
-    this.verb = Route.Constants.Verbs.GET;
+    this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.READ;
     this._ids = [];
@@ -108,13 +108,12 @@ class BulkGetCompanies extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      this._ids = this.req.query.ids;
+      this._ids = this.req.body;
       if (!this._ids) {
         this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
-      this._ids = this._ids.split(',');
       if (!this._ids.length) {
         this.log('ERROR: No company IDs provided', Route.LogLevel.ERR);
         reject({statusCode: 400});
