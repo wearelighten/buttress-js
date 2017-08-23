@@ -209,6 +209,12 @@ const __validateProp = (prop, config) => {
       valid = type === config.__type;
       break;
     case 'string':
+      if (type === 'number') {
+        prop.value = String(prop.value);
+        type = typeof prop.value;
+        Logging.logSilly(`${prop.value} [${type}]`);
+      }
+
       valid = type === config.__type;
       if (config.__enum && Array.isArray(config.__enum)) {
         valid = !prop.value || config.__enum.indexOf(prop.value) !== -1;
