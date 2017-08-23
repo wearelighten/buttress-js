@@ -141,7 +141,7 @@ const __initWorker = () => {
   let app = express();
   app.use(morgan('short'));
   app.enable('trust proxy', 1);
-  app.use(bodyParser.json({limit: '5mb'}));
+  app.use(bodyParser.json({limit: '20mb'}));
   app.use(bodyParser.urlencoded({extended: true}));
   app.use(methodOverride());
   app.use(express.static(`${Config.paths.appData}/public`));
