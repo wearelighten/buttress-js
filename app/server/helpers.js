@@ -58,7 +58,7 @@ class JSONStringifyStream extends Transform {
       }
       if (value instanceof Array) {
         return value.map(c => {
-          if (c._id) c.id = c._id;
+          if (c && c._id) c.id = c._id;
           return c;
         });
       }
