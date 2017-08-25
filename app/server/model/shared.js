@@ -14,8 +14,7 @@
 const Logging = require('../logging');
 const Model = require('./index');
 const ObjectId = require('mongodb').ObjectId;
-
-require('sugar');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -255,7 +254,7 @@ const __getPropDefault = config => {
       if (config.__default === null) {
         res = null;
       } else if (config.__default) {
-        res = new Date(config.__default);
+        res = Sugar.Date.create(config.__default);
       } else {
         res = new Date();
       }
