@@ -142,7 +142,7 @@ routes.push(AddDocument);
  */
 class BulkAddDocuments extends Route {
   constructor() {
-    super('contract/bulk/add', 'BULK ADD DOCUMENTS');
+    super('document/bulk/add', 'BULK ADD DOCUMENTS');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
