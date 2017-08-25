@@ -138,6 +138,55 @@ class AddDocument extends Route {
 routes.push(AddDocument);
 
 /**
+ * @class BulkAddDocuments
+ */
+class BulkAddDocuments extends Route {
+  constructor() {
+    super('contract/bulk/add', 'BULK ADD DOCUMENTS');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      // Logging.logDebug(JSON.stringify(this.req.body.contracts));
+      if (this.req.body.documents instanceof Array === false) {
+        this.log(`ERROR: You need to supply an array of documents`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send an array of documents`});
+        return;
+      }
+
+      let validation = Model.Document.validate(this.req.body.documents);
+      if (!validation.isValid) {
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `DOCUMENT: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `DOCUMENT: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: DOCUMENT: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `DOCUMENT: Unhandled error.`});
+        return;
+      }
+
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Document.add(this.req.body.documents);
+  }
+}
+routes.push(BulkAddDocuments);
+
+
+/**
  * @class UpdateDocument
  */
 class UpdateDocument extends Route {
