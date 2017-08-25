@@ -323,7 +323,9 @@ const _validateAppProperties = function(collection, body) {
 const __inflateObject = (parent, path, value) => {
   if (path.length > 1) {
     let parentKey = path.shift();
-    parent[parentKey] = {};
+    if (!parent[parentKey]) {
+      parent[parentKey] = {};
+    }
     __inflateObject(parent[parentKey], path, value);
     return;
   }
