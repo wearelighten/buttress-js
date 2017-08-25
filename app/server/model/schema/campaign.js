@@ -21,6 +21,7 @@ const Shared = require('../shared');
 const Config = require('../../config');
 const Helpers = require('../../helpers');
 const EmailFactory = require('../../email/factory');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -99,7 +100,7 @@ schema.add({
     text: String,
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     }
   }]
 });

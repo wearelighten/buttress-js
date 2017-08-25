@@ -16,6 +16,7 @@ const ObjectId = require('mongodb').ObjectId;
 const Shared = require('../shared');
 const Model = require('../');
 const Logging = require('../../logging');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -77,7 +78,7 @@ schema.add({
     description: String,
     lastModified: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     },
     iconUrl: String,
     mimeType: String,
@@ -107,7 +108,7 @@ schema.add({
     text: String,
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     }
   }]
 });

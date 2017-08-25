@@ -16,7 +16,7 @@ const ObjectId = require('mongodb').ObjectId;
 const Shared = require('../shared');
 const Model = require('../');
 const Logging = require('../../logging');
-require('sugar');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -104,11 +104,11 @@ schema.add({
   },
   dateCreated: {
     type: Date,
-    default: Date.create
+    default: Sugar.Date.create
   },
   dueDate: {
     type: Date,
-    default: Date.create
+    default: Sugar.Date.create
   },
   reminder: {
     status: {
@@ -129,7 +129,7 @@ schema.add({
     text: String,
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     }
   }]
 });
@@ -198,7 +198,7 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('dueDate');
   }
-  if (Date.create(body.dueDate).isBefore(Date.create())) {
+  if (Sugar.Date.isBefore(Sugar.Date.create(body.dueDate), Sugar.Date.create())) {
     res.isValid = false;
     res.invalid.push('dueDate');
   }
@@ -237,7 +237,7 @@ const __add = body => {
       entityId: body.entityId,
       reminder: {status: 'pending', snoozed: null},
       dateCreated: body.dateCreated ? body.dateCreated : new Date(),
-      dueDate: Date.create(body.dueDate),
+      dueDate: Sugar.Date.create(body.dueDate),
       status: Status.PENDING,
       notes: body.notes ? body.notes : [],
       metadata: []

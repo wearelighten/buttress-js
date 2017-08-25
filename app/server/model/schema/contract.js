@@ -16,6 +16,7 @@ const ObjectId = require('mongodb').ObjectId;
 const Shared = require('../shared');
 const Model = require('../');
 const Logging = require('../../logging');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -96,7 +97,7 @@ schema.add({
     },
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     },
     approverId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -120,7 +121,7 @@ schema.add({
   }],
   dateCreated: {
     type: Date,
-    default: Date.create
+    default: Sugar.Date.create
   },
   documentIds: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -147,7 +148,7 @@ schema.add({
     text: String,
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     }
   }]
 });

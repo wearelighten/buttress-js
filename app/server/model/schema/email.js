@@ -13,7 +13,8 @@
 
 const mongoose = require('mongoose');
 const Logging = require('../../logging');
-require('sugar');
+const Sugar = require('sugar');
+
 /**
  * Constants
  */
@@ -60,7 +61,7 @@ schema.statics.add = body => {
       subject: body.subject
     },
     html: body.html,
-    sendOn: Date.create(body.sendOn)
+    sendOn: Sugar.Date.create(body.sendOn)
   });
 
   Logging.log(email.headers, Logging.Constants.LogLevel.DEBUG);

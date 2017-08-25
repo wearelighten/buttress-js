@@ -14,7 +14,7 @@
 const Logging = require('../logging');
 const Model = require('./index');
 const ObjectId = require('mongodb').ObjectId;
-const Sugar = require('sugar/date');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -54,7 +54,7 @@ module.exports.add = (collection, __add) => {
             return;
           }
 
-          const insertedIds = Object.values(res.insertedIds);
+          const insertedIds = Sugar.Object.values(res.insertedIds);
           if (insertedIds.length === 0 || insertedIds.length > 1) {
             resolve(insertedIds);
             return;
@@ -227,7 +227,7 @@ const __validateProp = (prop, config) => {
         valid = true;
       } else {
         let date = new Date(prop.value);
-        valid = date.isValid();
+        valid = Sugar.Date.isValid(date);
         if (valid) {
           prop.value = date;
         }

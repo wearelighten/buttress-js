@@ -16,8 +16,7 @@ const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
-// const humanname = require('humanname');
-// const addressit = require('addressit');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -201,7 +200,7 @@ schema.add({
     text: String,
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     }
   }]
 });

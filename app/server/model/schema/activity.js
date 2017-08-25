@@ -13,6 +13,7 @@
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
+const Sugar = require('sugar');
 // const Helpers = require('../../helpers');
 // var Config = require('../../config');
 
@@ -37,7 +38,7 @@ const schema = new mongoose.Schema();
 schema.add({
   timestamp: {
     type: Date,
-    default: Date.create
+    default: Sugar.Date.create
   },
   title: String,
   description: String,
