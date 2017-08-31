@@ -220,7 +220,11 @@ const __validateProp = (prop, config) => {
       }
       break;
     case 'array':
-      valid = Array.isArray(prop.value);
+      if (type === 'array') {
+        valid = Array.isArray(prop.value);
+      } else {
+        valid = true;
+      }
       break;
     case 'date':
       if (prop.value === null) {
