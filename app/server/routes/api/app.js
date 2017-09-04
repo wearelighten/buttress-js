@@ -42,7 +42,7 @@ routes.push(GetAppList);
  */
 class GetApp extends Route {
   constructor() {
-    super('app/:id', 'GET APP');
+    super('app/:id([0-9|a-f|A-F]{24})', 'GET APP');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.SUPER;
     this.permissions = Route.Constants.Permissions.READ;
@@ -354,6 +354,42 @@ class AddAppPermission extends Route {
   }
 }
 routes.push(AddAppPermission);
+
+/**
+ * @class GetAppSchema
+ */
+class GetAppSchema extends Route {
+  constructor() {
+    super('app/schema', 'GET APP SCHEMA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.USER;
+    this.permissions = Route.Constants.Permissions.READ;
+
+    this._app = false;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      if (!this.req.authApp) {
+        this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'No authenticated app'});
+        return;
+      }
+      console.log(this.req.authApp.__schema);
+      if (!this.req.authApp.__schema) {
+        this.log('ERROR: No app schema defined', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'No authenticated app schema'});
+        return;
+      }
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return this.req.authApp.__schema;
+  }
+}
+routes.push(GetAppSchema);
 
 /**
  * @class UpdateAppSchema
