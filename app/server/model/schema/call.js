@@ -256,7 +256,7 @@ const __add = body => {
       contactListId: body.contactListId,
       companyId: body.companyId,
       notes: body.notes ? body.notes : [],
-      metadata: []     
+      metadata: []
     };
 
     if (body.id) {
