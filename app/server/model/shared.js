@@ -366,7 +366,12 @@ const _applyAppProperties = function(collection, body) {
     }
 
     if (propVal === undefined) continue;
-    __validateProp(propVal, config);
+    if (!__validateProp(propVal, config)) {
+      Logging.logWarn(`Invalid ${property}: ${propVal.value} [${typeof propVal.value}]`);
+      res.isValid = false;
+      res.invalid.push(`${property}:${propVal.value}[${typeof propVal.value}]`);
+      return res;
+    }
 
     const path = propVal.path.split('.');
     const root = path.shift();
