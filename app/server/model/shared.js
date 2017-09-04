@@ -132,7 +132,8 @@ const __getFlattenedBody = body => {
   const __buildFlattenedBody = (property, parent, path, flattened) => {
     // if (/^__/.test(property)) continue; // ignore internals
     path.push(property);
-    if (typeof parent[property] !== 'object' || Array.isArray(parent[property])) {
+
+    if (typeof parent[property] !== 'object' || Array.isArray(parent[property]) || parent[property] === null) {
       flattened.push({
         path: path.join('.'),
         value: parent[property]
@@ -164,6 +165,10 @@ const __getFlattenedBody = body => {
 const __validateProp = (prop, config) => {
   let type = typeof prop.value;
   let valid = false;
+
+  if (prop.value === null) {
+    return true; // Pass if value is null value
+  }
 
   switch (config.__type) {
     default:
