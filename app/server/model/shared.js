@@ -278,7 +278,7 @@ const __validate = (schema, values) => {
     let propVal = values.find(v => v.path === property);
     const config = schema[property];
 
-    if (!propVal && config.__default !== undefined) {
+    if (propVal === undefined && config.__default !== undefined) {
       propVal = {
         path: property,
         value: __getPropDefault(config)
@@ -287,7 +287,7 @@ const __validate = (schema, values) => {
       // console.log(propVal);
     }
 
-    if (!propVal) {
+    if (propVal === undefined) {
       if (config.__required) {
         res.isValid = false;
         Logging.logWarn(`Missing '__require'd ${property}`);
@@ -357,7 +357,7 @@ const _applyAppProperties = function(collection, body) {
     let propVal = flattenedBody.find(v => v.path === property);
     const config = flattenedSchema[property];
 
-    if (!propVal && config.__default !== undefined) {
+    if (propVal === undefined && config.__default !== undefined) {
       propVal = {
         path: property,
         value: __getPropDefault(config)
@@ -365,7 +365,7 @@ const _applyAppProperties = function(collection, body) {
       // console.log(propVal);
     }
 
-    if (!propVal) continue;
+    if (propVal === undefined) continue;
     __validateProp(propVal, config);
 
     const path = propVal.path.split('.');
