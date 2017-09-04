@@ -176,7 +176,8 @@ const __initMaster = () => {
       .then(db => {
         Model.init(db);
         return __systemInstall();
-      });
+      })
+      .catch(e => Logging.logError(e));
   } else {
     Logging.logVerbose(`Secondary Master REST`);
   }
