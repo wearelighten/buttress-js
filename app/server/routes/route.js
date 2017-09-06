@@ -149,7 +149,15 @@ class Route {
     };
 
     setTimeout(() => {
-      Model.Activity.add(this, res);
+      const body = this.req.body;
+      const path = this.path;
+      const verb = this.verb;
+      Model.Activity.add(this, res)
+      .catch(e => {
+        console.log(`[${verb.toUpperCase()}] ${path}`);
+        console.log(body);
+        console.log(e);
+      });
       broadcast();
     }, 50);
 

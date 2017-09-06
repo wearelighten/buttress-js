@@ -375,7 +375,7 @@ class GetAppSchema extends Route {
         reject({statusCode: 400, message: 'No authenticated app'});
         return;
       }
-      console.log(this.req.authApp.__schema);
+      // console.log(this.req.authApp.__schema);
       if (!this.req.authApp.__schema) {
         this.log('ERROR: No app schema defined', Route.LogLevel.ERR);
         reject({statusCode: 400, message: 'No authenticated app schema'});

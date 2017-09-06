@@ -529,7 +529,7 @@ let _doUpdate = (entity, body, pathContext, config) => {
           delete body.value.id;
         }
         if (config && config.__schema) {
-          vector.push(__populateObject(config.__schema, __getFlattenedBody(body.value)))
+          vector.push(__populateObject(config.__schema, __getFlattenedBody(body.value)));
         } else {
           vector.push(body.value);
         }
