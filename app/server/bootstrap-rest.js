@@ -25,6 +25,8 @@ const Routes = require('./routes');
 const Logging = require('./logging');
 const MongoClient = require('mongodb').MongoClient;
 
+Error.stackTraceLimit = Infinity;
+
 /* ********************************************************************************
  *
  *
@@ -145,6 +147,10 @@ const __initWorker = () => {
   app.use(bodyParser.urlencoded({extended: true}));
   app.use(methodOverride());
   app.use(express.static(`${Config.paths.appData}/public`));
+
+  process.on('unhandledRejection', error => {
+    console.log(error);
+  });
 
   return __nativeMongoConnect()
     .then(db => {
