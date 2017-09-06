@@ -100,6 +100,9 @@ const __getFlattenedSchema = schema => {
     for (let childProp in parent[property]) {
       if (!parent[property].hasOwnProperty(childProp)) continue;
       if (/^__/.test(childProp)) {
+        if (childProp === '__schema') {
+          parent[property].__schema = __getFlattenedSchema({properties: parent[property].__schema});
+        }
         continue;
       }
 
@@ -160,6 +163,30 @@ const __getFlattenedBody = body => {
 
   Logging.logSilly(flattened);
   return flattened;
+};
+
+const __getPropDefault = config => {
+  let res;
+  switch (config.__type) {
+    default:
+    case 'boolean':
+    case 'string':
+    case 'number':
+    case 'array':
+    case 'object':
+    case 'id':
+      res = config.__default;
+      break;
+    case 'date':
+      if (config.__default === null) {
+        res = null;
+      } else if (config.__default) {
+        res = Sugar.Date.create(config.__default);
+      } else {
+        res = new Date();
+      }
+  }
+  return res;
 };
 
 const __validateProp = (prop, config) => {
@@ -225,11 +252,7 @@ const __validateProp = (prop, config) => {
       }
       break;
     case 'array':
-      if (type === 'array') {
-        valid = Array.isArray(prop.value);
-      } else {
-        valid = true;
-      }
+      valid = Array.isArray(prop.value);
       break;
     case 'date':
       if (prop.value === null) {
@@ -247,31 +270,7 @@ const __validateProp = (prop, config) => {
   return valid;
 };
 
-const __getPropDefault = config => {
-  let res;
-  switch (config.__type) {
-    default:
-    case 'boolean':
-    case 'string':
-    case 'number':
-    case 'array':
-    case 'object':
-    case 'id':
-      res = config.__default;
-      break;
-    case 'date':
-      if (config.__default === null) {
-        res = null;
-      } else if (config.__default) {
-        res = Sugar.Date.create(config.__default);
-      } else {
-        res = new Date();
-      }
-  }
-  return res;
-};
-
-const __validate = (schema, values) => {
+const __validate = (schema, values, parentProperty) => {
   const res = {
     isValid: true,
     missing: [],
@@ -304,7 +303,25 @@ const __validate = (schema, values) => {
     if (!__validateProp(propVal, config)) {
       Logging.logWarn(`Invalid ${property}: ${propVal.value} [${typeof propVal.value}]`);
       res.isValid = false;
-      res.invalid.push(`${property}:${propVal.value}[${typeof propVal.value}]`);
+      res.invalid.push(`${parentProperty}${property}:${propVal.value}[${typeof propVal.value}]`);
+      continue;
+    }
+
+    if (config.__type === 'array' && config.__schema) {
+      propVal.value.reduce((errors, v, idx) => {
+        const values = __getFlattenedBody(v);
+        Logging.logSilly(values);
+        const res = __validate(config.__schema, values, `${property}.${idx}.`);
+        if (!res.invalid) return errors;
+        if (res.missing.length) {
+          errors.missing = errors.missing.concat(res.missing);
+        }
+        if (res.invalid.length) {
+          errors.invalid = errors.invalid.concat(res.invalid);
+        }
+
+        return errors;
+      }, res);
     }
   }
 
@@ -343,24 +360,14 @@ const __inflateObject = (parent, path, value) => {
   return;
 };
 
-/**
- * @param {String} collection - name of the collection
- * @param {Object} body - object containing properties to be applied
- * @return {Object} - returns an object with only validated properties
- */
-const _applyAppProperties = function(collection, body) {
-  const schema = __getCollectionSchema(collection);
-  if (schema === false) return {isValid: true};
-
-  const flattenedSchema = __getFlattenedSchema(schema);
-  const flattenedBody = __getFlattenedBody(body);
-
+const __populateObject = (schema, values) => {
   const res = {};
   const objects = {};
-  for (let property in flattenedSchema) {
-    if (!flattenedSchema.hasOwnProperty(property)) continue;
-    let propVal = flattenedBody.find(v => v.path === property);
-    const config = flattenedSchema[property];
+
+  for (let property in schema) {
+    if (!schema.hasOwnProperty(property)) continue;
+    let propVal = values.find(v => v.path === property);
+    const config = schema[property];
 
     if (propVal === undefined && config.__default !== undefined) {
       propVal = {
@@ -376,6 +383,10 @@ const _applyAppProperties = function(collection, body) {
     const path = propVal.path.split('.');
     const root = path.shift();
     let value = propVal.value;
+    if (config.__type === 'array' && config.__schema) {
+      value = value.map(v => __populateObject(config.__schema, __getFlattenedBody(v)));
+    }
+
     if (path.length > 0) {
       if (!objects[root]) {
         objects[root] = {};
@@ -386,8 +397,23 @@ const _applyAppProperties = function(collection, body) {
 
     res[root] = value;
   }
-  // console.log(res);
+  Logging.logSilly(res);
   return res;
+};
+
+/**
+ * @param {String} collection - name of the collection
+ * @param {Object} body - object containing properties to be applied
+ * @return {Object} - returns an object with only validated properties
+ */
+const _applyAppProperties = function(collection, body) {
+  const schema = __getCollectionSchema(collection);
+  if (schema === false) return {isValid: true};
+
+  const flattenedSchema = __getFlattenedSchema(schema);
+  const flattenedBody = __getFlattenedBody(body);
+
+  return __populateObject(flattenedSchema, flattenedBody);
 };
 
 module.exports.validateAppProperties = _validateAppProperties;
@@ -459,9 +485,25 @@ let _doValidateUpdate = function(pathContext, flattenedSchema) {
     }
 
     const config = flattenedSchema[body.path];
-    if (config && !__validateProp(body, config)) {
-      res.invalidValue = `${body.path} failed schema test`;
-      return res;
+    if (config) {
+      if (config.__type === 'array') {
+        if (config.__schema) {
+          const validation = __validate(config.__schema, __getFlattenedBody(body.value), `${body.path}.`);
+          if (validation.isValid !== true) {
+            if (validation.missing.length) {
+              res.isMissingRequired = true;
+              res.missingRequired = validation.missing[0];
+            }
+            if (validation.invalid.length) {
+              res.invalidValue = validation.invalid[0];
+            }
+            return res;
+          }
+        }
+      } else if (!__validateProp(body, config)) {
+        res.invalidValue = `${body.path} failed schema test`;
+        return res;
+      }
     }
 
     res.isValueValid = true;
@@ -470,7 +512,7 @@ let _doValidateUpdate = function(pathContext, flattenedSchema) {
   };
 };
 
-let _doUpdate = (entity, body, pathContext) => {
+let _doUpdate = (entity, body, pathContext, config) => {
   return prev => {
     const context = pathContext[body.contextPath];
     const updateType = context.type;
@@ -486,7 +528,12 @@ let _doUpdate = (entity, body, pathContext) => {
           body.value._id = body.value.id;
           delete body.value.id;
         }
-        vector.push(body.value);
+        if (config && config.__schema) {
+          vector.push(__populateObject(config.__schema, __getFlattenedBody(body.value)))
+        } else {
+          vector.push(body.value);
+        }
+        entity.markModified(body.path);
 
         response = vector[vector.length - 1];
         if (response && response.toObject) {
@@ -540,9 +587,9 @@ let _doUpdate = (entity, body, pathContext) => {
   };
 };
 
-const __extendPathContext = (pathContext, schema) => {
+const __extendPathContext = (pathContext, schema, prefix) => {
   if (!schema) return pathContext;
-  const extended = {};
+  let extended = {};
   for (let property in schema) {
     if (!schema.hasOwnProperty(property)) continue;
     const config = schema[property];
@@ -552,19 +599,22 @@ const __extendPathContext = (pathContext, schema) => {
       case 'object':
       case 'number':
       case 'date':
-        extended[`^${property}$`] = {type: 'scalar', values: []};
+        extended[`^${prefix}${property}$`] = {type: 'scalar', values: []};
         break;
       case 'string':
         if (config.__enum) {
-          extended[`^${property}$`] = {type: 'scalar', values: config.__enum};
+          extended[`^${prefix}${property}$`] = {type: 'scalar', values: config.__enum};
         } else {
-          extended[`^${property}$`] = {type: 'scalar', values: []};
+          extended[`^${prefix}${property}$`] = {type: 'scalar', values: []};
         }
         break;
       case 'array':
-        extended[`^${property}$`] = {type: 'vector-add', values: []};
-        extended[`^${property}.([0-9]{1,3}).__remove__$`] = {type: 'vector-rm', values: []};
-        extended[`^${property}.([0-9]{1,3})$`] = {type: 'scalar', values: []};
+        extended[`^${prefix}${property}$`] = {type: 'vector-add', values: []};
+        extended[`^${prefix}${property}.([0-9]{1,3}).__remove__$`] = {type: 'vector-rm', values: []};
+        extended[`^${prefix}${property}.([0-9]{1,3})$`] = {type: 'scalar', values: []};
+        if (config.__schema) {
+          extended = __extendPathContext(extended, config.__schema, `${prefix}${property}.([0-9]{1,3}).`);
+        }
         break;
     }
   }
@@ -580,7 +630,7 @@ module.exports.validateUpdate = function(pathContext, collection) {
 
     const schema = __getCollectionSchema(collection);
     const flattenedSchema = schema ? __getFlattenedSchema(schema) : false;
-    const extendedPathContext = __extendPathContext(pathContext, flattenedSchema);
+    const extendedPathContext = __extendPathContext(pathContext, flattenedSchema, '');
 
     let validation = body.map(_doValidateUpdate(extendedPathContext, flattenedSchema)).filter(v => v.isValid === false);
 
@@ -595,10 +645,11 @@ module.exports.updateByPath = function(pathContext, collection) {
     }
     const schema = __getCollectionSchema(collection);
     const flattenedSchema = schema ? __getFlattenedSchema(schema) : false;
-    const extendedPathContext = __extendPathContext(pathContext, flattenedSchema);
+    const extendedPathContext = __extendPathContext(pathContext, flattenedSchema, '');
+    Logging.logSilly(extendedPathContext);
 
     return body.reduce((promise, update) => {
-      const config = flattenedSchema[update.path];
+      const config = flattenedSchema === false ? false : flattenedSchema[update.path];
       return promise
         .then(_doUpdate(this, update, extendedPathContext, config));
     }, Promise.resolve([]))
