@@ -343,7 +343,7 @@ const _validateAppProperties = function(collection, body) {
   const flattenedSchema = __getFlattenedSchema(schema);
   const flattenedBody = __getFlattenedBody(body);
 
-  return __validate(flattenedSchema, flattenedBody);
+  return __validate(flattenedSchema, flattenedBody, '');
 };
 
 const __inflateObject = (parent, path, value) => {
