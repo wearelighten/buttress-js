@@ -182,15 +182,7 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('name');
   }
-  if (!body.type) {
-    res.isValid = false;
-    res.missing.push('type');
-  }
-  if (types.indexOf(body.type) === -1) {
-    res.isValid = false;
-    res.invalid.push('type');
-  }
-  if (body.type !== Type.FREE && !body.entityId) {
+  if (body.taskType !== Type.FREE && !body.entityId) {
     res.isValid = false;
     res.missing.push('entityId');
   }

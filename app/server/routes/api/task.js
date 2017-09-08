@@ -158,6 +158,59 @@ class AddTask extends Route {
 routes.push(AddTask);
 
 /**
+ * @class BulkAddTasks
+ */
+class BulkAddTasks extends Route {
+  constructor() {
+    super('task/bulk/add', 'BULK ADD TASKS');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      // Logging.logDebug(JSON.stringify(this.req.body.tasks));
+      if (this.req.body.tasks instanceof Array === false) {
+        this.log(`ERROR: You need to supply an array of tasks`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send an array of tasks`});
+        return;
+      }
+      // if (this.req.body.tasks.length > 301) {
+      //   this.log(`ERROR: No more than 300 tasks`, Route.LogLevel.ERR);
+      //   reject({statusCode: 400, message: `Invalid data: send no more than 300 tasks at a time`});
+      //   return;
+      // }
+
+      let validation = Model.Task.validate(this.req.body.tasks);
+      if (!validation.isValid) {
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `TASK: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `TASK: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: CONTRACT: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `TASK: Unhandled error.`});
+        return;
+      }
+
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Task.add(this.req.body.tasks);
+  }
+}
+routes.push(BulkAddTasks);
+
+/**
  * @class UpdateTask
  */
 class UpdateTask extends Route {
