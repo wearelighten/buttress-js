@@ -257,7 +257,7 @@ class AddUser extends Route {
           return;
         }
         this.req.body.auth.type = Model.Constants.Token.Type.USER;
-        this.req.body.auth.app = this.req.authApp;
+        this.req.body.auth.app = this.req.authApp.id;
       }
 
       Model.Person.findByDetails(this.req.body.user)

@@ -3,8 +3,8 @@
 /**
  * ButtressJS - Realtime datastore for business software
  *
- * @file task.js
- * @description Company API specification
+ * @file service.js
+ * @description Service API specification
  * @module API
  * @author Chris Bates-Keegan
  *
@@ -17,11 +17,11 @@ const Logging = require('../../logging');
 let routes = [];
 
 /**
- * @class GetTaskList
+ * @class GetServiceList
  */
-class GetTaskList extends Route {
+class GetServiceList extends Route {
   constructor() {
-    super('task', 'GET TASK LIST');
+    super('service', 'GET SERVICE LIST');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.LIST;
@@ -32,17 +32,17 @@ class GetTaskList extends Route {
   }
 
   _exec() {
-    return Model.Task.getAll();
+    return Model.Service.getAll();
   }
 }
-routes.push(GetTaskList);
+routes.push(GetServiceList);
 
 /**
  * @class GetAllMetadata
  */
 class GetAllMetadata extends Route {
   constructor() {
-    super('task/metadata/all', 'GET ALL TASK METADATA');
+    super('service/metadata/all', 'GET ALL SERVICE METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
@@ -53,72 +53,51 @@ class GetAllMetadata extends Route {
   }
 
   _exec() {
-    return Model.Task.getAllMetadata();
+    return Model.Service.getAllMetadata();
   }
 }
 routes.push(GetAllMetadata);
 
 /**
- * @class GetTaskReminders
+ * @class GetService
  */
-class GetTaskReminders extends Route {
+class GetService extends Route {
   constructor() {
-    super('task/reminders', 'GET TASK REMINDERS');
-    this.verb = Route.Constants.Verbs.GET;
-    this.auth = Route.Constants.Auth.ADMIN;
-    this.permissions = Route.Constants.Permissions.LIST;
-  }
-
-  _validate() {
-    return Promise.resolve(true);
-  }
-
-  _exec() {
-    return Model.Task.getAllReminders();
-  }
-}
-routes.push(GetTaskReminders);
-
-/**
- * @class GetTask
- */
-class GetTask extends Route {
-  constructor() {
-    super('task/:id', 'GET TASK');
+    super('service/:id', 'GET SERVICE');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.READ;
 
-    this._task = false;
+    this._service = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Task.findById(this.req.params.id)
-        .then(task => {
-          if (!task) {
-            this.log('ERROR: Invalid Task ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id)
+        .then(service => {
+          if (!service) {
+            this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
-          this._task = task;
+          this._service = service;
           resolve(true);
         });
     });
   }
 
   _exec() {
-    return Promise.resolve(this._task.details);
+    return Promise.resolve(this._service.details);
   }
 }
-routes.push(GetTask);
+routes.push(GetService);
 
 /**
- * @class AddTask
+ * @class AddService
  */
-class AddTask extends Route {
+class AddService extends Route {
   constructor() {
-    super('task', 'ADD TASK');
+    super('service', 'ADD SERVICE');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
@@ -129,21 +108,21 @@ class AddTask extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      let validation = Model.Task.validate(this.req.body);
+      let validation = Model.Service.validate(this.req.body);
       if (!validation.isValid) {
         if (validation.missing.length > 0) {
           this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `TASK: Missing field: ${validation.missing[0]}`});
+          reject({statusCode: 400, message: `SERVICE: Missing field: ${validation.missing[0]}`});
           return;
         }
         if (validation.invalid.length > 0) {
           this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `TASK: Invalid value: ${validation.invalid[0]}`});
+          reject({statusCode: 400, message: `SERVICE: Invalid value: ${validation.invalid[0]}`});
           return;
         }
 
-        this.log(`ERROR: TASK: Unhandled Error`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `TASK: Unhandled error.`});
+        this.log(`ERROR: SERVICE: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `SERVICE: Unhandled error.`});
         return;
       }
 
@@ -152,17 +131,17 @@ class AddTask extends Route {
   }
 
   _exec() {
-    return Model.Task.add(this.req.body);
+    return Model.Service.add(this.req.body);
   }
 }
-routes.push(AddTask);
+routes.push(AddService);
 
 /**
- * @class BulkAddTasks
+ * @class BulkAddServices
  */
-class BulkAddTasks extends Route {
+class BulkAddServices extends Route {
   constructor() {
-    super('task/bulk/add', 'BULK ADD TASKS');
+    super('service/bulk/add', 'BULK ADD SERVICES');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
@@ -170,56 +149,55 @@ class BulkAddTasks extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      // Logging.logDebug(JSON.stringify(this.req.body.tasks));
-      if (this.req.body.tasks instanceof Array === false) {
-        this.log(`ERROR: You need to supply an array of tasks`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Invalid data: send an array of tasks`});
+      // Logging.logDebug(JSON.stringify(this.req.body.services));
+      if (this.req.body.services instanceof Array === false) {
+        this.log(`ERROR: You need to supply an array of services`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send an array`});
         return;
       }
-      // if (this.req.body.tasks.length > 301) {
-      //   this.log(`ERROR: No more than 300 tasks`, Route.LogLevel.ERR);
-      //   reject({statusCode: 400, message: `Invalid data: send no more than 300 tasks at a time`});
+      // if (this.req.body.services.length > 301) {
+      //   this.log(`ERROR: No more than 300`, Route.LogLevel.ERR);
+      //   reject({statusCode: 400, message: `Invalid data: send no more than 300 services at a time`});
       //   return;
       // }
 
-      let validation = Model.Task.validate(this.req.body.tasks);
+      let validation = Model.Service.validate(this.req.body.services);
       if (!validation.isValid) {
         if (validation.missing.length > 0) {
           this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `TASK: Missing field: ${validation.missing[0]}`});
+          reject({statusCode: 400, message: `SERVICE: Missing field: ${validation.missing[0]}`});
           return;
         }
         if (validation.invalid.length > 0) {
           this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `TASK: Invalid value: ${validation.invalid[0]}`});
+          reject({statusCode: 400, message: `SERVICE: Invalid value: ${validation.invalid[0]}`});
           return;
         }
 
-        this.log(`ERROR: CONTRACT: Unhandled Error`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `TASK: Unhandled error.`});
+        this.log(`ERROR: SERVICE: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `SERVICE: Unhandled error.`});
         return;
       }
-
       resolve(true);
     });
   }
 
   _exec() {
-    return Model.Task.add(this.req.body.tasks);
+    return Model.Service.add(this.req.body.services);
   }
 }
-routes.push(BulkAddTasks);
+routes.push(BulkAddServices);
 
 /**
- * @class UpdateTask
+ * @class UpdateService
  */
-class UpdateTask extends Route {
+class UpdateService extends Route {
   constructor() {
-    super('task/:id', 'UPDATE TASK');
+    super('service/:id', 'UPDATE SERVICE');
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._task = null;
+    this._service = null;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
@@ -227,87 +205,121 @@ class UpdateTask extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      let validation = Model.Task.validateUpdate(this.req.body);
+      let validation = Model.Service.validateUpdate(this.req.body);
       if (!validation.isValid) {
         if (validation.isPathValid === false) {
           this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `TASK: Update path is invalid: ${validation.invalidPath}`});
+          reject({statusCode: 400, message: `SERVICE: Update path is invalid: ${validation.invalidPath}`});
           return;
         }
         if (validation.isValueValid === false) {
           this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `TASK: Update value is invalid: ${validation.invalidValue}`});
+          reject({statusCode: 400, message: `SERVICE: Update value is invalid: ${validation.invalidValue}`});
           return;
         }
       }
 
-      Model.Task.findById(this.req.params.id)
-      .then(task => {
-        if (!task) {
-          this.log('ERROR: Invalid Task ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id)
+      .then(service => {
+        if (!service) {
+          this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._task = task;
+        this._service = service;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._task.updateByPath(this.req.body);
+    return this._service.updateByPath(this.req.body);
   }
 }
-routes.push(UpdateTask);
+routes.push(UpdateService);
 
 /**
- * @class DeleteTask
+ * @class DeleteService
  */
-class DeleteTask extends Route {
+class DeleteService extends Route {
   constructor() {
-    super('task/:id', 'DELETE TASK');
+    super('service/:id', 'DELETE SERVICE');
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
-    this._task = false;
-
-    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
-    this.activityBroadcast = true;
+    this._service = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Task.findById(this.req.params.id)
-        .then(task => {
-          if (!task) {
-            this.log('ERROR: Invalid Task ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id)
+        .then(service => {
+          if (!service) {
+            this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
-          this._task = task;
+          this._service = service;
           resolve(true);
         });
     });
   }
 
   _exec() {
-    return this._task.rm().then(() => true);
+    return this._service.rm().then(() => true);
   }
 }
-routes.push(DeleteTask);
+routes.push(DeleteService);
 
 /**
- * @class DeleteAllTasks
+ * @class BulkDeleteServices
  */
-class DeleteAllTasks extends Route {
+class BulkDeleteServices extends Route {
   constructor() {
-    super('task', 'DELETE ALL TASKS');
+    super('service/bulk/delete', 'BULK DELETE SERVICES');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.DELETE;
+    this._ids = [];
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      this._ids = this.req.body;
+      if (!this._ids) {
+        this.log('ERROR: No service IDs provided', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'ERROR: No service IDs provided'});
+        return;
+      }
+      if (!this._ids.length) {
+        this.log('ERROR: No service IDs provided', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'ERROR: No service IDs provided'});
+        return;
+      }
+      if (this._ids.length > 300) {
+        this.log('ERROR: No more than 300 service IDs are supported', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'ERROR: No more than 300 service IDs are supported'});
+        return;
+      }
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Service.rmBulk(this._ids).then(() => true);
+  }
+}
+routes.push(BulkDeleteServices);
+
+/**
+ * @class DeleteAllServices
+ */
+class DeleteAllServices extends Route {
+  constructor() {
+    super('service', 'DELETE ALL SERVICES');
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.SUPER;
     this.permissions = Route.Constants.Permissions.DELETE;
-
-    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
-    this.activityBroadcast = true;
   }
 
   _validate() {
@@ -315,33 +327,33 @@ class DeleteAllTasks extends Route {
   }
 
   _exec() {
-    return Model.Task.rmAll().then(() => true);
+    return Model.Service.rmAll().then(() => true);
   }
 }
-routes.push(DeleteAllTasks);
+routes.push(DeleteAllServices);
 
 /**
  * @class AddMetadata
  */
 class AddMetadata extends Route {
   constructor() {
-    super('task/:id/metadata/:key', 'ADD TASK METADATA');
+    super('service/:id/metadata/:key', 'ADD SERVICE METADATA');
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
 
-    this._task = false;
+    this._service = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Task.findById(this.req.params.id).then(task => {
-        if (!task) {
-          this.log('ERROR: Invalid Task ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id).then(service => {
+        if (!service) {
+          this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        if (`${task._app}` !== `${this.req.authApp._id}`) {
+        if (`${service._app}` !== `${this.req.authApp._id}`) {
           this.log('ERROR: Not authorised', Route.LogLevel.ERR);
           reject({statusCode: 401});
           return;
@@ -356,14 +368,14 @@ class AddMetadata extends Route {
           return;
         }
 
-        this._task = task;
+        this._service = service;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._task.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
+    return this._service.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
   }
 }
 routes.push(AddMetadata);
@@ -373,7 +385,7 @@ routes.push(AddMetadata);
  */
 class GetMetadata extends Route {
   constructor() {
-    super('task/:id/metadata/:key?', 'GET TASK METADATA');
+    super('service/:id/metadata/:key?', 'GET SERVICE METADATA');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.GET;
@@ -385,27 +397,27 @@ class GetMetadata extends Route {
       this._allMetadata = null;
 
       Logging.log(`AppID: ${this.req.authApp._id}`, Route.LogLevel.DEBUG);
-      Model.Task.findById(this.req.params.id).then(task => {
-        if (!task) {
-          this.log('ERROR: Invalid Task ID', Route.LogLevel.ERR);
+      Model.Service.findById(this.req.params.id).then(service => {
+        if (!service) {
+          this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        if (`${task._app}` !== `${this.req.authApp._id}`) {
+        if (`${service._app}` !== `${this.req.authApp._id}`) {
           this.log('ERROR: Not authorised', Route.LogLevel.ERR);
           reject({statusCode: 401});
           return;
         }
         // Logging.log(this._metadata.value, Route.LogLevel.INFO);
         if (this.req.params.key) {
-          this._metadata = task.findMetadata(this.req.params.key);
+          this._metadata = service.findMetadata(this.req.params.key);
           if (this._metadata === false) {
-            this.log('WARN: Task Metadata Not Found', Route.LogLevel.ERR);
+            this.log('WARN: Service Metadata Not Found', Route.LogLevel.ERR);
             reject({statusCode: 404});
             return;
           }
         } else {
-          this._allMetadata = task.metadata.reduce((prev, curr) => {
+          this._allMetadata = service.metadata.reduce((prev, curr) => {
             prev[curr.key] = JSON.parse(curr.value);
             return prev;
           }, {});
@@ -427,36 +439,36 @@ routes.push(GetMetadata);
  */
 class DeleteMetadata extends Route {
   constructor() {
-    super('task/:id/metadata/:key', 'DELETE TASK METADATA');
+    super('service/:id/metadata/:key', 'DELETE SERVICE METADATA');
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
-    this._task = false;
+    this._service = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Task
+      Model.Service
         .findById(this.req.params.id).select('id, _app')
-        .then(task => {
-          if (!task) {
-            this.log('ERROR: Invalid Task ID', Route.LogLevel.ERR);
-            reject({statusCode: 400, message: `Invalid Task ID: ${this.req.params.id}`});
+        .then(service => {
+          if (!service) {
+            this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
+            reject({statusCode: 400, message: `Invalid Service ID: ${this.req.params.id}`});
             return;
           }
-          if (`${task._app}` !== `${this.req.authApp._id}`) {
+          if (`${service._app}` !== `${this.req.authApp._id}`) {
             this.log('ERROR: Not authorised', Route.LogLevel.ERR);
             reject({statusCode: 401});
             return;
           }
-          this._task = task;
+          this._service = service;
           resolve(true);
         }, err => reject({statusCode: 400, message: err.message}));
     });
   }
 
   _exec() {
-    return this._task.rmMetadata(this.req.params.key);
+    return this._service.rmMetadata(this.req.params.key);
   }
 }
 routes.push(DeleteMetadata);

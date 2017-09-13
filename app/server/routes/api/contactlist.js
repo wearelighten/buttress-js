@@ -12,7 +12,6 @@
 
 const Route = require('../route');
 const Model = require('../../model');
-const Helpers = require('../../helpers');
 
 const routes = [];
 
@@ -36,6 +35,27 @@ class GetContactListList extends Route {
   }
 }
 routes.push(GetContactListList);
+
+/**
+ * @class GetAllMetadata
+ */
+class GetAllMetadata extends Route {
+  constructor() {
+    super('contact-list/metadata/all', 'GET ALL CONTACT LIST METADATA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.GET;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Contactlist.getAllMetadata();
+  }
+}
+routes.push(GetAllMetadata);
 
 /**
  * @class GetContactList
@@ -117,12 +137,7 @@ class AddContactlist extends Route {
   }
 
   _exec() {
-    return this._campaign.addContactList(this.req.body)
-      .then(cl => {
-        this.activityTitle = cl.name;
-        return cl;
-      })
-      .then(Helpers.Promise.prop('details'));
+    return this._campaign.addContactList(this.req.body);
   }
 }
 routes.push(AddContactlist);

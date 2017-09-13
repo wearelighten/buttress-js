@@ -12,9 +12,11 @@
  */
 
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId;
 const Shared = require('../shared');
 const Model = require('../');
 const Logging = require('../../logging');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -23,6 +25,8 @@ const Logging = require('../../logging');
  **********************************************************************************/
 const schema = new mongoose.Schema();
 let ModelDef = null;
+const collectionName = 'contracts';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -75,6 +79,12 @@ schema.add({
   entityId: String,
   entityType: String,
   references: [String],
+  services: [{
+    serviceId: mongoose.Schema.Types.ObjectId,
+    status: String,
+    startDate: Date,
+    endDate: Date
+  }],
   status: {
     type: String,
     enum: status,
@@ -87,7 +97,7 @@ schema.add({
     },
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     },
     approverId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -111,7 +121,7 @@ schema.add({
   }],
   dateCreated: {
     type: Date,
-    default: Date.create
+    default: Sugar.Date.create
   },
   documentIds: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -138,7 +148,7 @@ schema.add({
     text: String,
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     }
   }]
 });
@@ -158,6 +168,7 @@ schema.virtual('details').get(function() {
     entityId: this.entityId,
     entityType: this.entityType,
     references: this.references,
+    services: this.services,
     contractType: this.contractType,
     contractMode: this.contractMode,
     status: this.status,
@@ -204,6 +215,13 @@ const __doValidation = body => {
     res.missing.push('contractType');
   }
 
+  let app = Shared.validateAppProperties(collectionName, body);
+  if (app.isValid === false) {
+    res.isValid = false;
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.missing.concat(app.missing);
+  }
+
   return res;
 };
 
@@ -222,55 +240,53 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
-    Logging.logSilly(body);
-    const md = new ModelDef({
+    const md = {
       _app: Model.authApp._id,
       ownerId: body.ownerId,
       assignedToUserId: body.assignedToUserId,
       name: body.name,
       tag: body.tag,
+      status: Status.PENDING,
       contractType: body.contractType,
       contractMode: body.contractMode,
       entityId: body.entityId,
       entityType: body.entityType,
       references: body.references,
+      services: body.services,
       parties: body.parties,
       documentIds: body.documentIds,
-      // submittedDates: body.submittedDates ? body.submittedDates : new Array(body.partyIds.length),
-      // receivedDates: body.receivedDates ? body.receivedDates : new Array(body.partyIds.length),
       executionDate: body.executionDate,
       startDate: body.startDate,
-      endDate: body.endDate
-    });
+      endDate: body.endDate,
+      notes: body.notes ? body.notes : [],
+      metadata: []
+    };
 
     if (body.id) {
-      md._id = body.id;
+      md._id = new ObjectId(body.id);
     }
 
-    return md.save()
-      .then(o => prev.concat([o]));
+    const validated = Shared.applyAppProperties(collectionName, body);
+    return prev.concat([Object.assign(md, validated)]);
   };
 };
 
-schema.statics.add = body => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__add(item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
-};
-
-const collection = Model.mongoDb.collection('contracts');
+schema.statics.add = Shared.add(collection, __add);
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
   Logging.logSilly(`getAll: ${Model.authApp._id}`);
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
+};
+
+/**
+ * @param {Array} ids - Array of company ids to delete
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.statics.rmBulk = ids => {
+  Logging.logSilly(`DELETING: ${ids}`);
+  return ModelDef.remove({_id: {$in: ids}}).exec();
 };
 
 schema.statics.rmAll = () => {
@@ -293,6 +309,9 @@ const PATH_CONTEXT = {
   '^documentIds$': {type: 'vector-add', values: []},
   '^documentIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^documentIds.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^services$': {type: 'vector-add', values: []},
+  '^services.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  '^services.([0-9]{1,3}).(serviceId|startDate|endDate|status)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
@@ -301,8 +320,8 @@ const PATH_CONTEXT = {
   '^references.([0-9]{1,3})$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
 
 /* ********************************************************************************
  *
@@ -326,6 +345,7 @@ schema.methods.rm = function() {
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
 /* ********************************************************************************
  *

@@ -14,21 +14,24 @@
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
 const Config = require('../../config');
 const Helpers = require('../../helpers');
 const EmailFactory = require('../../email/factory');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
  * LOCALS
  *
  **********************************************************************************/
-
 const schema = new mongoose.Schema({strict: false});
 let ModelDef = null;
+const collectionName = 'campaigns';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -97,7 +100,7 @@ schema.add({
     text: String,
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     }
   }]
 });
@@ -169,6 +172,13 @@ const __doValidation = body => {
     res.missing.push('data');
   }
 
+  let app = Shared.validateAppProperties(collectionName, body);
+  if (app.isValid === false) {
+    res.isValid = false;
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.invamissinglid.concat(app.missing);
+  }
+
   return res;
 };
 
@@ -185,46 +195,41 @@ schema.statics.validate = body => {
  * @param {Object} body - body passed through from a POST request
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-const __addCampaign = body => {
+const __add = body => {
   return prev => {
-    const md = new ModelDef({
+    const md = {
       _app: Model.authApp._id,
       name: body.name,
-      type: body.type,
-      filters: body.filters,
-      companyIds: body.companyIds,
-      personIds: body.personIds,
+      type: body.type ? body.type : Type.EMAIL,
+      filters: body.filters ? body.filters : [],
+      companyIds: body.companyIds ? body.companyIds : [],
+      personIds: body.personIds ? body.personIds : [],
       description: body.description,
-      legals: body.legals
-    });
+      legals: body.legals,
+      contactListIds: [],
+      templates: [],
+      images: [],
+      notes: body.notes ? body.notes : [],
+      metadata: []
+    };
 
     if (body.id) {
-      md._id = body.id;
+      md._id = new ObjectId(body.id);
     }
 
-    return md.save()
-      .then(o => prev.concat([o]));
+    const validated = Shared.applyAppProperties(collectionName, body);
+    return prev.concat([Object.assign(md, validated)]);
   };
 };
 
-schema.statics.add = body => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__addCampaign(item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
-};
+schema.statics.add = Shared.add(collection, __add);
 
 schema.methods.addContactList = function(body) {
-  return Model.Contactlist.add(this, body)
+  body.campaignId = this._id;
+  return Model.Contactlist.add(body)
     .then(cl => {
-      Logging.logDebug(cl[0]._id);
-      this.contactListIds.push(cl[0]);
-      return this.save().then(() => cl[0]);
+      this.contactListIds.push(cl.id);
+      return this.save().then(() => cl);
     });
 };
 
@@ -274,8 +279,8 @@ const PATH_CONTEXT = {
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
 
 /* ********************************************************************************
  *
@@ -438,18 +443,17 @@ schema.methods.createPreviewEmail = function(template, body) {
  * METADATA
  *
  **********************************************************************************/
-
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
-const collection = Model.mongoDb.collection('campaigns');
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 /**

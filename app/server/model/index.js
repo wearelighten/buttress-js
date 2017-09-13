@@ -13,7 +13,7 @@
 const path = require('path');
 const fs = require('fs');
 const Logging = require('../logging');
-require('sugar');
+const Sugar = require('sugar');
 
 /**
  * @param {string} model - name of the model to load
@@ -76,7 +76,7 @@ function _getModels() {
   for (let x = 0; x < filenames.length; x++) {
     let file = filenames[x];
     if (path.extname(file) === '.js') {
-      files.push(path.basename(file, '.js').capitalize());
+      files.push(Sugar.String.capitalize(path.basename(file, '.js')));
     }
   }
   return files;

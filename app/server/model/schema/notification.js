@@ -12,9 +12,11 @@
  */
 
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -23,6 +25,8 @@ const Shared = require('../shared');
  **********************************************************************************/
 let schema = new mongoose.Schema();
 let ModelDef = null;
+const collectionName = 'notifications';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -79,7 +83,7 @@ schema.add({
   },
   dateCreated: {
     type: Date,
-    default: Date.create
+    default: Sugar.Date.create
   },
   read: {
     type: Boolean,
@@ -141,6 +145,13 @@ const __doValidation = body => {
     res.missing.push('entityId');
   }
 
+  let app = Shared.validateAppProperties('notifications', body);
+  if (app.isValid === false) {
+    res.isValid = false;
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.missing.concat(app.missing);
+  }
+
   return res;
 };
 
@@ -159,43 +170,33 @@ schema.statics.validate = body => {
  */
 const __add = body => {
   return prev => {
-    const md = new ModelDef({
+    const md = {
       _app: Model.authApp._id,
       name: body.name,
       userId: body.userId,
       type: body.type,
-      entityId: body.entityId
-    });
+      entityId: body.entityId,
+      dateCreated: body.dateCreated ? body.dateCreated : new Date(),
+      read: false
+    };
 
     if (body.id) {
-      md._id = body.id;
+      md._id = new ObjectId(body.id);
     }
 
-    return md.save()
-      .then(o => prev.concat([o]));
+    const validated = Shared.applyAppProperties(collectionName, body);
+    return prev.concat([Object.assign(md, validated)]);
   };
 };
 
-schema.statics.add = body => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__add(item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
-};
-
-const collection = Model.mongoDb.collection('notifications');
+schema.statics.add = Shared.add(collection, __add);
 
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 schema.statics.rmAll = () => {
@@ -212,7 +213,7 @@ const PATH_CONTEXT = {
   '^read$': {type: 'scalar', values: [true, false]}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, 'notifications');
 schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
 
 /**

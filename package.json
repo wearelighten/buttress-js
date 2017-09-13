@@ -1,6 +1,6 @@
 {
   "name": "ButtressJS",
-  "version": "1.0.5",
+  "version": "1.5.0",
   "description": "Realtime datastore for business software",
   "author": "Lighten",
   "license": "MIT",
@@ -42,7 +42,7 @@
     "socket.io": "^1.7.2",
     "socket.io-emitter": "^3.0.1",
     "socket.io-redis": "^4.x.x",
-    "sugar": "~1.4.x",
+    "sugar": "^2.0.4",
     "underscore": "^1.8.x",
     "when": "~3.7.x",
     "winston": "^2.2.x",

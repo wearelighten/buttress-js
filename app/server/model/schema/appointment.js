@@ -12,9 +12,11 @@
  */
 
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
+const Sugar = require('sugar');
 
 /* ********************************************************************************
  *
@@ -23,6 +25,8 @@ const Shared = require('../shared');
  **********************************************************************************/
 let schema = new mongoose.Schema();
 let ModelDef = null;
+const collectionName = 'appointments';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -42,13 +46,15 @@ const outcomes = [
   'fail',
   'defer',
   'progressed',
-  'success'
+  'success',
+  'pending'
 ];
 const Outcomes = {
   FAIL: outcomes[0],
   DEFER: outcomes[1],
   PROGRESSED: outcomes[2],
-  SUCCESS: outcomes[3]
+  SUCCESS: outcomes[3],
+  PENDING: outcomes[4]
 };
 
 constants.Outcomes = Outcomes;
@@ -90,7 +96,7 @@ schema.add({
     },
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     },
     approverId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -117,7 +123,7 @@ schema.add({
     text: String,
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     }
   }]
 });
@@ -158,28 +164,33 @@ schema.virtual('details').get(function() {
  */
 const __doValidation = body => {
   let res = {
-    isValid: false,
+    isValid: true,
     missing: [],
     invalid: []
   };
 
   if (!body.name) {
+    res.isValid = false;
     res.missing.push('name');
     return res;
   }
   if (!body.ownerId) {
+    res.isValid = false;
     res.missing.push('ownerId');
     return res;
   }
   if (!body.assignedToUserId) {
+    res.isValid = false;
     res.missing.push('assignedToUserId');
     return res;
   }
   if (!body.companyId) {
+    res.isValid = false;
     res.missing.push('companyId');
     return res;
   }
   if (!body.contactId) {
+    res.isValid = false;
     res.missing.push('contactId');
     return res;
   }
@@ -188,7 +199,13 @@ const __doValidation = body => {
   //   return res;
   // }
 
-  res.isValid = true;
+  let app = Shared.validateAppProperties(collectionName, body);
+  if (app.isValid === false) {
+    res.isValid = false;
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.missing.concat(app.missing);
+  }
+
   return res;
 };
 
@@ -208,47 +225,39 @@ schema.statics.validate = body => {
 const __add = body => {
   return prev => {
     Logging.logDebug(body);
-    const md = new ModelDef({
+    const md = {
       _app: Model.authApp._id,
       name: body.name,
-      date: Date.create(body.date),
+      date: Sugar.Date.create(body.date),
       ownerId: body.ownerId,
+      outcome: body.outcome ? body.outcome : Outcomes.PENDING,
       assignedToUserId: body.assignedToUserId,
       tag: body.tag ? body.tag : '',
       companyId: body.companyId,
       contactId: body.contactId,
       locationId: body.locationId,
-      notes: body.notes
-    });
+      intelApproval: {status: 'pending'},
+      notes: body.notes ? body.notes : [],
+      metadata: []
+    };
 
     if (body.id) {
-      md._id = body.id;
+      md._id = new ObjectId(body.id);
     }
 
-    return md.save()
-      .then(o => prev.concat([o]));
+    const validated = Shared.applyAppProperties(collectionName, body);
+    return prev.concat([Object.assign(md, validated)]);
   };
 };
 
-schema.statics.add = body => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
+schema.statics.add = Shared.add(collection, __add);
 
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__add(item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]));
-};
-
-const collection = Model.mongoDb.collection('appointments');
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
   Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 schema.statics.rmAll = () => {
@@ -270,8 +279,8 @@ const PATH_CONTEXT = {
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
 
 /* ********************************************************************************
  *
@@ -295,6 +304,7 @@ schema.methods.rm = function() {
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
 /* ********************************************************************************
  *

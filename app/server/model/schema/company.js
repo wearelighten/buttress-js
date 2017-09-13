@@ -12,15 +12,22 @@
  */
 
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
-// const humanname = require('humanname');
-// const addressit = require('addressit');
+const Sugar = require('sugar');
 
+/* ********************************************************************************
+ *
+ * LOCALS
+ *
+ **********************************************************************************/
 const schema = new mongoose.Schema();
 let ModelDef = null;
 const constants = {};
+const collectionName = 'companies';
+const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
  *
@@ -116,6 +123,7 @@ schema.add({
     type: String,
     default: ''
   },
+  salesStatus: String,
   source: String,
   companyNumber: Number,
   numEmployees: Number,
@@ -192,7 +200,7 @@ schema.add({
     text: String,
     timestamp: {
       type: Date,
-      default: Date.create
+      default: Sugar.Date.create
     }
   }]
 });
@@ -221,37 +229,74 @@ const __doValidation = body => {
     res.isValid = false;
     res.invalid.push('companyType');
   }
-  if (!body.location) {
-    res.isValid = false;
-    res.missing.push('location');
-  }
-  if (!body.location.name) {
-    res.isValid = false;
-    res.missing.push('location.name');
-  }
-  // if (!body.location.address) {
+  // if (!body.location && !body.locations) {
   //   res.isValid = false;
-  //   res.missing.push('location.address');
+  //   res.missing.push('location');
   // }
-  if (!body.location.postCode) {
-    res.isValid = false;
-    res.missing.push('location.postCode');
+  if (body.location) {
+    body.location._id = body.location.id ? body.location.id : (new ObjectId()).toHexString();
+    delete body.location.id;
+    if (!body.location.name) {
+      res.isValid = false;
+      res.missing.push('location.name');
+    }
+    if (!body.location.postCode) {
+      res.isValid = false;
+      res.missing.push('location.postCode');
+    }
   }
-  // if (!body.location.phoneNumber) {
-  //   res.isValid = false;
-  //   res.missing.push('location.phoneNumber');
-  // }
-  if (!body.contact) {
+  if (body.locations) {
+    body.locations.forEach((l, idx) => {
+      l._id = l.id ? new ObjectId(l.id) : (new ObjectId()).toHexString();
+      delete l.id;
+      if (!l.name) {
+        res.isValid = false;
+        res.missing.push(`locations.${idx}.name`);
+      }
+      if (!l.postCode) {
+        res.isValid = false;
+        res.missing.push(`locations.${idx}.postCode`);
+      }
+    });
+  }
+
+  if (!body.contact && !body.contacts) {
     res.isValid = false;
     res.missing.push('contact');
   }
-  if (!body.contact.name) {
-    res.isValid = false;
-    res.missing.push('contact.name');
+  if (body.contact) {
+    body.contact._id = body.contact.id ? body.contact.id : (new ObjectId()).toHexString();
+    delete body.contact.id;
+    if (!body.contact.name) {
+      res.isValid = false;
+      res.missing.push('contact.name');
+    }
+    if (!body.contact.role) {
+      res.isValid = false;
+      res.missing.push('contact.role');
+    }
   }
-  if (!body.contact.role) {
+
+  if (body.contacts) {
+    body.contacts.forEach((c, idx) => {
+      c._id = c.id ? new ObjectId(c.id) : (new ObjectId()).toHexString();
+      delete c.id;
+      if (!c.name) {
+        res.isValid = false;
+        res.missing.push(`contacts.${idx}.name`);
+      }
+      if (!c.role) {
+        res.isValid = false;
+        res.missing.push(`contacts.${idx}.role`);
+      }
+    });
+  }
+
+  let app = Shared.validateAppProperties(collectionName, body);
+  if (app.isValid === false) {
     res.isValid = false;
-    res.missing.push('contact.role');
+    res.invalid = res.invalid.concat(app.invalid);
+    res.missing = res.missing.concat(app.missing);
   }
 
   return res;
@@ -270,83 +315,70 @@ schema.statics.validate = body => {
  * @param {Object} body - body passed through from a POST request
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
-const __addCompany = body => {
+const __add = body => {
   return prev => {
-    // Logging.logDebug(body);
-    // const loc = new Model.Location({
-    //   name: body.location.name,
-    //   address: Model.Address.create(body.location.address),
-    //   phoneNumber: body.location.phoneNumber
-    // });
-
-    // Logging.logDebug(loc.address.details);
-
-    // const contact = Model.Contact.create(body.contact);
-
-    const md = new ModelDef({
-      name: body.name,
-      companyType: body.companyType,
-      parentCompanyId: body.parentCompanyId,
-      childType: body.childType,
-      siccode: body.siccode,
-      reference: body.reference,
-      description: body.description,
-      source: body.source,
-      flags: body.flags,
-      memberships: body.memberships,
-      companyNumber: body.number ? body.number : body.companyNumber,
-      numEmployees: body.numEmployees,
-      employeeBand: body.employeeBand,
-      annualTurnover: body.annualTurnover,
-      turnoverBand: body.turnoverBand,
-      profitPreTax: body.profitPreTax,
-      netWorth: body.netWorth,
-      financeAnnualEndDate: body.financeAnnualEndDate,
-      vatExempt: body.vatExempt,
-      vatRegistrationNumber: body.vatRegistrationNumber,
-      sector: body.sector,
-      subsector: body.subsector,
-      website: body.website,
-      locations: [body.location],
-      contacts: [body.contact],
-      notes: body.notes,
-      _app: Model.authApp._id
-    });
-
-    if (body.id) {
-      md._id = body.id;
+    let contacts = [];
+    let locations = [];
+    if (body.locations) {
+      locations = body.locations;
+    } else if (body.location) {
+      locations = [body.location];
+    }
+    if (body.contacts) {
+      contacts = body.contacts;
+    } else if (body.contact) {
+      contacts = [body.contact];
     }
 
-    md.primaryContact = md.contacts[0]._id;
-    md.primaryLocation = md.locations[0]._id;
+    const md = {
+      name: body.name,
+      companyType: body.companyType ? body.companyType : '',
+      parentCompanyId: body.parentCompanyId ? body.parentCompanyId : undefined,
+      childType: body.childType ? body.childType : '',
+      salesStatus: body.salesStatus ? body.salesStatus : '',
+      siccode: body.siccode ? body.siccode : '',
+      reference: body.reference ? body.reference : '',
+      description: body.description ? body.description : '',
+      source: body.source ? body.source : '',
+      flags: body.flags ? body.flags : '',
+      memberships: body.memberships ? body.memberships : '',
+      companyNumber: body.number ? body.number : body.companyNumber,
+      numEmployees: body.numEmployees ? body.numEmployees : 0,
+      employeeBand: body.employeeBand ? body.employeeBand : '1-4',
+      annualTurnover: body.annualTurnover ? body.annualTurnover : 0,
+      turnoverBand: body.turnoverBand ? body.turnoverBand : '0-99k',
+      profitPreTax: body.profitPreTax ? body.profitPreTax : 0,
+      netWorth: body.netWorth ? body.netWorth : 0,
+      financeAnnualEndDate: body.financeAnnualEndDate,
+      vatExempt: body.vatExempt ? body.vatExempt : false,
+      vatRegistrationNumber: body.vatRegistrationNumber ? body.vatRegistrationNumber : '',
+      sector: body.sector ? body.sector : '',
+      subsector: body.subsector ? body.subsector : '',
+      website: body.website ? body.website : '',
+      locations: locations,
+      contacts: contacts,
+      _app: Model.authApp._id,
+      notes: body.notes ? body.notes : [],
+      metadata: []
+    };
 
-    return Promise.resolve(prev.concat([md.toObject()]));
+    if (body.id) {
+      md._id = new ObjectId(body.id);
+    }
+
+    if (md.contacts.length) {
+      md.primaryContact = md.contacts[0]._id;
+    }
+    if (md.locations.length) {
+      md.primaryLocation = md.locations[0]._id;
+    }
+
+    const validated = Shared.applyAppProperties(collectionName, body);
+    return prev.concat([Object.assign(md, validated)]);
   };
 };
 
-schema.statics.add = body => {
-  if (body instanceof Array === false) {
-    body = [body];
-  }
-
-  return body.reduce((promise, item) => {
-    return promise
-      .then(__addCompany(item))
-      .catch(Logging.Promise.logError());
-  }, Promise.resolve([]))
-  .then(companies => {
-    return new Promise((resolve, reject) => {
-      ModelDef.collection.insert(companies, (err, res) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        resolve(res.ops.map(c => c._id));
-      });
-    });
-  });
-};
+schema.statics.add = Shared.add(collection, __add);
 
 /* ********************************************************************************
  *
@@ -355,13 +387,8 @@ schema.statics.add = body => {
  *********************************************************************************/
 
 schema.virtual('details').get(function() {
-  // Logging.logDebug(this.locations[this.primaryLocation].details);
-
   const _locations = this.locations.map(l => {
-    // const _address = addressit(l.address, {locale: 'en-GB'});
-    // const regions = _address.regions;
-    Logging.log(l.address, Logging.Constants.LogLevel.SILLY);
-    // Logging.log(_address, Logging.Constants.LogLevel.DEBUG);
+    Logging.logSilly(l.address);
     return {
       id: l._id,
       name: l.name,
@@ -371,33 +398,11 @@ schema.virtual('details').get(function() {
       county: l.county,
       postCode: l.postCode,
       phoneNumber: l.phoneNumber
-      // address: {
-      //   full: l.address,
-      //   unit: _address.unit,
-      //   number: _address.number,
-      //   street: _address.street,
-      //   town: regions.length >= 2 ? regions.shift() : '',
-      //   city: regions.length >= 1 ? regions.shift() : '',
-      //   county: _address.state,
-      //   postcode: _address.postalcode
-      // }
     };
   });
 
   const _contacts = this.contacts.map(c => {
-    // const name = humanname.parse(c.name);
-    // const formalName =
-    //   `${name.title ? name.title + ' ' : ''}${name.firstName} ${name.initials ? name.initials + ' ' : ''}${name.lastName}`;
     return {
-      // name: {
-      //   full: c.name,
-      //   formal: formalName,
-      //   title: name.title,
-      //   forename: name.firstName,
-      //   initials: name.initials,
-      //   surname: name.lastName,
-      //   suffix: name.suffix
-      // },
       id: c._id,
       name: c.name,
       tag: '',
@@ -413,6 +418,7 @@ schema.virtual('details').get(function() {
     companyType: this.companyType,
     parentCompanyId: this.parentCompanyId,
     childType: this.childType,
+    salesStatus: this.salesStatus,
     description: this.description,
     siccode: this.siccode,
     reference: this.reference,
@@ -455,7 +461,7 @@ schema.virtual('details').get(function() {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(name|parentCompanyId|childType|companyType|reference|description|siccode|numEmployees|annualTurnover|profitPreTax|financeEndDate|netWorth|source|memberships|flags|vatExempt|vatRegistrationNumber|companyNumber)$': {type: 'scalar', values: []}, // eslint-disable-line max-len
+  '^(name|parentCompanyId|childType|companyType|salesStatus|reference|description|siccode|numEmployees|annualTurnover|profitPreTax|financeEndDate|netWorth|source|memberships|flags|vatExempt|vatRegistrationNumber|companyNumber)$': {type: 'scalar', values: []}, // eslint-disable-line max-len
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
@@ -472,11 +478,11 @@ const PATH_CONTEXT = {
   '^locations$': {type: 'vector-add', values: []},
   '^locations.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^locations.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|address|county|city|postCode)$': {type: 'scalar', values: []}
+  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|email|address|county|city|postCode)$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
 
 /* ********************************************************************************
  *
@@ -517,8 +523,6 @@ schema.statics.rmAll = () => {
   return ModelDef.remove({});
 };
 
-const collection = Model.mongoDb.collection('companies');
-
 /**
  * @return {Promise} - resolves to an array of Companies
  */
@@ -529,7 +533,7 @@ schema.statics.findAll = () => {
     return ModelDef.find({});
   }
 
-  return collection.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 /**
@@ -551,6 +555,7 @@ schema.statics.findAllById = ids => {
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
+schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
 
 /* ********************************************************************************
  *

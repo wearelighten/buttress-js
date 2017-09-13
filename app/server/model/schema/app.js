@@ -54,7 +54,8 @@ schema.add({
   _token: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Token'
-  }
+  },
+  __schema: []
 });
 
 var ModelDef = null;
@@ -143,6 +144,16 @@ schema.statics.add = body => {
     .then(app => {
       return Promise.resolve({app: app, token: _token});
     });
+};
+
+/**
+ * @param {object} schema - schema object for the app
+ * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
+ */
+schema.methods.updateSchema = function(schema) {
+  this.__schema = schema;
+
+  return this.save();
 };
 
 /**

@@ -63,7 +63,7 @@ function _authenticateToken(req, res, next) {
   req.session = null; // potentially prevents a write
   req.timer = _timer;
   req.timer.start();
-  Logging.logVerbose(`START ${req.path}`);
+  Logging.logVerbose(`START [${req.method.toUpperCase()}] ${req.path}`);
 
   if (!req.query.token) {
     Logging.log('EAUTH: Missing Token', Logging.Constants.LogLevel.ERR);

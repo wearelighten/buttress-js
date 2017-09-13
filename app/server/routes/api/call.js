@@ -12,7 +12,6 @@
 
 const Route = require('../route');
 const Model = require('../../model');
-const Helpers = require('../../helpers');
 const Logging = require('../../logging');
 
 let routes = [];
@@ -37,6 +36,27 @@ class GetCallList extends Route {
   }
 }
 routes.push(GetCallList);
+
+/**
+ * @class GetAllMetadata
+ */
+class GetAllMetadata extends Route {
+  constructor() {
+    super('call/metadata/all', 'GET ALL CALL METADATA');
+    this.verb = Route.Constants.Verbs.GET;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.GET;
+  }
+
+  _validate() {
+    return Promise.resolve(true);
+  }
+
+  _exec() {
+    return Model.Call.getAllMetadata();
+  }
+}
+routes.push(GetAllMetadata);
 
 /**
  * @class GetCall
@@ -100,9 +120,7 @@ class AddCall extends Route {
   }
 
   _exec() {
-    return Model.Call.add(this.req.body)
-      .then(arr => arr[0])
-      .then(Helpers.Promise.prop('details'));
+    return Model.Call.add(this.req.body);
   }
 }
 routes.push(AddCall);

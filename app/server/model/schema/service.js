@@ -3,8 +3,8 @@
 /**
  * ButtressJS - Realtime datastore for business software
  *
- * @file opportunity.js
- * @description Opportunity model definition.
+ * @file service.js
+ * @description Service model definition.
  * @module Model
  * @exports model, schema, constants
  * @author Chris Bates-Keegan
@@ -13,9 +13,9 @@
 
 const mongoose = require('mongoose');
 const ObjectId = require('mongodb').ObjectId;
+const Shared = require('../shared');
 const Model = require('../');
 const Logging = require('../../logging');
-const Shared = require('../shared');
 const Sugar = require('sugar');
 
 /* ********************************************************************************
@@ -25,7 +25,7 @@ const Sugar = require('sugar');
  **********************************************************************************/
 let schema = new mongoose.Schema();
 let ModelDef = null;
-const collectionName = 'opportunities';
+const collectionName = 'services';
 const collection = Model.mongoDb.collection(collectionName);
 
 /* ********************************************************************************
@@ -34,48 +34,6 @@ const collection = Model.mongoDb.collection(collectionName);
  *
  **********************************************************************************/
 let constants = {};
-const types = [
-  'new-business',
-  'renewal'
-];
-const Type = {
-  NEW_BUSINESS: types[0],
-  RENEWAL: types[1]
-};
-
-constants.Type = Type;
-
-const statuses = [
-  'pending',
-  'in-progress',
-  'deferred',
-  'lost',
-  'won'
-];
-const Status = {
-  PENDING: statuses[0],
-  IN_PROGRESS: statuses[1],
-  DEFERRED: statuses[2],
-  LOST: statuses[3],
-  WON: statuses[4]
-};
-
-constants.Status = Status;
-
-const qualification = [
-  'unqualified',
-  'qualified-weak',
-  'qualified-strong'
-];
-const Qualification = {
-  UNQUALIFIED: qualification[0],
-  QUALIFIED_WEAK: qualification[1],
-  QUALIFIED_STRONG: qualification[2],
-  DEAD: statuses[3],
-  WON: statuses[4]
-};
-
-constants.Qualification = Qualification;
 
 /* ********************************************************************************
  *
@@ -83,60 +41,31 @@ constants.Qualification = Qualification;
  *
  **********************************************************************************/
 schema.add({
-  name: String,
-  opportunityType: {
-    type: String,
-    enum: types
-  },
-  status: {
-    type: String,
-    enum: statuses
-  },
-  qualification: {
-    type: String,
-    enum: qualification
-  },
   _app: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'App'
   },
-  _company: {
+  name: String,
+  description: String,
+  reference: String,
+  tag: String,
+  serviceType: String,
+  salesStatus: String,
+  status: String,
+  companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company'
   },
-  _owner: {
+  ownerUserId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  _assignedTo: {
+  assignedToUserId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  relatedEntity: {
-    entityType: {
-      type: String
-    },
-    id: {
-      type: mongoose.Schema.Types.ObjectId
-    }
-  },
-  value: {
-    type: Number,
-    default: 0
-  },
-  confidence: {
-    type: Number,
-    default: 0
-  },
-  dates: {
-    opened: {
-      type: Date,
-      default: Sugar.Date.create
-    },
-    updated: [Date],
-    closed: {
-      type: Date
-    }
+  locationId: {
+    type: mongoose.Schema.Types.ObjectId
   },
   metadata: [{key: String, value: String}],
   notes: [{
@@ -161,10 +90,15 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
-    type: this.opportunityType,
-    userId: this._user && this._user._id ? this._user._id : this._user,
-    entityId: this.entityId,
-    dateCreated: this.dateCreated,
+    description: this.description,
+    reference: this.reference,
+    tag: this.tag,
+    serviceType: this.serviceType,
+    salesStatus: this.salesStatus,
+    status: this.status,
+    companyId: this.companyId,
+    ownerUserId: this.ownerUserId,
+    assignedToUserId: this.assignedToUserId,
     notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
   };
 });
@@ -185,25 +119,17 @@ const __doValidation = body => {
     invalid: []
   };
 
+  if (!body.companyId) {
+    res.isValid = false;
+    res.missing.push('companyId');
+  }
   if (!body.name) {
     res.isValid = false;
     res.missing.push('name');
   }
-  if (!body.userId) {
+  if (!body.serviceType) {
     res.isValid = false;
-    res.missing.push('userId');
-  }
-  if (!body.type) {
-    res.isValid = false;
-    res.missing.push('type');
-  }
-  if (types.indexOf(body.type) === -1) {
-    res.isValid = false;
-    res.invalid.push('type');
-  }
-  if (body.type !== Type.CHAT && !body.entityId) {
-    res.isValid = false;
-    res.missing.push('entityId');
+    res.missing.push('serviceType');
   }
 
   let app = Shared.validateAppProperties(collectionName, body);
@@ -233,10 +159,16 @@ const __add = body => {
   return prev => {
     const md = {
       _app: Model.authApp._id,
+      ownerUserId: body.ownerUserId ? new ObjectId(body.ownerUserId) : undefined,
+      assignedToUserId: body.assignedToUserId ? new ObjectId(body.assignedToUserId) : undefined,
+      companyId: body.companyId,
       name: body.name,
-      _user: body.userId,
-      type: body.type,
-      entityId: body.entityId,
+      description: body.description,
+      reference: body.reference ? body.reference : '',
+      tag: body.tag ? body.tag : '',
+      serviceType: body.serviceType,
+      salesStatus: body.salesStatus,
+      status: body.status,
       notes: body.notes ? body.notes : [],
       metadata: []
     };
@@ -253,15 +185,28 @@ const __add = body => {
 schema.statics.add = Shared.add(collection, __add);
 
 /**
+ * @param {String} id - Object id as a hex string
+ * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+ */
+schema.statics.getFromId = id => {
+  return new Promise(resolve => {
+    collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
+      if (err) throw err;
+      doc.id = doc._id;
+      delete doc._id;
+      resolve(doc);
+    });
+  });
+};
+/**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
-  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  return ModelDef.find({_app: Model.authApp._id});
+  return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
 schema.statics.rmAll = () => {
-  return ModelDef.remove({});
+  return ModelDef.remove({_app: Model.authApp._id});
 };
 
 /* ********************************************************************************
@@ -271,6 +216,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
+  '^(ownerUserId|assignedToUserId|name|description|tag|reference|serviceType|companyId|locationId|salesStatus|status)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
@@ -292,11 +238,25 @@ schema.methods.rm = function() {
   return ModelDef.remove({_id: this._id});
 };
 
+/**
+ * @param {Array} ids - Array of company ids to delete
+ * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+ */
+schema.statics.rmBulk = ids => {
+  Logging.logSilly(`DELETING: ${ids}`);
+  return ModelDef.remove({_id: {$in: ids}}).exec();
+};
+
+schema.statics.rmAll = () => {
+  return ModelDef.remove({});
+};
+
 /* ********************************************************************************
  *
  * METADATA
  *
  **********************************************************************************/
+
 schema.methods.addOrUpdateMetadata = Shared.addOrUpdateMetadata;
 schema.methods.findMetadata = Shared.findMetadata;
 schema.methods.rmMetadata = Shared.rmMetadata;
@@ -307,8 +267,7 @@ schema.statics.getAllMetadata = Shared.getAllMetadata(collection);
  * EXPORTS
  *
  **********************************************************************************/
-
-ModelDef = mongoose.model('Opportunity', schema);
+ModelDef = mongoose.model('Service', schema);
 
 module.exports.constants = constants;
 module.exports.schema = schema;

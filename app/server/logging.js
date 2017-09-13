@@ -20,7 +20,6 @@ proxyquire('winston-logrotate', {
   winston: winston
 });
 const Config = require('./config');
-require('sugar');
 
 /**
  *
