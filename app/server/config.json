@@ -22,7 +22,7 @@
       "title": "ButtressJS",
       "description": "Realtime datastore for business software",
       "code": "buttressjs",
-      "version": "1.0.5",
+      "version": "1.5.0",
       "protocol": "http",
       "host": "%BUTTRESS_HOST_URL%",
       "apiPrefix": "/api/v1/"
