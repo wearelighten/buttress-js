@@ -2,13 +2,21 @@
 Realtime datastore for business software.
 
 # What's New
-### version: 1.0.5
+### version: 1.5.0
+- Added App schema for flexible extension of existing models via JSON notation
+- Added new service Model & API
+- Added support for addition/update of arrays of objects
+- Import optimisations and support for bulk operations add/delete
+- Various model properties changes and fixes
+- Added Sugar for date management
+
+### 1.0.5
 -  API compatibility fixes
 
 ### 1.0.2
 - Patch bug fix
 
-### version: 1.0.0
+### 1.0.0
 - Production Ready.
 - Scalable socket and rest processes
 
