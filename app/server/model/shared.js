@@ -577,12 +577,20 @@ let _doUpdate = (entity, body, pathContext, config) => {
 
     }
 
-    return entity.save().then(() => {
-      return prev.concat([{
-        type: updateType,
-        path: body.path,
-        value: response
-      }]);
+    return new Promise((resolve, reject) => {
+      entity.save(err => {
+        if (err) {
+          err.statusCode = 400;
+          reject(err);
+          return;
+        }
+        prev.push({
+          type: updateType,
+          path: body.path,
+          value: response
+        });
+        resolve(prev);
+      });
     });
   };
 };
@@ -652,8 +660,7 @@ module.exports.updateByPath = function(pathContext, collection) {
       const config = flattenedSchema === false ? false : flattenedSchema[update.path];
       return promise
         .then(_doUpdate(this, update, extendedPathContext, config));
-    }, Promise.resolve([]))
-      .catch(Logging.Promise.logError());
+    }, Promise.resolve([]));
   };
 };
 
