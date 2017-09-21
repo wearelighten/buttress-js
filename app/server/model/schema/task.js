@@ -78,10 +78,6 @@ constants.Status = Status;
  **********************************************************************************/
 schema.add({
   name: String,
-  taskType: {
-    type: String,
-    enum: types
-  },
   status: {
     type: String,
     enum: status,
@@ -143,7 +139,7 @@ schema.virtual('details').get(function() {
   return {
     id: this._id,
     name: this.name,
-    type: this.taskType,
+    type: this.type,
     status: this.status,
     ownerId: this.ownerId && this.ownerId._id ? this.ownerId._id : this.ownerId,
     assignedToId: this.assignedToId && this.assignedToId._id ? this.assignedToId._id : this.assignedToId,
@@ -181,10 +177,6 @@ const __doValidation = body => {
   if (!body.name) {
     res.isValid = false;
     res.missing.push('name');
-  }
-  if (body.taskType !== Type.FREE && !body.entityId) {
-    res.isValid = false;
-    res.missing.push('entityId');
   }
   if (!body.dueDate) {
     res.isValid = false;
@@ -225,7 +217,7 @@ const __add = body => {
       ownerId: body.ownerId,
       assignedToId: body.assignedToId,
       name: body.name,
-      taskType: body.type,
+      type: body.type,
       entityId: body.entityId,
       reminder: {status: 'pending', snoozed: null},
       dateCreated: body.dateCreated ? body.dateCreated : new Date(),
