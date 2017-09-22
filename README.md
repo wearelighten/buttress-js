@@ -2,6 +2,12 @@
 Realtime datastore for business software.
 
 # What's New
+### version: 1.5.2
+- Fixed: error with objectid's in arrays with schemas
+- Fixed: mongoose validation errors now return a 400
+- Removed references to taskType in task collection
+- Fixed: if there's no contact primaryContact is null not undefined
+
 ### version: 1.5.0
 - Added App schema for flexible extension of existing models via JSON notation
 - Added new service Model & API
