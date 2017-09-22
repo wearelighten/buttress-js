@@ -15,6 +15,7 @@ const Logging = require('../logging');
 const Model = require('./index');
 const ObjectId = require('mongodb').ObjectId;
 const Sugar = require('sugar');
+const mongoose = require('mongoose');
 
 /* ********************************************************************************
  *
@@ -228,7 +229,7 @@ const __validateProp = (prop, config) => {
     case 'id':
       if (type === 'string') {
         try {
-          prop.value = new ObjectId(prop.value);
+          prop.value = mongoose.Types.ObjectId(prop.value); // eslint-disable-line new-cap
         } catch (e) {
           valid = false;
           return;
@@ -529,7 +530,8 @@ let _doUpdate = (entity, body, pathContext, config) => {
           delete body.value.id;
         }
         if (config && config.__schema) {
-          vector.push(__populateObject(config.__schema, __getFlattenedBody(body.value)));
+          const fb = __getFlattenedBody(body.value);
+          vector.push(__populateObject(config.__schema, fb));
         } else {
           vector.push(body.value);
         }
@@ -577,12 +579,20 @@ let _doUpdate = (entity, body, pathContext, config) => {
 
     }
 
-    return entity.save().then(() => {
-      return prev.concat([{
-        type: updateType,
-        path: body.path,
-        value: response
-      }]);
+    return new Promise((resolve, reject) => {
+      entity.save(err => {
+        if (err) {
+          err.statusCode = 400;
+          reject(err);
+          return;
+        }
+        prev.push({
+          type: updateType,
+          path: body.path,
+          value: response
+        });
+        resolve(prev);
+      });
     });
   };
 };
@@ -652,8 +662,7 @@ module.exports.updateByPath = function(pathContext, collection) {
       const config = flattenedSchema === false ? false : flattenedSchema[update.path];
       return promise
         .then(_doUpdate(this, update, extendedPathContext, config));
-    }, Promise.resolve([]))
-      .catch(Logging.Promise.logError());
+    }, Promise.resolve([]));
   };
 };
 
