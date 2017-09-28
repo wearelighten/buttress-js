@@ -553,8 +553,12 @@ let _doUpdate = (entity, body, pathContext, config) => {
         body.path = params.join('.');
         response = {numRemoved: 1, index: index};
       } break;
-      case 'scalar':
-        if (body.value instanceof Date === false && body.value instanceof Object === true) {
+      case 'scalar': {
+        const isDate = body.value instanceof Date;
+        const isMongoDbObjectId = body.value instanceof ObjectId;
+        const isMongooseObjectId = body.value instanceof mongoose.Types.ObjectId;
+        const isObjectId = isMongoDbObjectId || isMongooseObjectId;
+        if (body.value instanceof Object === true && isDate === false && isObjectId === false) {
           for (let field in body.value) {
             if (!Object.prototype.hasOwnProperty.call(body.value, field)) {
               continue;
@@ -575,8 +579,7 @@ let _doUpdate = (entity, body, pathContext, config) => {
           delete response._id;
         }
         Logging.logSilly(response);
-        break;
-
+      } break;
     }
 
     return new Promise((resolve, reject) => {
