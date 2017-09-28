@@ -2,7 +2,7 @@
 Realtime datastore for business software.
 
 # What's New
-### version: 1.5.2
+### version: 1.5.3
 - Fixed: error with objectid's in arrays with schemas
 - Fixed: mongoose validation errors now return a 400
 - Removed references to taskType in task collection
