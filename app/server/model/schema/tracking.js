@@ -135,6 +135,7 @@ const __add = body => {
     prev.push({
       _app: Model.authApp._id,
       userId: Model.authUser._id,
+      timestamp: Sugar.Date.create(),
       name: body.name,
       type: body.type,
       interaction: body.interaction,
