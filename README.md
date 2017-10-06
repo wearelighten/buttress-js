@@ -2,6 +2,9 @@
 Realtime datastore for business software.
 
 # What's New
+### version: 1.5.4
+- Added: tracking API for logging errors, activity and debug logs
+
 ### version: 1.5.3
 - Fixed: error with objectid's in arrays with schemas
 - Fixed: mongoose validation errors now return a 400
