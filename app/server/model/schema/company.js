@@ -281,14 +281,14 @@ const __doValidation = body => {
     body.contacts.forEach((c, idx) => {
       c._id = c.id ? new ObjectId(c.id) : (new ObjectId()).toHexString();
       delete c.id;
-      if (!c.name) {
-        res.isValid = false;
-        res.missing.push(`contacts.${idx}.name`);
-      }
-      if (!c.role) {
-        res.isValid = false;
-        res.missing.push(`contacts.${idx}.role`);
-      }
+      // if (!c.name) {
+      //   res.isValid = false;
+      //   res.missing.push(`contacts.${idx}.name`);
+      // }
+      // if (!c.role) {
+      //   res.isValid = false;
+      //   res.missing.push(`contacts.${idx}.role`);
+      // }
     });
   }
 
