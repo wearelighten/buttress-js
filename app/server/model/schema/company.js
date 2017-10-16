@@ -267,14 +267,14 @@ const __doValidation = body => {
   if (body.contact) {
     body.contact._id = body.contact.id ? body.contact.id : (new ObjectId()).toHexString();
     delete body.contact.id;
-    if (!body.contact.name) {
-      res.isValid = false;
-      res.missing.push('contact.name');
-    }
-    if (!body.contact.role) {
-      res.isValid = false;
-      res.missing.push('contact.role');
-    }
+    // if (!body.contact.name) {
+    //   res.isValid = false;
+    //   res.missing.push('contact.name');
+    // }
+    // if (!body.contact.role) {
+    //   res.isValid = false;
+    //   res.missing.push('contact.role');
+    // }
   }
 
   if (body.contacts) {
