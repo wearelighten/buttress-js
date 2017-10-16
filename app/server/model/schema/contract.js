@@ -79,12 +79,6 @@ schema.add({
   entityId: String,
   entityType: String,
   references: [String],
-  services: [{
-    serviceId: mongoose.Schema.Types.ObjectId,
-    status: String,
-    startDate: Date,
-    endDate: Date
-  }],
   status: {
     type: String,
     enum: status,
@@ -168,7 +162,6 @@ schema.virtual('details').get(function() {
     entityId: this.entityId,
     entityType: this.entityType,
     references: this.references,
-    services: this.services,
     contractType: this.contractType,
     contractMode: this.contractMode,
     status: this.status,
@@ -252,7 +245,6 @@ const __add = body => {
       entityId: body.entityId,
       entityType: body.entityType,
       references: body.references,
-      services: body.services,
       parties: body.parties,
       documentIds: body.documentIds,
       executionDate: body.executionDate,
@@ -309,9 +301,6 @@ const PATH_CONTEXT = {
   '^documentIds$': {type: 'vector-add', values: []},
   '^documentIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^documentIds.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^services$': {type: 'vector-add', values: []},
-  '^services.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^services.([0-9]{1,3}).(serviceId|startDate|endDate|status)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
   '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
