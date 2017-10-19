@@ -159,7 +159,8 @@ schema.add({
     region: String,
     postCode: String,
     phoneNumber: String,
-    email: String
+    email: String,
+    site: String
   }],
   primaryContact: String,
   contacts: [{
@@ -399,7 +400,8 @@ schema.virtual('details').get(function() {
       city: l.city,
       county: l.county,
       postCode: l.postCode,
-      phoneNumber: l.phoneNumber
+      phoneNumber: l.phoneNumber,
+      site: l.site
     };
   });
 
