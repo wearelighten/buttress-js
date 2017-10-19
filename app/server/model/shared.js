@@ -531,9 +531,9 @@ let _doUpdate = (entity, body, pathContext, config) => {
         }
         if (config && config.__schema) {
           const fb = __getFlattenedBody(body.value);
-          vector.push(__populateObject(config.__schema, fb), {strict: false});
+          vector.push(__populateObject(config.__schema, fb));
         } else {
-          vector.push(body.value, {strict: false});
+          vector.push(body.value);
         }
         entity.markModified(body.path);
 
