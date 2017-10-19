@@ -23,7 +23,7 @@ const Sugar = require('sugar');
  * LOCALS
  *
  **********************************************************************************/
-const schema = new mongoose.Schema();
+const schema = new mongoose.Schema({}, {strict: false});
 let ModelDef = null;
 const constants = {};
 const collectionName = 'companies';
@@ -203,7 +203,7 @@ schema.add({
       default: Sugar.Date.create
     }
   }]
-}, {strict: false});
+});
 
 /* ********************************************************************************
  *
