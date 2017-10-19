@@ -476,11 +476,7 @@ const PATH_CONTEXT = {
   '^contacts$': {type: 'vector-add', values: []},
   '^contacts.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^contacts.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^contacts.([0-9]{1,3}).(email|tag|directDial|mobile|role|responsibility|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []},
-  '^locations$': {type: 'vector-add', values: []},
-  '^locations.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^locations.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|email|address|county|city|postCode)$': {type: 'scalar', values: []}
+  '^contacts.([0-9]{1,3}).(email|tag|directDial|mobile|role|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
