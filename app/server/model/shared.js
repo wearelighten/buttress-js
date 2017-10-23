@@ -137,7 +137,7 @@ const __getFlattenedBody = body => {
     // if (/^__/.test(property)) continue; // ignore internals
     path.push(property);
 
-    if (typeof parent[property] !== 'object' || Array.isArray(parent[property]) || parent[property] === null) {
+    if (typeof parent[property] !== 'object' || parent[property] instanceof Date || Array.isArray(parent[property]) || parent[property] === null) {
       flattened.push({
         path: path.join('.'),
         value: parent[property]

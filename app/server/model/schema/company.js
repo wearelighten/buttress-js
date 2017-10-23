@@ -23,7 +23,7 @@ const Sugar = require('sugar');
  * LOCALS
  *
  **********************************************************************************/
-const schema = new mongoose.Schema();
+const schema = new mongoose.Schema({}, {strict: false});
 let ModelDef = null;
 const constants = {};
 const collectionName = 'companies';
@@ -159,7 +159,8 @@ schema.add({
     region: String,
     postCode: String,
     phoneNumber: String,
-    email: String
+    email: String,
+    site: String
   }],
   primaryContact: String,
   contacts: [{
@@ -267,28 +268,28 @@ const __doValidation = body => {
   if (body.contact) {
     body.contact._id = body.contact.id ? body.contact.id : (new ObjectId()).toHexString();
     delete body.contact.id;
-    if (!body.contact.name) {
-      res.isValid = false;
-      res.missing.push('contact.name');
-    }
-    if (!body.contact.role) {
-      res.isValid = false;
-      res.missing.push('contact.role');
-    }
+    // if (!body.contact.name) {
+    //   res.isValid = false;
+    //   res.missing.push('contact.name');
+    // }
+    // if (!body.contact.role) {
+    //   res.isValid = false;
+    //   res.missing.push('contact.role');
+    // }
   }
 
   if (body.contacts) {
     body.contacts.forEach((c, idx) => {
       c._id = c.id ? new ObjectId(c.id) : (new ObjectId()).toHexString();
       delete c.id;
-      if (!c.name) {
-        res.isValid = false;
-        res.missing.push(`contacts.${idx}.name`);
-      }
-      if (!c.role) {
-        res.isValid = false;
-        res.missing.push(`contacts.${idx}.role`);
-      }
+      // if (!c.name) {
+      //   res.isValid = false;
+      //   res.missing.push(`contacts.${idx}.name`);
+      // }
+      // if (!c.role) {
+      //   res.isValid = false;
+      //   res.missing.push(`contacts.${idx}.role`);
+      // }
     });
   }
 
@@ -399,7 +400,8 @@ schema.virtual('details').get(function() {
       city: l.city,
       county: l.county,
       postCode: l.postCode,
-      phoneNumber: l.phoneNumber
+      phoneNumber: l.phoneNumber,
+      site: l.site
     };
   });
 
@@ -476,11 +478,11 @@ const PATH_CONTEXT = {
   '^contacts$': {type: 'vector-add', values: []},
   '^contacts.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^contacts.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^contacts.([0-9]{1,3}).(email|tag|directDial|mobile|role|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []},
+  '^contacts.([0-9]{1,3}).(email|tag|directDial|responsibility|mobile|role|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []},
   '^locations$': {type: 'vector-add', values: []},
   '^locations.([0-9]{1,3})$': {type: 'scalar', values: []},
   '^locations.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|email|address|county|city|postCode)$': {type: 'scalar', values: []}
+  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|site|email|address|county|city|postCode)$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
