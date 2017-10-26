@@ -550,7 +550,7 @@ let _doUpdate = (entity, body, pathContext, config) => {
         const index = params.pop();
         const vector = entity.get(params.join('.'));
         vector.splice(index, 1);
-        entity.markModified(body.path);
+        entity.markModified(params.join('.'));
         body.path = params.join('.');
         response = {numRemoved: 1, index: index};
       } break;
