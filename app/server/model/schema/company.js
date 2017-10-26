@@ -234,64 +234,64 @@ const __doValidation = body => {
   //   res.isValid = false;
   //   res.missing.push('location');
   // }
-  if (body.location) {
-    body.location._id = body.location.id ? body.location.id : (new ObjectId()).toHexString();
-    delete body.location.id;
-    if (!body.location.name) {
-      res.isValid = false;
-      res.missing.push('location.name');
-    }
-    if (!body.location.postCode) {
-      res.isValid = false;
-      res.missing.push('location.postCode');
-    }
-  }
-  if (body.locations) {
-    body.locations.forEach((l, idx) => {
-      l._id = l.id ? l.id : (new ObjectId()).toHexString();
-      delete l.id;
-      if (!l.name) {
-        res.isValid = false;
-        res.missing.push(`locations.${idx}.name`);
-      }
-      if (!l.postCode) {
-        res.isValid = false;
-        res.missing.push(`locations.${idx}.postCode`);
-      }
-    });
-  }
+  // if (body.location) {
+  //   body.location._id = body.location.id ? body.location.id : (new ObjectId()).toHexString();
+  //   delete body.location.id;
+  //   if (!body.location.name) {
+  //     res.isValid = false;
+  //     res.missing.push('location.name');
+  //   }
+  //   if (!body.location.postCode) {
+  //     res.isValid = false;
+  //     res.missing.push('location.postCode');
+  //   }
+  // }
+  // if (body.locations) {
+  //   body.locations.forEach((l, idx) => {
+  //     l._id = l.id ? l.id : (new ObjectId()).toHexString();
+  //     delete l.id;
+  //     if (!l.name) {
+  //       res.isValid = false;
+  //       res.missing.push(`locations.${idx}.name`);
+  //     }
+  //     if (!l.postCode) {
+  //       res.isValid = false;
+  //       res.missing.push(`locations.${idx}.postCode`);
+  //     }
+  //   });
+  // }
 
-  if (!body.contact && !body.contacts) {
-    res.isValid = false;
-    res.missing.push('contact');
-  }
-  if (body.contact) {
-    body.contact._id = body.contact.id ? body.contact.id : (new ObjectId()).toHexString();
-    delete body.contact.id;
-    // if (!body.contact.name) {
-    //   res.isValid = false;
-    //   res.missing.push('contact.name');
-    // }
-    // if (!body.contact.role) {
-    //   res.isValid = false;
-    //   res.missing.push('contact.role');
-    // }
-  }
+  // if (!body.contact && !body.contacts) {
+  //   res.isValid = false;
+  //   res.missing.push('contact');
+  // }
+  // if (body.contact) {
+  //   body.contact._id = body.contact.id ? body.contact.id : (new ObjectId()).toHexString();
+  //   delete body.contact.id;
+  //   // if (!body.contact.name) {
+  //   //   res.isValid = false;
+  //   //   res.missing.push('contact.name');
+  //   // }
+  //   // if (!body.contact.role) {
+  //   //   res.isValid = false;
+  //   //   res.missing.push('contact.role');
+  //   // }
+  // }
 
-  if (body.contacts) {
-    body.contacts.forEach((c, idx) => {
-      c._id = c.id ? c.id : (new ObjectId()).toHexString();
-      delete c.id;
-      // if (!c.name) {
-      //   res.isValid = false;
-      //   res.missing.push(`contacts.${idx}.name`);
-      // }
-      // if (!c.role) {
-      //   res.isValid = false;
-      //   res.missing.push(`contacts.${idx}.role`);
-      // }
-    });
-  }
+  // if (body.contacts) {
+  //   body.contacts.forEach((c, idx) => {
+  //     c._id = c.id ? c.id : (new ObjectId()).toHexString();
+  //     delete c.id;
+  //     // if (!c.name) {
+  //     //   res.isValid = false;
+  //     //   res.missing.push(`contacts.${idx}.name`);
+  //     // }
+  //     // if (!c.role) {
+  //     //   res.isValid = false;
+  //     //   res.missing.push(`contacts.${idx}.role`);
+  //     // }
+  //   });
+  // }
 
   let app = Shared.validateAppProperties(collectionName, body);
   if (app.isValid === false) {
@@ -369,11 +369,11 @@ const __add = body => {
 
     md.primaryContact = null;
     if (md.contacts.length) {
-      md.primaryContact = md.contacts[0]._id;
+      md.primaryContact = md.contacts[0].id;
     }
     md.primaryLocation = null;
     if (md.locations.length) {
-      md.primaryLocation = md.locations[0]._id;
+      md.primaryLocation = md.locations[0].id;
     }
 
     const validated = Shared.applyAppProperties(collectionName, body);
@@ -393,7 +393,7 @@ schema.virtual('details').get(function() {
   const _locations = this.locations.map(l => {
     Logging.logSilly(l.address);
     return {
-      id: l._id,
+      id: l.id,
       name: l.name,
       tag: '',
       address: l.address,
@@ -407,7 +407,7 @@ schema.virtual('details').get(function() {
 
   const _contacts = this.contacts.map(c => {
     return {
-      id: c._id,
+      id: c.id,
       name: c.name,
       tag: '',
       role: c.role,
@@ -486,7 +486,7 @@ const PATH_CONTEXT = {
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
+schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
 
 /* ********************************************************************************
  *
@@ -528,6 +528,19 @@ schema.statics.rmAll = () => {
 };
 
 /**
+ * @param {String} id - company id to get
+ * @return {Promise} - resolves to an array of Companies
+ */
+schema.statics.getById = id => {
+  return new Promise((resolve, reject) => {
+    collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
+      if (err) throw err;
+      resolve(doc);
+    });
+  });
+};
+
+/**
  * @return {Promise} - resolves to an array of Companies
  */
 schema.statics.findAll = () => {
@@ -547,7 +560,7 @@ schema.statics.findAll = () => {
 schema.statics.findAllById = ids => {
   Logging.log(`findAllById: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
 
-  return ModelDef.find({_id: {$in: ids}, _app: Model.authApp._id});
+  return collection.find({_id: {$in: ids.map(id => new ObjectId(id))}, _app: Model.authApp._id}, {metadata: 0});
 };
 
 /* ********************************************************************************

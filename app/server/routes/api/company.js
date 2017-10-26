@@ -75,7 +75,7 @@ class GetCompany extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.Company.findById(this.req.params.id)
+      Model.Company.getById(this.req.params.id)
         .then(company => {
           if (!company) {
             this.log(`ERROR: Invalid Company ID: ${this.req.params.id}`, Route.LogLevel.ERR);
@@ -89,7 +89,7 @@ class GetCompany extends Route {
   }
 
   _exec() {
-    return Promise.resolve(this._company.details);
+    return Promise.resolve(this._company);
   }
 }
 routes.push(GetCompany);
@@ -124,7 +124,7 @@ class BulkGetCompanies extends Route {
   }
 
   _exec() {
-    return Model.Company.findAllById(this._ids).then(companies => companies.map(c => c.details));
+    return Model.Company.findAllById(this._ids);
   }
 }
 routes.push(BulkGetCompanies);
@@ -246,7 +246,11 @@ class UpdateCompany extends Route {
         }
         if (validation.isValueValid === false) {
           this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `COMPANY: Update value is invalid: ${validation.invalidValue}`});
+          if (validation.isMissingRequired) {
+            reject({statusCode: 400, message: `COMPANY: Missing required property updating ${this.req.body.path}: ${validation.missingRequired}`});
+          } else {
+            reject({statusCode: 400, message: `COMPANY: Update value is invalid for path ${this.req.body.path}: ${validation.invalidValue}`});
+          }
           return;
         }
       }

@@ -513,90 +513,111 @@ let _doValidateUpdate = function(pathContext, flattenedSchema) {
   };
 };
 
-let _doUpdate = (entity, body, pathContext, config) => {
+let _doUpdate = (entity, body, pathContext, config, collection) => {
   return prev => {
     const context = pathContext[body.contextPath];
     const updateType = context.type;
     let response = null;
+
+    const ops = [];
 
     switch (updateType) {
       default: {
         throw new Error(`Invalid update type: ${updateType}`);
       }
       case 'vector-add': {
-        const vector = entity.get(body.path);
-        if (body.value instanceof Object && body.value.id) {
-          body.value._id = body.value.id;
-          delete body.value.id;
-        }
+        let value = null;
         if (config && config.__schema) {
           const fb = __getFlattenedBody(body.value);
-          vector.push(__populateObject(config.__schema, fb));
+          value = __populateObject(config.__schema, fb);
         } else {
-          vector.push(body.value);
+          value = body.value;
         }
-        entity.markModified(body.path);
 
-        response = vector[vector.length - 1];
-        if (response && response.toObject) {
-          response = response.toObject();
-          response.id = `${response._id}`;
-          delete response._id;
-        }
+        ops.push({
+          updateOne: {
+            filter: {_id: entity._id},
+            update: {
+              $push: {
+                [body.path]: value
+              }
+            }
+          }
+        });
+        response = value;
       } break;
       case 'vector-rm': {
         const params = body.path.split('.');
         params.splice(-1, 1);
+        const rmPath = params.join('.');
         const index = params.pop();
-        const vector = entity.get(params.join('.'));
-        vector.splice(index, 1);
-        entity.markModified(params.join('.'));
         body.path = params.join('.');
+
+        ops.push({
+          updateOne: {
+            filter: {_id: entity._id},
+            update: {
+              $unset: {
+                [rmPath]: null
+              }
+            }
+          }
+        });
+        ops.push({
+          updateOne: {
+            filter: {_id: entity._id},
+            update: {
+              $pull: {
+                [body.path]: null
+              }
+            }
+          }
+        });
+
         response = {numRemoved: 1, index: index};
       } break;
       case 'scalar': {
-        const isDate = body.value instanceof Date;
-        const isMongoDbObjectId = body.value instanceof ObjectId;
-        const isMongooseObjectId = body.value instanceof mongoose.Types.ObjectId;
-        const isObjectId = isMongoDbObjectId || isMongooseObjectId;
-        if (body.value instanceof Object === true && isDate === false && isObjectId === false) {
-          for (let field in body.value) {
-            if (!Object.prototype.hasOwnProperty.call(body.value, field)) {
-              continue;
-            }
-
-            Logging.logDebug(`${body.path}.${field} = ${body.value[field]}`);
-            entity.set(`${body.path}.${field}`, body.value[field]);
-          }
+        let value = null;
+        if (config && config.__schema) {
+          const fb = __getFlattenedBody(body.value);
+          value = __populateObject(config.__schema, fb);
         } else {
-          Logging.logSilly(`${body.path}: ${body.value}`);
-          entity.set(body.path, body.value, {strict: false});
+          value = body.value;
         }
 
-        response = entity.get(body.path);
-        if (response && response.toObject) {
-          response = response.toObject();
-          response.id = `${response._id}`;
-          delete response._id;
-        }
-        Logging.logSilly(response);
+        ops.push({
+          updateOne: {
+            filter: {_id: entity._id},
+            update: {
+              $set: {
+                [body.path]: value
+              }
+            }
+          }
+        });
+
+        response = value;
       } break;
     }
 
     return new Promise((resolve, reject) => {
-      entity.save(err => {
-        if (err) {
-          err.statusCode = 400;
-          reject(err);
-          return;
-        }
-        prev.push({
-          type: updateType,
-          path: body.path,
-          value: response
+      if (!ops.length) throw new Error('Aargh');
+      if (ops.length) {
+        collection.bulkWrite(ops, (err, res) => {
+          if (err) {
+            err.statusCode = 400;
+            reject(err);
+            return;
+          }
+          prev.push({
+            type: updateType,
+            path: body.path,
+            value: response
+          });
+          resolve(prev);
         });
-        resolve(prev);
-      });
+        return;
+      }
     });
   };
 };
@@ -652,12 +673,12 @@ module.exports.validateUpdate = function(pathContext, collection) {
   };
 };
 
-module.exports.updateByPath = function(pathContext, collection) {
+module.exports.updateByPath = function(pathContext, collectionName, collection) {
   return function(body) {
     if (body instanceof Array === false) {
       body = [body];
     }
-    const schema = __getCollectionSchema(collection);
+    const schema = __getCollectionSchema(collectionName);
     const flattenedSchema = schema ? __getFlattenedSchema(schema) : false;
     const extendedPathContext = __extendPathContext(pathContext, flattenedSchema, '');
     Logging.logSilly(extendedPathContext);
@@ -665,7 +686,7 @@ module.exports.updateByPath = function(pathContext, collection) {
     return body.reduce((promise, update) => {
       const config = flattenedSchema === false ? false : flattenedSchema[update.path];
       return promise
-        .then(_doUpdate(this, update, extendedPathContext, config));
+        .then(_doUpdate(this, update, extendedPathContext, config, collection));
     }, Promise.resolve([]));
   };
 };
