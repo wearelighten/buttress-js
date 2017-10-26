@@ -56,7 +56,7 @@ class JSONStringifyStream extends Transform {
           return metadata;
         }, {});
       }
-      if (value instanceof Array) {
+      if (Array.isArray(value)) {
         return value.map(c => {
           if (c && c._id) c.id = c._id;
           return c;
