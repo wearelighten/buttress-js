@@ -248,7 +248,7 @@ const __doValidation = body => {
   }
   if (body.locations) {
     body.locations.forEach((l, idx) => {
-      l._id = l.id ? new ObjectId(l.id) : (new ObjectId()).toHexString();
+      l._id = l.id ? l.id : (new ObjectId()).toHexString();
       delete l.id;
       if (!l.name) {
         res.isValid = false;
@@ -280,7 +280,7 @@ const __doValidation = body => {
 
   if (body.contacts) {
     body.contacts.forEach((c, idx) => {
-      c._id = c.id ? new ObjectId(c.id) : (new ObjectId()).toHexString();
+      c._id = c.id ? c.id : (new ObjectId()).toHexString();
       delete c.id;
       // if (!c.name) {
       //   res.isValid = false;
@@ -534,7 +534,7 @@ schema.statics.findAll = () => {
   Logging.logSilly(`findAll: ${Model.authApp._id}`);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
-    return ModelDef.find({});
+    return collection.find({}, {metadata: 0});
   }
 
   return collection.find({_app: Model.authApp._id}, {metadata: 0});
