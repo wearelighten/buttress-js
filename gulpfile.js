@@ -7,6 +7,7 @@ const coffee = require('gulp-coffee');
 const eslint = require('gulp-eslint');
 const clean = require('gulp-clean');
 const bump = require('gulp-bump');
+const cache = require('gulp-cached');
 
 //
 // Scripts
@@ -14,12 +15,14 @@ const bump = require('gulp-bump');
 
 gulp.task('coffee', function() {
   return gulp.src(['app/server/**/*.coffee'])
+    .pipe(cache('coffee'))
     .pipe(coffee())
     .pipe(gulp.dest('deploy'));
 });
 
 gulp.task('js', function() {
   return gulp.src('app/server/**/*.js')
+		.pipe(cache('js'))
 		.pipe(eslint())
 		.pipe(eslint.format())
 		// .pipe(eslint.failAfterError())
@@ -35,6 +38,7 @@ gulp.task('scripts', function() {
  */
 gulp.task('email-styles', function() {
   return gulp.src(['app/server/email/**/*.less'])
+    .pipe(cache('email-styles'))
     .pipe(gulp.dest('deploy/email'));
 });
 gulp.task('styles', function() {

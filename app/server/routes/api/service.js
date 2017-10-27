@@ -197,7 +197,6 @@ class UpdateService extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._service = null;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
@@ -219,21 +218,20 @@ class UpdateService extends Route {
         }
       }
 
-      Model.Service.findById(this.req.params.id)
-      .then(service => {
-        if (!service) {
+      Model.Service.exists(this.req.params.id)
+      .then(exists => {
+        if (!exists) {
           this.log('ERROR: Invalid Service ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._service = service;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._service.updateByPath(this.req.body);
+    return Model.Service.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateService);

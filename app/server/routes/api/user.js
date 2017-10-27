@@ -393,7 +393,6 @@ class UpdateUser extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._user = null;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
@@ -415,21 +414,20 @@ class UpdateUser extends Route {
         }
       }
 
-      Model.User.findById(this.req.params.id)
-        .then(user => {
-          if (!user) {
+      Model.User.exists(this.req.params.id)
+        .then(exists => {
+          if (!exists) {
             this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
-          this._user = user;
           resolve(true);
         });
     });
   }
 
   _exec() {
-    return this._user.updateByPath(this.req.body);
+    return Model.User.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateUser);

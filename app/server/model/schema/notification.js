@@ -145,7 +145,7 @@ const __doValidation = body => {
     res.missing.push('entityId');
   }
 
-  let app = Shared.validateAppProperties('notifications', body);
+  let app = Shared.validateAppProperties(collectionName, body);
   if (app.isValid === false) {
     res.isValid = false;
     res.invalid = res.invalid.concat(app.invalid);
@@ -191,6 +191,13 @@ const __add = body => {
 
 schema.statics.add = Shared.add(collection, __add);
 
+schema.statics.exists = id => {
+  return collection.find({_id: new ObjectId(id)})
+    .limit(1)
+    .count()
+    .then(count => count > 0);
+};
+
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
@@ -213,8 +220,8 @@ const PATH_CONTEXT = {
   '^read$': {type: 'scalar', values: [true, false]}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, 'notifications');
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT);
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.statics.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
 
 /**
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed

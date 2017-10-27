@@ -172,7 +172,6 @@ class UpdateCampaign extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._campaign = null;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
@@ -194,21 +193,20 @@ class UpdateCampaign extends Route {
         }
       }
 
-      Model.Campaign.findById(this.req.params.id)
-        .then(campaign => {
-          if (!campaign) {
+      Model.Campaign.exists(this.req.params.id)
+        .then(exists => {
+          if (!exists) {
             this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
-          this._campaign = campaign;
           resolve(true);
         });
     });
   }
 
   _exec() {
-    return this._campaign.updateByPath(this.req.body);
+    return Model.Campaign.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateCampaign);

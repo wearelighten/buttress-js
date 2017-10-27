@@ -176,6 +176,14 @@ schema.statics.getFromId = id => {
     });
   });
 };
+
+schema.statics.exists = id => {
+  return collection.find({_id: new ObjectId(id)})
+    .limit(1)
+    .count()
+    .then(count => count > 0);
+};
+
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */

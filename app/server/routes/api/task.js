@@ -219,7 +219,6 @@ class UpdateTask extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._task = null;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
@@ -241,21 +240,20 @@ class UpdateTask extends Route {
         }
       }
 
-      Model.Task.findById(this.req.params.id)
-      .then(task => {
-        if (!task) {
+      Model.Task.exists(this.req.params.id)
+      .then(exists => {
+        if (!exists) {
           this.log('ERROR: Invalid Task ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._task = task;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._task.updateByPath(this.req.body);
+    return Model.Task.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateTask);

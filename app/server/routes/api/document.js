@@ -215,21 +215,20 @@ class UpdateDocument extends Route {
         }
       }
 
-      Model.Document.findById(this.req.params.id)
-      .then(document => {
-        if (!document) {
+      Model.Document.exists(this.req.params.id)
+      .then(exists => {
+        if (!exists) {
           this.log('ERROR: Invalid Document ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._document = document;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._document.updateByPath(this.req.body);
+    return Model.Document.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateDocument);

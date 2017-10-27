@@ -15,6 +15,10 @@ const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');
+const ObjectId = require('mongodb').ObjectId;
+
+const collectionName = 'users';
+const collection = Model.mongoDb.collection(collectionName);
 
 /**
  * Constants
@@ -211,6 +215,13 @@ schema.methods.updateApps = function(app) {
   return this.save();
 };
 
+schema.statics.exists = id => {
+  return collection.find({_id: new ObjectId(id)})
+    .limit(1)
+    .count()
+    .then(count => count > 0);
+};
+
 /**
  * @return {Promise} - resolves once all have been deleted
  */
@@ -239,8 +250,6 @@ schema.statics.getAll = () => {
 
   return ModelDef.find({_apps: Model.authApp._id}).populate('_person');
 };
-
-const collection = Model.mongoDb.collection('users');
 
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
@@ -348,8 +357,8 @@ const PATH_CONTEXT = {
   '^(teamRole|teamName|orgRole)$': {type: 'scalar', values: []}
 };
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, 'users');
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, 'users');
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.statics.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
 
 ModelDef = mongoose.model('User', schema);
 

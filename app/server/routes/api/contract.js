@@ -221,21 +221,20 @@ class UpdateContract extends Route {
         }
       }
 
-      Model.Contract.findById(this.req.params.id)
-      .then(contract => {
-        if (!contract) {
+      Model.Contract.exists(this.req.params.id)
+      .then(exists => {
+        if (!exists) {
           this.log('ERROR: Invalid Contract ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._contract = contract;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._contract.updateByPath(this.req.body);
+    return Model.Contract.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateContract);

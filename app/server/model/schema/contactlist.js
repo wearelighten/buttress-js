@@ -186,6 +186,13 @@ schema.statics.add = Shared.add(collection, __add);
 //   return ModelDef.add(body);
 // };
 
+schema.statics.exists = id => {
+  return collection.find({_id: new ObjectId(id)})
+    .limit(1)
+    .count()
+    .then(count => count > 0);
+};
+
 schema.statics.getAll = () => {
   return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
@@ -209,7 +216,7 @@ const PATH_CONTEXT = {
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName);
+schema.statics.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
 
 /* ********************************************************************************
  *

@@ -134,7 +134,6 @@ class UpdateAppointment extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._appointment = null;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
@@ -156,21 +155,20 @@ class UpdateAppointment extends Route {
         }
       }
 
-      Model.Appointment.findById(this.req.params.id)
-      .then(appointment => {
-        if (!appointment) {
+      Model.Appointment.exists(this.req.params.id)
+      .then(exists => {
+        if (!exists) {
           this.log('ERROR: Invalid Appointment ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._appointment = appointment;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._appointment.updateByPath(this.req.body);
+    return Model.Appointment.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateAppointment);
