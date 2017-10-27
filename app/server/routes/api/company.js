@@ -255,21 +255,20 @@ class UpdateCompany extends Route {
         }
       }
 
-      Model.Company.findById(this.req.params.id)
-        .then(company => {
-          if (!company) {
+      Model.Company.exists(this.req.params.id)
+        .then(exists => {
+          if (!exists) {
             this.log('ERROR: Invalid Company ID', Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
-          this._company = company;
           resolve(true);
         });
     });
   }
 
   _exec() {
-    return this._company.updateByPath(this.req.body);
+    return Model.Company.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateCompany);

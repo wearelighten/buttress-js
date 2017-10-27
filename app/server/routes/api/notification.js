@@ -112,7 +112,6 @@ class UpdateNotification extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._notification = null;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
@@ -139,32 +138,21 @@ class UpdateNotification extends Route {
         }
       }
 
-      Model.Notification.findById(this.req.params.id)
+      Model.Notification.exists(this.req.params.id)
       .then(notification => {
         if (!notification) {
           this.log('ERROR: Invalid Notification ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        if (!this.req.body.path) {
-          this.log('ERROR: Missing required field: path', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-        if (!this.req.body.value) {
-          this.log('ERROR: Missing required field: value', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
 
-        this._notification = notification;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._notification.updateByPath(this.req.body);
+    return Model.Notification.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateNotification);

@@ -136,8 +136,6 @@ class UpdateCall extends Route {
     this.permissions = Route.Constants.Permissions.WRITE;
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
-
-    this._call = null;
   }
 
   _validate() {
@@ -156,21 +154,20 @@ class UpdateCall extends Route {
         }
       }
 
-      Model.Call.findById(this.req.params.id)
-      .then(call => {
-        if (!call) {
+      Model.Call.exists(this.req.params.id)
+      .then(exists => {
+        if (!exists) {
           this.log('ERROR: Invalid Call ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._call = call;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._call.updateByPath(this.req.body);
+    return Model.Call.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateCall);

@@ -173,21 +173,20 @@ class UpdateContactList extends Route {
         }
       }
 
-      Model.Contactlist.findById(this.req.params.id)
-        .then(contactList => {
-          if (!contactList) {
+      Model.Contactlist.exists(this.req.params.id)
+        .then(exists => {
+          if (!exists) {
             this.log('ERROR: Invalid Contact List ID', Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
-          this._contactList = contactList;
           resolve(true);
         });
     });
   }
 
   _exec() {
-    return this._contactList.updateByPath(this.req.body);
+    return Model.Contactlist.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdateContactList);

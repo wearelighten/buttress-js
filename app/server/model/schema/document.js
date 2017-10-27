@@ -233,6 +233,13 @@ const __add = body => {
 
 schema.statics.add = Shared.add(collection, __add);
 
+schema.statics.exists = id => {
+  return collection.find({_id: new ObjectId(id)})
+    .limit(1)
+    .count()
+    .then(count => count > 0);
+};
+
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
@@ -259,7 +266,7 @@ const PATH_CONTEXT = {
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
+schema.statics.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
 
 /* ********************************************************************************
  *

@@ -513,11 +513,13 @@ let _doValidateUpdate = function(pathContext, flattenedSchema) {
   };
 };
 
-let _doUpdate = (entity, body, pathContext, config, collection) => {
+let _doUpdate = (entity, body, pathContext, config, collection, id) => {
   return prev => {
     const context = pathContext[body.contextPath];
     const updateType = context.type;
     let response = null;
+
+    if (!id) id = entity._id;
 
     const ops = [];
 
@@ -536,7 +538,7 @@ let _doUpdate = (entity, body, pathContext, config, collection) => {
 
         ops.push({
           updateOne: {
-            filter: {_id: entity._id},
+            filter: {_id: new ObjectId(id)},
             update: {
               $push: {
                 [body.path]: value
@@ -555,7 +557,7 @@ let _doUpdate = (entity, body, pathContext, config, collection) => {
 
         ops.push({
           updateOne: {
-            filter: {_id: entity._id},
+            filter: {_id: new ObjectId(id)},
             update: {
               $unset: {
                 [rmPath]: null
@@ -565,7 +567,7 @@ let _doUpdate = (entity, body, pathContext, config, collection) => {
         });
         ops.push({
           updateOne: {
-            filter: {_id: entity._id},
+            filter: {_id: new ObjectId(id)},
             update: {
               $pull: {
                 [body.path]: null
@@ -587,7 +589,7 @@ let _doUpdate = (entity, body, pathContext, config, collection) => {
 
         ops.push({
           updateOne: {
-            filter: {_id: entity._id},
+            filter: {_id: new ObjectId(id)},
             update: {
               $set: {
                 [body.path]: value
@@ -674,7 +676,7 @@ module.exports.validateUpdate = function(pathContext, collection) {
 };
 
 module.exports.updateByPath = function(pathContext, collectionName, collection) {
-  return function(body) {
+  return function(body, id) {
     if (body instanceof Array === false) {
       body = [body];
     }
@@ -686,7 +688,7 @@ module.exports.updateByPath = function(pathContext, collectionName, collection) 
     return body.reduce((promise, update) => {
       const config = flattenedSchema === false ? false : flattenedSchema[update.path];
       return promise
-        .then(_doUpdate(this, update, extendedPathContext, config, collection));
+        .then(_doUpdate(this, update, extendedPathContext, config, collection, id));
     }, Promise.resolve([]));
   };
 };

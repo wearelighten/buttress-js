@@ -145,7 +145,6 @@ class UpdatePost extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._post = null;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
@@ -167,21 +166,20 @@ class UpdatePost extends Route {
         }
       }
 
-      Model.Post.findById(this.req.params.id)
-      .then(post => {
-        if (!post) {
+      Model.Post.exists(this.req.params.id)
+      .then(exists => {
+        if (!exists) {
           this.log('ERROR: Invalid Post ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
-        this._post = post;
         resolve(true);
       });
     });
   }
 
   _exec() {
-    return this._post.updateByPath(this.req.body);
+    return Model.Post.updateByPath(this.req.body, this.req.params.id);
   }
 }
 routes.push(UpdatePost);

@@ -486,13 +486,20 @@ const PATH_CONTEXT = {
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
-schema.methods.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
+schema.statics.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
 
 /* ********************************************************************************
  *
  * SCHEMA DB FUNCTIONS
  *
  **********************************************************************************/
+
+schema.statics.exists = id => {
+  return collection.find({_id: new ObjectId(id)})
+    .limit(1)
+    .count()
+    .then(count => count > 0);
+};
 
 /*
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
