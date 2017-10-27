@@ -20,7 +20,6 @@ const ObjectId = require('mongodb').ObjectId;
 const collectionName = 'users';
 const collection = Model.mongoDb.collection(collectionName);
 
-
 /**
  * Constants
 */
