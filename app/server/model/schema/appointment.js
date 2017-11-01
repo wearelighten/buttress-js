@@ -278,6 +278,7 @@ schema.statics.rmAll = () => {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
+  '^name$': {type: 'scalar', values: []},
   '^outcome$': {type: 'scalar', values: Outcomes},
   '^(reason|tag|contactId|locationId|date|calendarEntryId|assignedToUserId|assignedToAccepted)$': {type: 'scalar', values: []},
   '^intelApproval$': {type: 'scalar', values: []},

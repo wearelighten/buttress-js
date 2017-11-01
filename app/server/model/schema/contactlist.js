@@ -206,6 +206,7 @@ schema.statics.rmAll = () => {
  *
  **********************************************************************************/
 const PATH_CONTEXT = {
+  '^name$': {type: 'scalar', values: []},
   '^companyIds$': {type: 'vector-add', values: []},
   '^assignedToUserId$': {type: 'scalar', values: []},
   '^companyIds.([0-9]{1,3})$': {type: 'scalar', values: []},
