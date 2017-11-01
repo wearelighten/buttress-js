@@ -268,9 +268,7 @@ class DeleteContactList extends Route {
     this.permissions = Route.Constants.Permissions.DELETE;
     this._contactList = false;
 
-    this.activityTitle = '';
-    this.activityDescription = 'A Contact List was deleted by %USER_NAME%';
-    this.activityVisibility = Model.Constants.Activity.Visibility.PUBLIC;
+    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
     this.activityBroadcast = true;
   }
 
@@ -281,21 +279,20 @@ class DeleteContactList extends Route {
         reject({statusCode: 400});
         return;
       }
-      Model.ContactList.findById(this.req.params.id).select('-metadata').then(contactList => {
-        if (!contactList) {
-          this.log('ERROR: Invalid ContactList ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-        this._contactList = contactList;
-        this.activityTitle = contactList.name;
-        resolve(true);
-      });
+      Model.Contactlist.exists(this.req.params.id)
+        .then(exists => {
+          if (!exists) {
+            this.log('ERROR: Invalid ContactList ID', Route.LogLevel.ERR);
+            reject({statusCode: 400});
+            return;
+          }
+          resolve(true);
+        });
     });
   }
 
   _exec() {
-    return this._contactList.rm().then(() => true);
+    return Model.Contactlist.rm(this.req.params.id).then(() => true);
   }
 }
 routes.push(DeleteContactList);
