@@ -204,9 +204,9 @@ schema.statics.getAll = () => {
   return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
-schema.statics.rm = contactList => {
-  Logging.log(`DELETING: ${contactList._id}`, Logging.Constants.LogLevel.DEBUG);
-  return ModelDef.remove({_id: contactList._id});
+schema.statics.rm = id => {
+  Logging.log(`DELETING: ${id}`, Logging.Constants.LogLevel.DEBUG);
+  return ModelDef.remove({_id: id});
 };
 
 schema.statics.rmAll = () => {
