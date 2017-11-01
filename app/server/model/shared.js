@@ -180,6 +180,8 @@ const __getPropDefault = config => {
     case 'id':
       if (config.__default === 'auto') {
         res = (new ObjectId()).toHexString();
+      } else {
+        res = config.__default;
       }
       break;
     case 'date':
