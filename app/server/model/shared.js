@@ -175,8 +175,14 @@ const __getPropDefault = config => {
     case 'number':
     case 'array':
     case 'object':
-    case 'id':
       res = config.__default;
+      break;
+    case 'id':
+      if (config.__default === 'auto') {
+        res = (new ObjectId()).toHexString();
+      } else {
+        res = config.__default;
+      }
       break;
     case 'date':
       if (config.__default === null) {
@@ -630,7 +636,7 @@ const __extendPathContext = (pathContext, schema, prefix) => {
   for (let property in schema) {
     if (!schema.hasOwnProperty(property)) continue;
     const config = schema[property];
-    if (!config.__allowUpdate) continue;
+    if (config.__allowUpdate === false) continue;
     switch (config.__type) {
       default:
       case 'object':

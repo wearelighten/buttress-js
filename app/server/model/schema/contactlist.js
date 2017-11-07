@@ -14,6 +14,7 @@
 const mongoose = require('mongoose');
 const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
+const Logging = require('../../logging');
 const Shared = require('../shared');
 const Sugar = require('sugar');
 
@@ -186,6 +187,12 @@ schema.statics.add = Shared.add(collection, __add);
 //   return ModelDef.add(body);
 // };
 
+/* ********************************************************************************
+ *
+ * SCHEMA DB FUNCTIONS
+ *
+ **********************************************************************************/
+
 schema.statics.exists = id => {
   return collection.find({_id: new ObjectId(id)})
     .limit(1)
@@ -196,6 +203,12 @@ schema.statics.exists = id => {
 schema.statics.getAll = () => {
   return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
+
+schema.statics.rm = id => {
+  Logging.log(`DELETING: ${id}`, Logging.Constants.LogLevel.DEBUG);
+  return ModelDef.remove({_id: id});
+};
+
 schema.statics.rmAll = () => {
   return ModelDef.remove({});
 };
@@ -206,6 +219,7 @@ schema.statics.rmAll = () => {
  *
  **********************************************************************************/
 const PATH_CONTEXT = {
+  '^name$': {type: 'scalar', values: []},
   '^companyIds$': {type: 'vector-add', values: []},
   '^assignedToUserId$': {type: 'scalar', values: []},
   '^companyIds.([0-9]{1,3})$': {type: 'scalar', values: []},
