@@ -11,12 +11,14 @@
  *
  */
 
-var fs = require('fs');
-var crypto = require('crypto');
-var mongoose = require('mongoose');
-var Model = require('../');
-var Logging = require('../../logging');
-var Config = require('../../config');
+const fs = require('fs');
+const crypto = require('crypto');
+const mongoose = require('mongoose');
+const Model = require('../');
+const Logging = require('../../logging');
+const Config = require('../../config');
+const NRP = require('node-redis-pubsub');
+const nrp = new NRP(Config.redis);
 
 /**
  * Constants
@@ -152,6 +154,8 @@ schema.statics.add = body => {
  */
 schema.methods.updateSchema = function(schema) {
   this.__schema = schema;
+
+  nrp.emit('app-metadata:changed', {appId: Model.authApp._id});
 
   return this.save();
 };
