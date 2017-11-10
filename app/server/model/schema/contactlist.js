@@ -89,7 +89,11 @@ schema.add({
       type: Date,
       default: Sugar.Date.create
     }
-  }]
+  }],
+  created: {
+    type: Date,
+    default: null
+  }
 });
 
 /*
@@ -102,7 +106,8 @@ schema.virtual('details').get(function() {
     campaignId: this.campaignId,
     companyIds: this.companyIds,
     assignedToUserId: this.assignedToUserId,
-    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId}))
+    notes: this.notes.map(n => ({text: n.text, timestamp: n.timestamp, userId: n.userId})),
+    created: this.created
   };
 });
 
@@ -169,6 +174,7 @@ const __add = body => {
       personIds: body.personIds,
       assignedToUserId: body.assignedToUserId,
       notes: body.notes ? body.notes : [],
+      created: body.created,
       metadata: []
     };
 
@@ -226,7 +232,8 @@ const PATH_CONTEXT = {
   '^companyIds.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
   '^notes$': {type: 'vector-add', values: []},
   '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
+  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
+  '^created$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
