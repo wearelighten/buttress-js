@@ -164,6 +164,54 @@ class AddCampaign extends Route {
 routes.push(AddCampaign);
 
 /**
+ * @class BulkAddCampaigns
+ */
+class BulkAddCampaigns extends Route {
+  constructor() {
+    super('campaign/bulk/add', 'BULK ADD CAMPAIGNS');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      // Logging.logDebug(JSON.stringify(this.req.body.contracts));
+      if (this.req.body.campaigns instanceof Array === false) {
+        this.log(`ERROR: You need to supply an array of campaigns`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send an array of campaigns`});
+        return;
+      }
+
+      let validation = Model.Campaign.validate(this.req.body.campaigns);
+      if (!validation.isValid) {
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CAMPAIGN: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CAMPAIGN: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: CAMPAIGN: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `CAMPAIGN: Unhandled error.`});
+        return;
+      }
+
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Campaign.add(this.req.body.campaigns);
+  }
+}
+routes.push(BulkAddCampaigns);
+
+/**
  * @class UpdateCampaign
  */
 class UpdateCampaign extends Route {
