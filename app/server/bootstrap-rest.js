@@ -24,6 +24,7 @@ const Model = require('./model');
 const Routes = require('./routes');
 const Logging = require('./logging');
 const MongoClient = require('mongodb').MongoClient;
+const NRP = require('node-redis-pubsub');
 
 Error.stackTraceLimit = Infinity;
 
@@ -152,6 +153,11 @@ const __initWorker = () => {
     console.log(error);
   });
 
+  process.on('message', payload => {
+    Logging.logDebug(`App Metadata Changed: ${payload.appId}`);
+    Model.appMetadataChanged = true;
+  });
+
   return __nativeMongoConnect()
     .then(db => {
       Model.init(db);
@@ -187,6 +193,16 @@ const __initMaster = () => {
   } else {
     Logging.logVerbose(`Secondary Master REST`);
   }
+
+  const nrp = new NRP(Config.redis);
+  nrp.on('app-metadata:changed', data => {
+    Logging.logDebug(`App Metadata Changed: ${data.appId}, ${_workers.length} Workers`);
+    _workers.forEach(w => {
+      w.send({
+        appId: data.appId
+      });
+    });
+  });
 
   p.then(__spawnWorkers);
 

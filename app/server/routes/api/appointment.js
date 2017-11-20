@@ -126,6 +126,54 @@ class AddAppointment extends Route {
 routes.push(AddAppointment);
 
 /**
+ * @class BulkAddAppointments
+ */
+class BulkAddAppointments extends Route {
+  constructor() {
+    super('appointment/bulk/add', 'BULK ADD APPOINTMENTS');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      // Logging.logDebug(JSON.stringify(this.req.body.contracts));
+      if (this.req.body.appointments instanceof Array === false) {
+        this.log(`ERROR: You need to supply an array of appointments`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send an array of appointments`});
+        return;
+      }
+
+      let validation = Model.Appointment.validate(this.req.body.appointments);
+      if (!validation.isValid) {
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `APPOINTMENT: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `APPOINTMENT: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: APPOINTMENT: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `APPOINTMENT: Unhandled error.`});
+        return;
+      }
+
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Appointment.add(this.req.body.appointments);
+  }
+}
+routes.push(BulkAddAppointments);
+
+/**
  * @class UpdateAppointment
  */
 class UpdateAppointment extends Route {

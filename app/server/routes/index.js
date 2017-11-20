@@ -102,7 +102,7 @@ function _authenticateToken(req, res, next) {
 function _getToken(req) {
   let token = null;
 
-  if (_tokens.length > 0) {
+  if (_tokens.length > 0 && !Model.appMetadataChanged) {
     token = _lookupToken(_tokens, req.query.token);
     // Logging.log("Using Cached Tokens", Logging.Constants.LogLevel.DEBUG);
     if (token) {
@@ -115,8 +115,9 @@ function _getToken(req) {
     Model.Token.findAllNative()
       .then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
       .then(tokens => {
-        Logging.logSilly(`_getToken:Load: ${req.timer.interval.toFixed(3)}`);
+        Logging.logDebug(`_getToken:Load: ${req.timer.interval.toFixed(3)}`);
         _tokens = tokens;
+        Model.appMetadataChanged = false;
         token = _lookupToken(_tokens, req.query.token);
         return resolve(token);
       });

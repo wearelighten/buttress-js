@@ -30,6 +30,7 @@ class Model {
     this.Constants = {};
     this.mongoDb = null;
     this.app = false;
+    this.appMetadataChanged = false;
   }
 
   init(db) {
