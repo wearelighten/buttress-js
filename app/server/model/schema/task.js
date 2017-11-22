@@ -182,10 +182,10 @@ const __doValidation = body => {
     res.isValid = false;
     res.missing.push('dueDate');
   }
-  if (Sugar.Date.isBefore(Sugar.Date.create(body.dueDate), Sugar.Date.create())) {
-    res.isValid = false;
-    res.invalid.push('dueDate');
-  }
+  // if (Sugar.Date.isBefore(Sugar.Date.create(body.dueDate), Sugar.Date.create())) {
+  //   res.isValid = false;
+  //   res.invalid.push('dueDate');
+  // }
 
   let app = Shared.validateAppProperties(collectionName, body);
   if (app.isValid === false) {
