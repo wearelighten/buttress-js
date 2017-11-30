@@ -189,11 +189,11 @@ const __doValidation = body => {
     res.missing.push('companyId');
     return res;
   }
-  if (!body.contactId) {
-    res.isValid = false;
-    res.missing.push('contactId');
-    return res;
-  }
+  // if (!body.contactId) {
+  //   res.isValid = false;
+  //   res.missing.push('contactId');
+  //   return res;
+  // }
   // if (!body.date) {
   //   res.missing.push('date');
   //   return res;
