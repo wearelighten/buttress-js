@@ -104,6 +104,54 @@ class AddNotification extends Route {
 routes.push(AddNotification);
 
 /**
+ * @class BulkAddNotifications
+ */
+class BulkAddNotifications extends Route {
+  constructor() {
+    super('notification/bulk/add', 'BULK ADD NOTIFICATIONS');
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.ADD;
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      // Logging.logDebug(JSON.stringify(this.req.body.contracts));
+      if (this.req.body.notifications instanceof Array === false) {
+        this.log(`ERROR: You need to supply an array of notifications`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send an array of notifications`});
+        return;
+      }
+
+      let validation = Model.Notification.validate(this.req.body.notifications);
+      if (!validation.isValid) {
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `NOTIFICATION: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `NOTIFICATION: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: NOTIFICATION: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `NOTIFICATION: Unhandled error.`});
+        return;
+      }
+
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return Model.Notification.add(this.req.body.notifications);
+  }
+}
+routes.push(BulkAddNotifications);
+
+/**
  * @class UpdateNotification
  */
 class UpdateNotification extends Route {
