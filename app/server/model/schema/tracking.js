@@ -188,6 +188,12 @@ schema.statics.exists = id => {
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
  */
 schema.statics.getAll = () => {
+  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+  
+  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    return collection.find({});
+  }
+
   return collection.find({_app: Model.authApp._id}, {metadata: 0});
 };
 
