@@ -162,7 +162,7 @@ class UpdateNotification extends Route {
     this.permissions = Route.Constants.Permissions.WRITE;
 
     this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
-    this.activityBroadcast = true;
+    this.activityBroadcast = false;
   }
 
   _validate() {
