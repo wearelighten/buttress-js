@@ -119,25 +119,27 @@ class AddContactlist extends Route {
     return new Promise((resolve, reject) => {
       let validation = Model.Contactlist.validate(this.req.body);
       if (!validation.isValid) {
-        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
-        return;
-      }
-
-      Model.Campaign.findById(this.req.body.campaignId).select('-metadata').then(campaign => {
-        if (!campaign) {
-          this.log('ERROR: Invalid Campaign ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CONTACT_LIST: Missing field: ${validation.missing[0]}`});
           return;
         }
-        this._campaign = campaign;
-        resolve(true);
-      });
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CONTACT_LIST: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: CONTACT_LIST: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `CONTACT_LIST: Unhandled error.`});
+        return;
+      }
+      resolve(true);
     });
   }
 
   _exec() {
-    return this._campaign.addContactList(this.req.body);
+    return Model.Contactlist.add(this.req.body);
   }
 }
 routes.push(AddContactlist);
