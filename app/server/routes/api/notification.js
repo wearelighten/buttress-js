@@ -88,8 +88,19 @@ class AddNotification extends Route {
     return new Promise((resolve, reject) => {
       let validation = Model.Notification.validate(this.req.body);
       if (!validation.isValid) {
-        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `NOTIFICATION: Missing required fields: ${validation.missing}`});
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `NOTIFICATION: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `NOTIFICATION: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: NOTIFICATION: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `NOTIFICATION: Unhandled error.`});
         return;
       }
 

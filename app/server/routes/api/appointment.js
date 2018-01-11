@@ -110,8 +110,19 @@ class AddAppointment extends Route {
     return new Promise((resolve, reject) => {
       let validation = Model.Appointment.validate(this.req.body);
       if (!validation.isValid) {
-        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `APPOINTMENT: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `APPOINTMENT: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: APPOINTMENT: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `APPOINTMENT: Unhandled error.`});
         return;
       }
 

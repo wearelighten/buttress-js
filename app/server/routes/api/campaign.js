@@ -148,8 +148,19 @@ class AddCampaign extends Route {
       Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
       let validation = Model.Campaign.validate(this.req.body);
       if (!validation.isValid) {
-        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CAMPAIGN: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CAMPAIGN: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: CAMPAIGN: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `CAMPAIGN: Unhandled error.`});
         return;
       }
 
@@ -275,8 +286,19 @@ class AddContactlist extends Route {
       Logging.log(this.req.body, Logging.Constants.LogLevel.DEBUG);
       let validation = Model.Contactlist.validate(this.req.body);
       if (!validation.isValid) {
-        this.log(`ERROR: Missing required fields: ${validation.missing}`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `Missing required fields: ${validation.missing}`});
+        if (validation.missing.length > 0) {
+          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CONTACT LIST: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `CONTACT LIST: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`ERROR: CONTACT LIST: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `CONTACT LIST: Unhandled error.`});
         return;
       }
 
