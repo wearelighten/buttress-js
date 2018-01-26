@@ -169,8 +169,7 @@ const __add = body => {
       serviceType: body.serviceType,
       salesStatus: body.salesStatus,
       status: body.status,
-      notes: body.notes ? body.notes : [],
-      metadata: []
+      notes: body.notes ? body.notes : []
     };
 
     if (body.id) {

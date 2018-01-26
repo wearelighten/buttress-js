@@ -250,8 +250,7 @@ const __add = body => {
       executionDate: body.executionDate,
       startDate: body.startDate,
       endDate: body.endDate,
-      notes: body.notes ? body.notes : [],
-      metadata: []
+      notes: body.notes ? body.notes : []
     };
 
     if (body.id) {

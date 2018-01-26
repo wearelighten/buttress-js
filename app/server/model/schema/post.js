@@ -192,8 +192,7 @@ const __add = body => {
       postType: body.type,
       entityId: body.entityId,
       likeUserIds: [],
-      notes: body.notes ? body.notes : [],
-      metadata: []
+      notes: body.notes ? body.notes : []
     };
 
     if (body.id) {

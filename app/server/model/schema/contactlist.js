@@ -174,8 +174,7 @@ const __add = body => {
       personIds: body.personIds,
       assignedToUserId: body.assignedToUserId,
       notes: body.notes ? body.notes : [],
-      created: body.created,
-      metadata: []
+      created: body.created
     };
 
     if (body.id) {

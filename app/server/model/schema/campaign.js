@@ -209,8 +209,7 @@ const __add = body => {
       contactListIds: [],
       templates: [],
       images: [],
-      notes: body.notes ? body.notes : [],
-      metadata: []
+      notes: body.notes ? body.notes : []
     };
 
     if (body.id) {
