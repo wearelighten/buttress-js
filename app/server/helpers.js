@@ -51,7 +51,7 @@ class JSONStringifyStream extends Transform {
         return undefined;
       }
       if (key === 'metadata') {
-        return key.reduce((metadata, entry) => {
+        return value.reduce((metadata, entry) => {
           metadata[entry.key] = JSON.parse(entry.value);
           return metadata;
         }, {});

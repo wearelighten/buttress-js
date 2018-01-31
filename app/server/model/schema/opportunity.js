@@ -237,8 +237,7 @@ const __add = body => {
       _user: body.userId,
       type: body.type,
       entityId: body.entityId,
-      notes: body.notes ? body.notes : [],
-      metadata: []
+      notes: body.notes ? body.notes : []
     };
 
     if (body.id) {

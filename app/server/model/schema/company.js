@@ -359,8 +359,7 @@ const __add = body => {
       locations: locations,
       contacts: contacts,
       _app: Model.authApp._id,
-      notes: body.notes ? body.notes : [],
-      metadata: []
+      notes: body.notes ? body.notes : []
     };
 
     if (body.id) {

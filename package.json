@@ -1,6 +1,6 @@
 {
   "name": "ButtressJS",
-  "version": "1.5.10",
+  "version": "1.5.11",
   "description": "Realtime datastore for business software",
   "author": "Lighten",
   "license": "MIT",
@@ -30,7 +30,7 @@
     "juice": "~3.0.x",
     "less": "~2.7.x",
     "method-override": "~2.3.x",
-    "mongodb": "^2.2.26",
+    "mongodb": "^3.x.x",
     "mongoose": "~4.4.x",
     "morgan": "~1.7.x",
     "node-redis-pubsub": "^1.0.2",

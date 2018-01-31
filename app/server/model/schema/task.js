@@ -223,8 +223,7 @@ const __add = body => {
       dateCreated: body.dateCreated ? body.dateCreated : new Date(),
       dueDate: Sugar.Date.create(body.dueDate),
       status: Status.PENDING,
-      notes: body.notes ? body.notes : [],
-      metadata: []
+      notes: body.notes ? body.notes : []
     };
 
     if (body.id) {

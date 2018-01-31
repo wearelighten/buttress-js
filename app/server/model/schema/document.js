@@ -218,8 +218,7 @@ const __add = body => {
       entityId: body.entityId,
       documentMetadata: body.documentMetadata,
       authApp: body.authApp ? body.authApp : 'google',
-      notes: body.notes ? body.notes : [],
-      metadata: []
+      notes: body.notes ? body.notes : []
     };
 
     if (body.id) {

@@ -237,8 +237,7 @@ const __add = body => {
       contactId: body.contactId,
       locationId: body.locationId,
       intelApproval: {status: 'pending'},
-      notes: body.notes ? body.notes : [],
-      metadata: []
+      notes: body.notes ? body.notes : []
     };
 
     if (body.id) {
