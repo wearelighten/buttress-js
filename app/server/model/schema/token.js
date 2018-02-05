@@ -16,7 +16,7 @@ var mongoose = require('mongoose');
 var Logging = require('../../logging');
 var Model = require('../');
 
-const collectionName = 'apps';
+const collectionName = 'tokens';
 const collection = Model.mongoDb.collection(collectionName);
 
 /**
