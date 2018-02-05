@@ -75,12 +75,12 @@ const __initMongoConnect = () => {
  * WORKERS
  *
  **********************************************************************************/
-const __spawnWorkers = rooms => {
+const __spawnWorkers = appTokens => {
   Logging.log(`Spawning ${processes} Socket Workers`);
 
   const __spawn = idx => {
     _workers[idx] = cluster.fork();
-    _workers[idx].send({'buttress:initAppNamespace': rooms});
+    _workers[idx].send({'buttress:initAppTokens': appTokens});
   };
 
   for (let x = 0; x < processes; x++) {
@@ -93,15 +93,26 @@ const __spawnWorkers = rooms => {
   }).listen(Config.listenPorts.sock);
 };
 
-const __initSocketNamespace = (io, name) => {
-  const namespace = io.of(`/${name}`);
-
+const __initSocketNamespace = (io, publicId, appTokens) => {
+  const namespace = io.of(`/${publicId}`);
   namespace.on('connect', socket => {
-    console.log(socket.handshake.query.token);
-    console.log(`Connection to ${name}`);
+    const userToken = socket.handshake.query.token;
+    const token = appTokens.tokens.find(t => t.value = userToken);
+    if (!token) {
+      Logging.logDebug(`Invalid token, closing connection: ${socket.id}`);
+      return socket.disconnect(0);
+    }
 
-    // Handle room assignment based on token
+    const app = appTokens.apps.find(a => a.publicId === publicId);
+    if (!app) {
+      Logging.logDebug(`Invalid app, closing connection: ${socket.id}`);
+      return socket.disconnect(0);
+    }
 
+    Logging.logSilly(`${socket.id} Connected on ${publicId}`);
+    socket.on('disconnect', () => {
+      Logging.logSilly(`${socket.id} Disconnect on ${publicId}`);
+    });
   });
 
   return namespace;
@@ -115,6 +126,13 @@ const __initWorker = () => {
   io.origins('*:*');
   io.adapter(sioRedis(Config.redis));
 
+  io.on('connect', socket => {
+    Logging.logSilly(`${socket.id} Connected on global space`);
+    socket.on('disconnect', socket => {
+      Logging.logSilly(`${socket.id} Disconnect on global space`);
+    });
+  });
+
   process.on('message', (message, input) => {
     if (message === 'buttress:connection') {
       const connection = input;
@@ -122,9 +140,10 @@ const __initWorker = () => {
       connection.resume();
       return;
     }
-    if (message['buttress:initAppNamespace']) {
-      message['buttress:initAppNamespace'].forEach(name => {
-        namespace.push(__initSocketNamespace(io, name));
+    if (message['buttress:initAppTokens']) {
+      const appTokens = message['buttress:initAppTokens'];
+      appTokens.apps.forEach(app => {
+        namespace.push(__initSocketNamespace(io, app.publicId, appTokens));
       });
     }
   });
@@ -138,7 +157,8 @@ const __initWorker = () => {
 const __initMaster = express => {
   const emitter = sioEmitter(Config.redis);
   const nrp = new NRP(Config.redis);
-  const publicAppIds = [];
+  let apps = [];
+  let tokens = [];
 
   const isPrimary = Config.sio.app === 'primary';
 
@@ -146,22 +166,44 @@ const __initMaster = express => {
     Logging.logDebug(`Primary Master`);
     nrp.on('activity', data => {
       Logging.logDebug(`Activity: ${data.path}`);
+      // Broadcast on global scope
       emitter.emit('db-activity', data);
     });
   }
 
   __initMongoConnect()
   .then(db => {
-    // Fetch all applications
-    Model.App.findAll().toArray((err, apps) => {
-      if (err) throw new Error(err);
-      // Create Application rooms with user groups
-      apps.forEach(app => {
-        // TODO: Replace with correct name/token
-        publicAppIds.push(Model.App.getPublicUID(app.name, app._token));
+    // Load Apps
+    return new Promise((resolve, reject) => {
+      Model.App.findAll().toArray((err, _apps) => {
+        if (err) reject(err);
+        resolve(apps = _apps);
       });
-      // Create workers, pass through room map
-      __spawnWorkers(publicAppIds);
+    });
+  })
+  .then(() => {
+    // Load Tokens
+    return new Promise((resolve, reject) => {
+      Model.Token.findAll().toArray((err, _tokens) => {
+        if (err) reject(err);
+        resolve(tokens = _tokens);
+      });
+    });
+  })
+  .then(() => {
+    // Spawn worker processes, pass through build app objects
+    apps.map(app => {
+      const token = tokens.find(t => {
+        return t._id.toString() === app._token.toString();
+      });
+      app.token = token;
+      app.publicId = Model.App.getPublicUID(app.name, token.value);
+      return app;
+    });
+
+    __spawnWorkers({
+      apps: apps,
+      tokens: tokens
     });
   });
 };
