@@ -157,8 +157,10 @@ const __initWorker = () => {
 const __initMaster = express => {
   const emitter = sioEmitter(Config.redis);
   const nrp = new NRP(Config.redis);
+
   let apps = [];
   let tokens = [];
+  const namespace = {};
 
   const isPrimary = Config.sio.app === 'primary';
 
@@ -166,8 +168,12 @@ const __initMaster = express => {
     Logging.logDebug(`Primary Master`);
     nrp.on('activity', data => {
       Logging.logDebug(`Activity: ${data.path}`);
-      // Broadcast on global scope
-      emitter.emit('db-activity', data);
+      const publicId = data.appPId;
+      if (!namespace[publicId]) {
+        namespace[publicId] = emitter.of(`/${publicId}`);
+      }
+
+      namespace[publicId].emit('db-activity', data);
     });
   }
 
@@ -202,8 +208,9 @@ const __initMaster = express => {
       }
 
       app.token = token;
-      app.publicId = Model.App.getPublicUID(app.name, token.value);
+      app.publicId = Model.App.genPublicUID(app.name, token.value);
       Logging.logDebug(`App Public ID: ${app.name}, ${app.publicId}`);
+
       return app;
     }).filter(app => app);
 

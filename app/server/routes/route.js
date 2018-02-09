@@ -134,8 +134,8 @@ class Route {
         return;
       }
 
-<<<<<<< develop
       if (res) {
+        const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.authAppToken.value);
         nrp.emit('activity', {
           title: this.activityTitle,
           description: this.activityDescription,
@@ -147,24 +147,9 @@ class Route {
           timestamp: new Date(),
           response: res,
           user: Model.authUser ? Model.authUser._id : '',
-          appPId: Model.authApp ? Model.authApp.getPublicUID() : ''
+          appPId: appPId ? appPId : ''
         });
       }
-=======
-      nrp.emit('activity', {
-        title: this.activityTitle,
-        description: this.activityDescription,
-        visibility: this.activityVisibility,
-        path: this.req.path.replace(Config.app.apiPrefix, ''),
-        pathSpec: this.path,
-        verb: this.verb,
-        permissions: this.permissions,
-        timestamp: new Date(),
-        response: res,
-        user: Model.authUser ? Model.authUser._id : '',
-        appPId: Model.authApp ? Model.authApp.getPublicUID() : ''
-      });
->>>>>>> - ADDED: Pass app public id with db-activity
     };
 
     setTimeout(() => {

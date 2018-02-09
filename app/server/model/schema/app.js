@@ -240,14 +240,14 @@ schema.methods.mkDataDir = function(name, isPublic) {
  * @return {String} - UID
  */
 schema.methods.getPublicUID = function() {
-  return schema.statics.getPublicUID(this.name, this.tokenValue);
+  return schema.statics.genPublicUID(this.name, this.tokenValue);
 };
 
 /**
  * @return {Promise} - resolves to the token
  */
 schema.methods.getToken = function() {
-  return Model.Token.find({_app: this._id}).populate('_user');
+  return Model.Token.findOne({_id: this._token}).populate('_user');
 };
 
 /**
@@ -280,7 +280,7 @@ schema.statics.findAll = () => {
  * @param {String} tokenValue - application token
  * @return {String} - UID
  */
-schema.statics.getPublicUID = function(name, tokenValue) {
+schema.statics.genPublicUID = function(name, tokenValue) {
   var hash = crypto.createHash('sha512');
   // Logging.log(`Create UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
   hash.update(`${name}.${tokenValue}`);
