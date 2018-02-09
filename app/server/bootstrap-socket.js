@@ -162,12 +162,21 @@ const __initMaster = express => {
   let tokens = [];
   const namespace = {};
 
+  const superApps = [];
+
   const isPrimary = Config.sio.app === 'primary';
 
   if (isPrimary) {
     Logging.logDebug(`Primary Master`);
     nrp.on('activity', data => {
       Logging.logDebug(`Activity: ${data.path}`);
+
+      // Super apps?
+      superApps.forEach(publicId => {
+        namespace[publicId].emit('db-activity', data);
+      });
+
+      // Broadcast on requested channel
       const publicId = data.appPId;
       if (!namespace[publicId]) {
         namespace[publicId] = emitter.of(`/${publicId}`);
@@ -210,6 +219,11 @@ const __initMaster = express => {
       app.token = token;
       app.publicId = Model.App.genPublicUID(app.name, token.value);
       Logging.logDebug(`App Public ID: ${app.name}, ${app.publicId}`);
+
+      if (token.authLevel > 2) {
+        namespace[app.publicId] = emitter.of(`/${app.publicId}`);
+        superApps.push(app.publicId);
+      }
 
       return app;
     }).filter(app => app);
