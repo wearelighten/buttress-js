@@ -97,7 +97,7 @@ const __initSocketNamespace = (io, publicId, appTokens) => {
   const namespace = io.of(`/${publicId}`);
   namespace.on('connect', socket => {
     const userToken = socket.handshake.query.token;
-    const token = appTokens.tokens.find(t => t.value = userToken);
+    const token = appTokens.tokens.find(t => t.value === userToken);
     if (!token) {
       Logging.logDebug(`Invalid token, closing connection: ${socket.id}`);
       return socket.disconnect(0);
@@ -196,10 +196,16 @@ const __initMaster = express => {
       const token = tokens.find(t => {
         return t._id.toString() === app._token.toString();
       });
+      if (!token) {
+        Logging.logWarn(`No Token found for ${app.name}`);
+        return null;
+      }
+
       app.token = token;
       app.publicId = Model.App.getPublicUID(app.name, token.value);
+      Logging.logDebug(`App Public ID: ${app.name}, ${app.publicId}`);
       return app;
-    });
+    }).filter(app => app);
 
     __spawnWorkers({
       apps: apps,
