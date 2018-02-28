@@ -305,13 +305,13 @@ const PATH_CONTEXT = {
   '^outcome$': {type: 'scalar', values: outcome},
   '^intelApproval$': {type: 'scalar', values: []},
   '^connections$': {type: 'vector-add', values: []},
-  '^connections.([0-9]{1,3}).status$': {type: 'scalar', values: connectionStatus},
-  '^connections.([0-9]{1,3}).outcome$': {type: 'scalar', values: connectionOutcome},
-  '^connections.([0-9]{1,3}).start$': {type: 'scalar', values: []},
-  '^connections.([0-9]{1,3}).end$': {type: 'scalar', values: []},
+  '^connections.([0-9]{1,11}).status$': {type: 'scalar', values: connectionStatus},
+  '^connections.([0-9]{1,11}).outcome$': {type: 'scalar', values: connectionOutcome},
+  '^connections.([0-9]{1,11}).start$': {type: 'scalar', values: []},
+  '^connections.([0-9]{1,11}).end$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
-  '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
+  '^notes.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
+  '^notes.([0-9]{1,11}).text$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
