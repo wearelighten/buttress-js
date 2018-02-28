@@ -274,8 +274,8 @@ const PATH_CONTEXT = {
   '^(name|dueDate|assignedToId)$': {type: 'scalar', values: []},
   '^(reminder.status|reminder.snoozed)$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
-  '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
+  '^notes.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
+  '^notes.([0-9]{1,11}).text$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);

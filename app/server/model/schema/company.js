@@ -457,22 +457,22 @@ schema.virtual('details').get(function() {
 const PATH_CONTEXT = {
   '^(name|parentCompanyId|childType|companyType|salesStatus|reference|description|siccode|numEmployees|annualTurnover|profitPreTax|financeEndDate|netWorth|source|memberships|flags|vatExempt|vatRegistrationNumber|companyNumber)$': {type: 'scalar', values: []}, // eslint-disable-line max-len
   '^notes$': {type: 'vector-add', values: []},
-  '^notes.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
+  '^notes.([0-9]{1,11})$': {type: 'scalar', values: []},
+  '^notes.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
+  '^notes.([0-9]{1,11}).text$': {type: 'scalar', values: []},
   '^emailHistory$': {type: 'vector-add', values: []},
-  '^emailHistory.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
+  '^emailHistory.([0-9]{1,11}).(__remove__)$': {type: 'vector-rm', values: []},
   '^contractIds$': {type: 'vector-add', values: []},
-  '^contractIds.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^contractIds.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
+  '^contractIds.([0-9]{1,11})$': {type: 'scalar', values: []},
+  '^contractIds.([0-9]{1,11}).(__remove__)$': {type: 'vector-rm', values: []},
   '^contacts$': {type: 'vector-add', values: []},
-  '^contacts.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^contacts.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^contacts.([0-9]{1,3}).(email|tag|directDial|responsibility|mobile|role|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []},
+  '^contacts.([0-9]{1,11})$': {type: 'scalar', values: []},
+  '^contacts.([0-9]{1,11}).(__remove__)$': {type: 'vector-rm', values: []},
+  '^contacts.([0-9]{1,11}).(email|tag|directDial|responsibility|mobile|role|name|linkedInProfile|twitterProfile)$': {type: 'scalar', values: []},
   '^locations$': {type: 'vector-add', values: []},
-  '^locations.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^locations.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
-  '^locations.([0-9]{1,3}).(name|tag|phoneNumber|site|email|address|county|city|postCode)$': {type: 'scalar', values: []}
+  '^locations.([0-9]{1,11})$': {type: 'scalar', values: []},
+  '^locations.([0-9]{1,11}).(__remove__)$': {type: 'vector-rm', values: []},
+  '^locations.([0-9]{1,11}).(name|tag|phoneNumber|site|email|address|county|city|postCode)$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
