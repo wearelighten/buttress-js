@@ -134,18 +134,20 @@ class Route {
         return;
       }
 
-      nrp.emit('activity', {
-        title: this.activityTitle,
-        description: this.activityDescription,
-        visibility: this.activityVisibility,
-        path: this.req.path.replace(Config.app.apiPrefix, ''),
-        pathSpec: this.path,
-        verb: this.verb,
-        permissions: this.permissions,
-        timestamp: new Date(),
-        response: res,
-        user: Model.authUser ? Model.authUser._id : ''
-      });
+      if (res) {
+        nrp.emit('activity', {
+          title: this.activityTitle,
+          description: this.activityDescription,
+          visibility: this.activityVisibility,
+          path: this.req.path.replace(Config.app.apiPrefix, ''),
+          pathSpec: this.path,
+          verb: this.verb,
+          permissions: this.permissions,
+          timestamp: new Date(),
+          response: res,
+          user: Model.authUser ? Model.authUser._id : ''
+        });
+      }
     };
 
     setTimeout(() => {
