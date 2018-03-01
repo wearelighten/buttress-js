@@ -56,7 +56,7 @@ const POOL_SIZE = 10;
 const __nativeMongoConnect = app => {
   const mongoUrl = `mongodb://${Config.mongoDb.url}`;
   const dbName = `${Config.app.code}-${Config.env}`;
-  return MongoClient.connect(mongoUrl, {poolSize: POOL_SIZE, native_parser: true})
+  return MongoClient.connect(mongoUrl, {poolSize: POOL_SIZE, native_parser: true}) // eslint-disable-line camelcase
   .then(client => {
     return client.db(dbName);
   });
