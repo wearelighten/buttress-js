@@ -2,7 +2,7 @@
 Realtime datastore for business software.
 
 # What's New
-### version: 1.5.11
+### version: 1.5.12
 - Added: tracking API for logging errors, activity and debug logs
 
 ### version: 1.5.3
