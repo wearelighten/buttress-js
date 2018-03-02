@@ -653,10 +653,10 @@ const __extendPathContext = (pathContext, schema, prefix) => {
         break;
       case 'array':
         extended[`^${prefix}${property}$`] = {type: 'vector-add', values: []};
-        extended[`^${prefix}${property}.([0-9]{1,3}).__remove__$`] = {type: 'vector-rm', values: []};
-        extended[`^${prefix}${property}.([0-9]{1,3})$`] = {type: 'scalar', values: []};
+        extended[`^${prefix}${property}.([0-9]{1,11}).__remove__$`] = {type: 'vector-rm', values: []};
+        extended[`^${prefix}${property}.([0-9]{1,11})$`] = {type: 'scalar', values: []};
         if (config.__schema) {
-          extended = __extendPathContext(extended, config.__schema, `${prefix}${property}.([0-9]{1,3}).`);
+          extended = __extendPathContext(extended, config.__schema, `${prefix}${property}.([0-9]{1,11}).`);
         }
         break;
     }

@@ -303,17 +303,17 @@ const PATH_CONTEXT = {
   '^(name|tag|contractType|contractMode|assignedToUserId|entityId|entityType|dateOfAgreement|startDate|endDate)$': {type: 'scalar', values: []},
   '^approval$': {type: 'scalar', values: []},
   '^parties$': {type: 'vector-add', values: []},
-  '^parties.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^parties.([0-9]{1,3}).(submitted|received)$': {type: 'scalar', values: []},
+  '^parties.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
+  '^parties.([0-9]{1,11}).(submitted|received)$': {type: 'scalar', values: []},
   '^documentIds$': {type: 'vector-add', values: []},
-  '^documentIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^documentIds.([0-9]{1,3})$': {type: 'scalar', values: []},
+  '^documentIds.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
+  '^documentIds.([0-9]{1,11})$': {type: 'scalar', values: []},
   '^notes$': {type: 'vector-add', values: []},
-  '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
+  '^notes.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
+  '^notes.([0-9]{1,11}).text$': {type: 'scalar', values: []},
   '^references$': {type: 'vector-add', values: []},
-  '^references.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^references.([0-9]{1,3})$': {type: 'scalar', values: []}
+  '^references.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
+  '^references.([0-9]{1,11})$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);

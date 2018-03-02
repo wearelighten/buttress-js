@@ -234,10 +234,10 @@ schema.statics.rmAll = () => {
 const PATH_CONTEXT = {
   '^(text|image|url|tags)$': {type: 'scalar', values: []},
   '^likeUserIds$': {type: 'vector-add', values: []},
-  '^likeUserIds.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
+  '^likeUserIds.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
   '^notes$': {type: 'vector-add', values: []},
-  '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []}
+  '^notes.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
+  '^notes.([0-9]{1,11}).text$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);

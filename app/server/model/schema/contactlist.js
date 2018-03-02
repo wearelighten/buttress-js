@@ -227,11 +227,11 @@ const PATH_CONTEXT = {
   '^name$': {type: 'scalar', values: []},
   '^companyIds$': {type: 'vector-add', values: []},
   '^assignedToUserId$': {type: 'scalar', values: []},
-  '^companyIds.([0-9]{1,3})$': {type: 'scalar', values: []},
-  '^companyIds.([0-9]{1,3}).(__remove__)$': {type: 'vector-rm', values: []},
+  '^companyIds.([0-9]{1,11})$': {type: 'scalar', values: []},
+  '^companyIds.([0-9]{1,11}).(__remove__)$': {type: 'vector-rm', values: []},
   '^notes$': {type: 'vector-add', values: []},
-  '^notes.([0-9]{1,3}).__remove__$': {type: 'vector-rm', values: []},
-  '^notes.([0-9]{1,3}).text$': {type: 'scalar', values: []},
+  '^notes.([0-9]{1,11}).__remove__$': {type: 'vector-rm', values: []},
+  '^notes.([0-9]{1,11}).text$': {type: 'scalar', values: []},
   '^created$': {type: 'scalar', values: []}
 };
 
