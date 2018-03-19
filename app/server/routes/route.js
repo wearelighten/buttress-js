@@ -135,6 +135,7 @@ class Route {
       }
 
       if (res) {
+        const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.authAppToken.value);
         nrp.emit('activity', {
           title: this.activityTitle,
           description: this.activityDescription,
@@ -145,7 +146,8 @@ class Route {
           permissions: this.permissions,
           timestamp: new Date(),
           response: res,
-          user: Model.authUser ? Model.authUser._id : ''
+          user: Model.authUser ? Model.authUser._id : '',
+          appPId: appPId ? appPId : ''
         });
       }
     };

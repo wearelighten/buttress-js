@@ -2,8 +2,12 @@
 Realtime datastore for business software.
 
 # What's New
-### version: 1.5.12
-- Added: tracking API for logging errors, activity and debug logs
+### version: 1.6.0
+- Added: Socket connections are now namespaced based on public app id
+- Added: User token is required to be passed to the socket on handshake
+
+### version: 1.5.4 - 1.5.12
+- NOTE: Verison information required
 
 ### version: 1.5.3
 - Fixed: error with objectid's in arrays with schemas
@@ -20,7 +24,7 @@ Realtime datastore for business software.
 - Added Sugar for date management
 
 ### 1.0.5
--  API compatibility fixes
+- API compatibility fixes
 
 ### 1.0.2
 - Patch bug fix

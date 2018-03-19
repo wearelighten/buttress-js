@@ -16,9 +16,12 @@ const Express = require('express');
 const sio = require('socket.io');
 const sioRedis = require('socket.io-redis');
 const sioEmitter = require('socket.io-emitter');
-const NRP = require('node-redis-pubsub');
+
 const Config = require('./config');
+const Model = require('./model');
 const Logging = require('./logging');
+const MongoClient = require('mongodb').MongoClient;
+const NRP = require('node-redis-pubsub');
 
 /* ********************************************************************************
  *
@@ -30,21 +33,9 @@ const _workers = [];
 
 /* ********************************************************************************
  *
- * WORKERS
+ * HELPERS
  *
  **********************************************************************************/
-const __spawnWorkers = () => {
-  Logging.log(`Spawning ${processes} Socket Workers`);
-
-  const __spawn = idx => {
-    _workers[idx] = cluster.fork();
-  };
-
-  for (let x = 0; x < processes; x++) {
-    __spawn(x);
-  }
-};
-
 const __indexFromIP = (ip, spread) => {
   let s = '';
   for (let i = 0, _len = ip.length; i < _len; i++) {
@@ -56,20 +47,105 @@ const __indexFromIP = (ip, spread) => {
   return Number(s) % spread;
 };
 
+/* ********************************************************************************
+ *
+ * MONGODB
+ *
+ **********************************************************************************/
+const POOL_SIZE = 10;
+const __nativeMongoConnect = app => {
+  const mongoUrl = `mongodb://${Config.mongoDb.url}`;
+  const dbName = `${Config.app.code}-${Config.env}`;
+  return MongoClient.connect(mongoUrl, {poolSize: POOL_SIZE, native_parser: true}) // eslint-disable-line camelcase
+  .then(client => {
+    return client.db(dbName);
+  });
+};
+const __initMongoConnect = () => {
+  return __nativeMongoConnect()
+  .then(db => {
+    Model.init(db);
+    return db;
+  })
+  .catch(e => Logging.logError(e));
+};
+
+/* ********************************************************************************
+ *
+ * WORKERS
+ *
+ **********************************************************************************/
+const __spawnWorkers = appTokens => {
+  Logging.log(`Spawning ${processes} Socket Workers`);
+
+  const __spawn = idx => {
+    _workers[idx] = cluster.fork();
+    _workers[idx].send({'buttress:initAppTokens': appTokens});
+  };
+
+  for (let x = 0; x < processes; x++) {
+    __spawn(x);
+  }
+
+  net.createServer({pauseOnConnect: true}, connection => {
+    const worker = _workers[__indexFromIP(connection.remoteAddress, processes)];
+    worker.send('buttress:connection', connection);
+  }).listen(Config.listenPorts.sock);
+};
+
+const __initSocketNamespace = (io, publicId, appTokens) => {
+  const namespace = io.of(`/${publicId}`);
+  namespace.on('connect', socket => {
+    const userToken = socket.handshake.query.token;
+    const token = appTokens.tokens.find(t => t.value === userToken);
+    if (!token) {
+      Logging.logDebug(`Invalid token, closing connection: ${socket.id}`);
+      return socket.disconnect(0);
+    }
+
+    const app = appTokens.apps.find(a => a.publicId === publicId);
+    if (!app) {
+      Logging.logDebug(`Invalid app, closing connection: ${socket.id}`);
+      return socket.disconnect(0);
+    }
+
+    Logging.logSilly(`${socket.id} Connected on ${publicId}`);
+    socket.on('disconnect', () => {
+      Logging.logSilly(`${socket.id} Disconnect on ${publicId}`);
+    });
+  });
+
+  return namespace;
+};
+
 const __initWorker = () => {
   const app = new Express();
   const server = app.listen(0, 'localhost');
   const io = sio(server);
+  const namespace = [];
   io.origins('*:*');
   io.adapter(sioRedis(Config.redis));
 
-  process.on('message', (message, connection) => {
-    if (message !== 'sticky-session:connection') {
+  io.on('connect', socket => {
+    Logging.logSilly(`${socket.id} Connected on global space`);
+    socket.on('disconnect', socket => {
+      Logging.logSilly(`${socket.id} Disconnect on global space`);
+    });
+  });
+
+  process.on('message', (message, input) => {
+    if (message === 'buttress:connection') {
+      const connection = input;
+      server.emit('connection', connection);
+      connection.resume();
       return;
     }
-
-    server.emit('connection', connection);
-    connection.resume();
+    if (message['buttress:initAppTokens']) {
+      const appTokens = message['buttress:initAppTokens'];
+      appTokens.apps.forEach(app => {
+        namespace.push(__initSocketNamespace(io, app.publicId, appTokens));
+      });
+    }
   });
 };
 
@@ -82,21 +158,81 @@ const __initMaster = express => {
   const emitter = sioEmitter(Config.redis);
   const nrp = new NRP(Config.redis);
 
+  let apps = [];
+  let tokens = [];
+  const namespace = {};
+
+  const superApps = [];
+
   const isPrimary = Config.sio.app === 'primary';
+
   if (isPrimary) {
     Logging.logDebug(`Primary Master`);
     nrp.on('activity', data => {
       Logging.logDebug(`Activity: ${data.path}`);
-      emitter.emit('db-activity', data);
+
+      // Super apps?
+      superApps.forEach(publicId => {
+        namespace[publicId].emit('db-activity', data);
+      });
+
+      // Broadcast on requested channel
+      const publicId = data.appPId;
+      if (!namespace[publicId]) {
+        namespace[publicId] = emitter.of(`/${publicId}`);
+      }
+
+      namespace[publicId].emit('db-activity', data);
     });
   }
 
-  __spawnWorkers();
+  __initMongoConnect()
+  .then(db => {
+    // Load Apps
+    return new Promise((resolve, reject) => {
+      Model.App.findAll().toArray((err, _apps) => {
+        if (err) reject(err);
+        resolve(apps = _apps);
+      });
+    });
+  })
+  .then(() => {
+    // Load Tokens
+    return new Promise((resolve, reject) => {
+      Model.Token.findAll().toArray((err, _tokens) => {
+        if (err) reject(err);
+        resolve(tokens = _tokens);
+      });
+    });
+  })
+  .then(() => {
+    // Spawn worker processes, pass through build app objects
+    apps.map(app => {
+      const token = tokens.find(t => {
+        return t._id.toString() === app._token.toString();
+      });
+      if (!token) {
+        Logging.logWarn(`No Token found for ${app.name}`);
+        return null;
+      }
 
-  net.createServer({pauseOnConnect: true}, connection => {
-    const worker = _workers[__indexFromIP(connection.remoteAddress, processes)];
-    worker.send('sticky-session:connection', connection);
-  }).listen(Config.listenPorts.sock);
+      app.token = token;
+      app.publicId = Model.App.genPublicUID(app.name, token.value);
+      Logging.logDebug(`App Public ID: ${app.name}, ${app.publicId}`);
+
+      if (token.authLevel > 2) {
+        namespace[app.publicId] = emitter.of(`/${app.publicId}`);
+        superApps.push(app.publicId);
+      }
+
+      return app;
+    }).filter(app => app);
+
+    __spawnWorkers({
+      apps: apps,
+      tokens: tokens
+    });
+  });
 };
 
 /* ********************************************************************************

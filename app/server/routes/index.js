@@ -79,6 +79,7 @@ function _authenticateToken(req, res, next) {
           reject({message: 'invalid_token'});
           return;
         }
+
         Model.token = req.token = token.details;
         Model.authApp = req.authApp = token._app;
         Model.authUser = req.authUser = token._user;
@@ -89,6 +90,10 @@ function _authenticateToken(req, res, next) {
 
         resolve();
       });
+    })
+    .then(() => Model.authApp.getToken())
+    .then(appToken => {
+      Model.authAppToken = req.authAppToken = appToken;
     })
     .then(Helpers.Promise.inject())
     .then(next)
