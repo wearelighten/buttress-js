@@ -16,6 +16,9 @@ var mongoose = require('mongoose');
 var Logging = require('../../logging');
 var Model = require('../');
 
+const collectionName = 'tokens';
+const collection = Model.mongoDb.collection(collectionName);
+
 /**
  * Constants
  */
@@ -194,6 +197,10 @@ schema.methods.addOrUpdatePermission = function(route, permission) {
 /**
  * Schema Static Methods
  */
+
+schema.statics.findAll = () => {
+  return collection.find({});
+};
 
 /**
  * @return {Promise} - resolves to an array of Tokens (native Mongoose objects)

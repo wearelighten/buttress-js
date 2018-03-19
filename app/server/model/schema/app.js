@@ -20,6 +20,9 @@ const Config = require('../../config');
 const NRP = require('node-redis-pubsub');
 const nrp = new NRP(Config.redis);
 
+const collectionName = 'apps';
+const collection = Model.mongoDb.collection(collectionName);
+
 /**
  * Constants
 */
@@ -237,28 +240,14 @@ schema.methods.mkDataDir = function(name, isPublic) {
  * @return {String} - UID
  */
 schema.methods.getPublicUID = function() {
-  var hash = crypto.createHash('sha512');
-  // Logging.log(`Create UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
-  hash.update(`${this.name}.${this.tokenValue}`);
-  var bytes = hash.digest();
-
-  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  var mask = 0x3d;
-  var uid = '';
-
-  for (var byte = 0; byte < 32; byte++) {
-    uid += chars[bytes[byte] & mask];
-  }
-
-  Logging.log(`Got UID: ${uid}`, Logging.Constants.LogLevel.SILLY);
-  return uid;
+  return schema.statics.genPublicUID(this.name, this.tokenValue);
 };
 
 /**
  * @return {Promise} - resolves to the token
  */
 schema.methods.getToken = function() {
-  return Model.Token.find({_app: this._id}).populate('_user');
+  return Model.Token.findOne({_id: this._token}).populate('_user');
 };
 
 /**
@@ -278,10 +267,35 @@ schema.statics.rm = app => {
  * @return {Promise} - resolves to an array of Apps (App.details)
  */
 schema.statics.findAll = () => {
-  return new Promise((resolve, reject) => {
-    ModelDef.find({}).populate('_owner').populate('_token')
-    .then(res => resolve(res.map(d => d.details)), reject);
-  });
+    // return new Promise((resolve, reject) => {
+  //   ModelDef.find({}).populate('_owner').populate('_token')
+  //   .then(res => resolve(res.map(d => d.details)), reject);
+  // });
+  // NOTE: Doesn't populate owner/token
+  return collection.find({});
+};
+
+/**
+ * @param {String} name - name of application
+ * @param {String} tokenValue - application token
+ * @return {String} - UID
+ */
+schema.statics.genPublicUID = function(name, tokenValue) {
+  var hash = crypto.createHash('sha512');
+  // Logging.log(`Create UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
+  hash.update(`${name}.${tokenValue}`);
+  var bytes = hash.digest();
+
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var mask = 0x3d;
+  var uid = '';
+
+  for (var byte = 0; byte < 32; byte++) {
+    uid += chars[bytes[byte] & mask];
+  }
+
+  Logging.log(`Got UID: ${uid}`, Logging.Constants.LogLevel.SILLY);
+  return uid;
 };
 
 /**
