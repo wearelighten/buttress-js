@@ -23,7 +23,7 @@ const _map = {
 };
 
 const _env = process.env.NODE_ENV ? process.env.NODE_ENV : 'development';
-const _regEx = /^%(\w+)%/;
+const _regEx = /%(\w+)%/g;
 
 /**
  * @param  {Object} env - environment variables
@@ -40,9 +40,12 @@ const __recurseVars = (env, root) => {
     } else if (root[variable] instanceof Array) {
       __recurseVars(env, root[variable]);
     } else if (typeof root[variable] === 'string') {
-      const match = _regEx.exec(root[variable]);
-      if (match) {
-        root[variable] = root[variable].replace(`%${match[1]}%`, env[match[1]]);
+      const matches = root[variable].match(_regEx);
+      if (matches) {
+        matches.forEach(match => {
+          const key = match.replace(/%/g, '');
+          root[variable] = root[variable].replace(`%${key}%`, env[key]);
+        });
       }
     }
   }
@@ -71,12 +74,39 @@ const __parse = object => {
 };
 
 /**
+ * @param  {String} data - environment variables data
+ * @return {Object} contained key-values for environment variables
+ */
+const __parseEnvFile = data => {
+  return data.split('\n').reduce((obj, line) => {
+    let lineSplit = line.split('=');
+    if (lineSplit.length > 0) {
+      const key = lineSplit.shift();
+      const value = lineSplit.join('=');
+      if (key === '' || key.indexOf('#') >= 0) return obj;
+      obj[key] = value;
+    }
+    return obj;
+  }, {});
+};
+
+/**
  * @class Config
  *
  */
 class Config {
-  constructor() {
-    this._settings = Config._loadSettings();
+  constructor(path) {
+    const basePath = path ? path : __dirname;
+    const envPath = `${basePath}/.${_env}.env`;
+
+    if (fs.existsSync(envPath)) {
+      const envFileData = __parseEnvFile(fs.readFileSync(envPath, {encoding: 'utf8'}));
+      Object.keys(envFileData).forEach(key => {
+        process.env[key] = envFileData[key];
+      });
+    }
+
+    this._settings = Config._loadSettings(process.env);
     this._settings.env = _map[this._settings.env];
   }
 
@@ -84,8 +114,8 @@ class Config {
     return this._settings;
   }
 
-  static _loadSettings() {
-    let json = fs.readFileSync('./config.json');
+  static _loadSettings(env) {
+    let json = fs.readFileSync(`${__dirname}/config.json`);
     let settings = JSON.parse(json);
 
     let variable;
@@ -93,11 +123,11 @@ class Config {
       if (!settings.environment.hasOwnProperty(variable)) { // eslint-disable-line no-prototype-builtins
         continue;
       }
-      if (!process.env[variable] && !settings.environment[variable]) {
-        throw new Error(`You must specify the ${variable} environment variable`);
+      if (!env[variable] && !settings.environment[variable]) {
+        console.warn(`WARN: You must specify the ${variable} environment variable`);
       }
-      if (process.env[variable]) {
-        settings.environment[variable] = process.env[variable];
+      if (env[variable]) {
+        settings.environment[variable] = env[variable];
       }
     }
 
@@ -108,4 +138,4 @@ class Config {
   }
 }
 
-module.exports = (new Config()).settings;
+module.exports = args => new Config(args).settings;

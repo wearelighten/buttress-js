@@ -10,7 +10,7 @@
  *
  */
 
-const Config = require('./config');
+const Config = require('./config')(process.cwd() + '/../');
 const Logging = require('./logging');
 const Bootstrap = require('./bootstrap');
 

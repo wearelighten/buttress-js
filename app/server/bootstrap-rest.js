@@ -19,7 +19,7 @@ const methodOverride = require('method-override');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 
-const Config = require('./config');
+const Config = require('./config')(process.cwd() + '/../');
 const Model = require('./model');
 const Routes = require('./routes');
 const Logging = require('./logging');
