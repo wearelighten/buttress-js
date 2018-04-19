@@ -130,9 +130,9 @@ class Route {
     }
 
     let broadcast = () => {
-      if (this.activityBroadcast === false) {
-        return;
-      }
+      // if (this.activityBroadcast === false) {
+      //   return;
+      // }
 
       if (res) {
         const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.authAppToken.value);
@@ -140,6 +140,7 @@ class Route {
           title: this.activityTitle,
           description: this.activityDescription,
           visibility: this.activityVisibility,
+          broadcast: this.activityBroadcast,
           path: this.req.path.replace(Config.app.apiPrefix, ''),
           pathSpec: this.path,
           verb: this.verb,

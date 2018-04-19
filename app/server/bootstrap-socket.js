@@ -180,6 +180,15 @@ const __initMaster = express => {
         });
       });
 
+      // Disable broadcasting to public space
+      if (data.broadcast === false) {
+        return;
+      }
+      // Don't emit activity if activity has super app PId, as it's already been sent
+      if (superApps[data.appPId]) {
+        return;
+      }
+
       // Broadcast on requested channel
       const publicId = data.appPId;
       if (!namespace[publicId]) {
