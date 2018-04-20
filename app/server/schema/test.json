@@ -1,0 +1,10 @@
+{
+  "collection": "test",
+  "properties": {
+    "name": {
+      "__type": "string",
+      "__required": true,
+      "__allowUpdate": true
+    }
+  }
+}

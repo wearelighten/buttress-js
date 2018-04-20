@@ -14,6 +14,7 @@
 const fs = require('fs');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Config = require('../../config');
@@ -274,6 +275,18 @@ schema.statics.findAll = () => {
   // });
   // NOTE: Doesn't populate owner/token
   return collection.find({});
+};
+
+schema.statics.updateSchema = (app, schema) => {
+  nrp.emit('app-metadata:changed', {appId: app.id});
+
+  return new Promise((resolve, reject) => {
+    collection.update({_id: new ObjectId(app.id)}, {$set: {__schema: schema}}, {}, (err, object) => {
+      if (err) throw new Error(err);
+
+      resolve(object);
+    });
+  });
 };
 
 /**

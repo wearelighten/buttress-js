@@ -59,69 +59,43 @@ const __spawnWorkers = () => {
  *
  **********************************************************************************/
 const __systemInstall = () => {
-  return Model.Organisation.find({})
-    .then(orgs => {
-      if (orgs.length > 0) {
-        return true; // If any organisations, assume we've got a Super Admin app
-      }
-      return Model.Organisation.add({
-        name: 'Lighten',
-        type: Model.Constants.Organisation.Type.COMPANY
-      });
-    })
-    .then(org => {
-      if (org === true) {
-        Logging.logSilly('ORGANISATION EXISTED');
-        return true;
-      }
+  let isInstalled = false;
 
-      Logging.logDebug('ORGANISATION ADDED');
-      Logging.logDebug(org.id);
+  return Model.App.find({})
+  .then(apps => {
+    if (apps.length > 0) {
+      isInstalled = true;
+      return {app: apps[0], token: null}; // If any apps, assume we've got a Super Admin app
+    }
+    return Model.App.add({
+      name: 'ButrressJS ADMIN',
+      type: Model.Constants.App.Type.SERVER,
+      authLevel: Model.Constants.Token.AuthLevel.SUPER,
+      permissions: [{route: '*', permission: '*'}],
+      domain: ''
+    });
+  })
+  .then(res => {
+    if (isInstalled) {
+      Logging.logSilly('APP EXISTED');
+      return res.app;
+    }
+    Logging.logDebug('APP ADDED');
+    Logging.logDebug(res.app.id);
+    return new Promise((resolve, reject) => {
+      let pathName = path.join(Config.paths.appData, 'super.json');
+      let app = Object.assign(res.app.details, {token: res.token.value});
+      fs.writeFile(pathName, JSON.stringify(app), err => {
+        if (err) {
+          return reject(err);
+        }
+        Logging.logVerbose(`Written ${pathName}`);
+        Logging.logSilly(app);
 
-      return Model.Group.add({
-        name: 'Rhizome Admin',
-        type: Model.Constants.Group.Type.STAFF,
-        orgId: org.id
-      });
-    })
-    .then(group => {
-      if (group === true) {
-        Logging.logSilly('GROUP EXISTED');
-        return true;
-      }
-      Logging.logDebug('GROUP ADDED');
-      Logging.logDebug(group.id);
-
-      return Model.App.add({
-        name: 'Rhizome ADMIN',
-        type: Model.Constants.App.Type.SERVER,
-        authLevel: Model.Constants.Token.AuthLevel.SUPER,
-        permissions: [{route: '*', permission: '*'}],
-        domain: '',
-        ownerGroupId: group.id
-      });
-    })
-    .then(res => {
-      if (res === true) {
-        Logging.logSilly('APP EXISTED');
-        return true;
-      }
-      Logging.logDebug('APP ADDED');
-      Logging.logDebug(res.app.id);
-      return new Promise((resolve, reject) => {
-        let pathName = path.join(Config.paths.appData, 'super.json');
-        let app = Object.assign(res.app.details, {token: res.token.value});
-        fs.writeFile(pathName, JSON.stringify(app), err => {
-          if (err) {
-            return reject(err);
-          }
-          Logging.logVerbose(`Written ${pathName}`);
-          Logging.logSilly(app);
-
-          resolve(true);
-        });
+        resolve(res.app);
       });
     });
+  });
 };
 
 /* ********************************************************************************
@@ -189,9 +163,13 @@ const __initMaster = () => {
   if (isPrimary) {
     Logging.logVerbose(`Primary Master REST`);
     p = __nativeMongoConnect()
-      .then(db => {
-        Model.init(db);
-        return __systemInstall();
+      .then(db => Model.init(db))
+      .then(() => __systemInstall())
+      .then(app => {
+        // Load local defined schemas into super app
+        const schema = _getLocalSchemas();
+        Model.App.updateSchema(app, schema);
+        return schema;
       })
       .catch(e => Logging.logError(e));
   } else {
@@ -212,6 +190,22 @@ const __initMaster = () => {
 
   return Promise.resolve();
 };
+
+/**
+ * @return {Array} - content of json files loaded from local system
+ */
+function _getLocalSchemas() {
+  let filenames = fs.readdirSync(`${__dirname}/schema`);
+
+  let files = [];
+  for (let x = 0; x < filenames.length; x++) {
+    let file = filenames[x];
+    if (path.extname(file) === '.json') {
+      files.push(require(`${__dirname}/schema/${path.basename(file, '.js')}`));
+    }
+  }
+  return files;
+}
 
 /* ********************************************************************************
  *
