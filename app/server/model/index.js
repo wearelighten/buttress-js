@@ -14,6 +14,7 @@ const path = require('path');
 const fs = require('fs');
 const Logging = require('../logging');
 const Sugar = require('sugar');
+const SchemaModel = require('./schemaModel');
 
 /**
  * @param {string} model - name of the model to load
@@ -35,11 +36,25 @@ class Model {
 
   init(db) {
     this.mongoDb = db;
+
+    // Core Models
     let models = _getModels();
     Logging.log(models, Logging.Constants.LogLevel.SILLY);
     for (let x = 0; x < models.length; x++) {
       this._initModel(models[x]);
     }
+
+    // Load schema models
+    return this.Schema.App.statics.findAll().toArray()
+    .then(apps => {
+      apps.forEach(app => {
+        if (app.__schema) {
+          app.__schema.forEach(schema => {
+            this._initSchemaModel(app, schema);
+          });
+        }
+      });
+    });
   }
 
   initModel(modelName) {
@@ -55,6 +70,21 @@ class Model {
     this.Schema.__defineGetter__(model, () => this._require(model).schema);
     this.Constants.__defineGetter__(model, () => this._require(model).constants);
     this._require(model);
+  }
+
+  /**
+   * @param {string} model - demand loads the schema
+   * @private
+   */
+  _initSchemaModel(app, schema) {
+    const name = schema.collection;
+
+    if (!this.models[name]) {
+      this.models[name] = new SchemaModel(this.mongoDb, schema);
+    }
+
+    this.__defineGetter__(name, () => this.models[name]);
+    return this.models[name];
   }
 
   _require(model) {

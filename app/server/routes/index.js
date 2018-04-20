@@ -18,6 +18,8 @@ const Helpers = require('../helpers');
 const Model = require('../model');
 const Mongo = require('mongodb');
 
+const SchemaRoutes = require('./schemaRoutes');
+
 const _timer = new Helpers.Timer();
 
 /**
@@ -47,6 +49,32 @@ function _initRoute(app, Route) {
         Logging.logError(err);
         res.status(err.statusCode ? err.statusCode : 500).json({message: err.message});
       });
+  });
+}
+function _initSchemaRoutes(express, app, schema) {
+  SchemaRoutes.forEach(Route => {
+    let route = new Route(schema);
+    express[route.verb](`/api/v1/${route.path}`, (req, res) => {
+      Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
+
+      route
+        .exec(req, res)
+        .then(result => {
+          if (result instanceof Mongo.Cursor) {
+            let stringifyStream = new Helpers.JSONStringifyStream();
+            res.set('Content-Type', 'application/json');
+            result.stream().pipe(stringifyStream).pipe(res);
+          } else {
+            res.json(result);
+          }
+          Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
+          Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
+        })
+        .catch(err => {
+          Logging.logError(err);
+          res.status(err.statusCode ? err.statusCode : 500).json({message: err.message});
+        });
+    });
   });
 }
 
@@ -179,6 +207,11 @@ function _configCrossDomain(req, res, next) {
 
   const rex = /https?:\/\/(.+)$/;
   let origin = req.header('Origin');
+
+  if (!origin) {
+    origin = req.header('Host');
+  }
+
   let matches = rex.exec(origin);
   if (matches) {
     origin = matches[1];
@@ -224,16 +257,29 @@ exports.init = app => {
   app.use(_authenticateToken);
   app.use(_configCrossDomain);
 
-  let providers = _getRouteProviders();
-  for (let x = 0; x < providers.length; x++) {
-    let routes = providers[x];
-    for (let y = 0; y < routes.length; y++) {
-      let route = routes[y];
-      _initRoute(app, route);
+  return Model.App.findAll().toArray()
+  .then(buttressApps => {
+    // Fetch app schemas and init
+    buttressApps.forEach(buttressApp => {
+      if (buttressApp.__schema) {
+        buttressApp.__schema.forEach(schema => {
+          _initSchemaRoutes(app, buttressApp, schema);
+        });
+      }
+    });
+  })
+  .then(() => {
+    // Fetch core routes and init
+    let providers = _getRouteProviders();
+    for (let x = 0; x < providers.length; x++) {
+      let routes = providers[x];
+      for (let y = 0; y < routes.length; y++) {
+        let route = routes[y];
+        _initRoute(app, route);
+      }
     }
-  }
-
-  return _loadTokens();
+  })
+  .then(() => _loadTokens());
 };
 
 /**
