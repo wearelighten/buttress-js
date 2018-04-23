@@ -69,6 +69,9 @@ class JSONStringifyStream extends Transform {
     if (chunk._id) {
       chunk.id = chunk._id;
     }
+    if (chunk._app) {
+      chunk.app = chunk._app;
+    }
 
     const str = JSON.stringify(chunk, __replacer);
 
