@@ -182,16 +182,16 @@ schema.methods.findMetadata = function(key) {
 };
 
 /**
- * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+ * @return {Cursor} - resolves with a mongo cursor
  */
 schema.statics.findAll = () => {
-  Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+  Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
-    return ModelDef.find({visibility: constants.Visibility.PUBLIC});
+    return collection.find({});
   }
 
-  return ModelDef.find({_app: Model.authApp._id, visibility: constants.Visibility.PUBLIC});
+  return collection.find({_app: Model.authApp._id, visibility: constants.Visibility.PUBLIC});
 };
 
 ModelDef = mongoose.model('Activity', schema);
