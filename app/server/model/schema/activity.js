@@ -11,16 +11,27 @@
  *
  */
 const mongoose = require('mongoose');
+const ObjectId = require('mongodb').ObjectId
 const Model = require('../');
 const Logging = require('../../logging');
 const Sugar = require('sugar');
+const Shared = require('../shared');
 // const Helpers = require('../../helpers');
 // var Config = require('../../config');
 
-/**
- * Constants
- */
+/* ********************************************************************************
+ *
+ * LOCALS
+ *
+ **********************************************************************************/
+const collectionName = 'activities';
+const collection = Model.mongoDb.collection(collectionName);
 
+/* ********************************************************************************
+ *
+ * Constants
+ *
+ **********************************************************************************/
 const visibility = ['public', 'private'];
 const Visibility = {
   PUBLIC: visibility[0],
@@ -104,56 +115,49 @@ schema.virtual('tokenValue').get(function() {
  * Schema Static Methods
  */
 
-const collection = Model.mongoDb.collection('activities');
-
 /**
  * @param {Object} route - route object that fulfilled the request
  * @param {Object} response - object containing the response data
  * @return {Promise} - fulfilled with App Object when the database request is completed
  */
-schema.statics.add = (route, response) => {
-  Logging.log(route.path, Logging.Constants.LogLevel.DEBUG);
+const __add = body => {
+  return prev => {
+    let user = Model.authUser;
+    let userName = user && user._person ? `${user._person.forename} ${user._person.surname}` : 'System';
 
-  let user = Model.authUser;
-  let userName = user && user._person ? `${user._person.forename} ${user._person.surname}` : 'System';
+    body.activityTitle = body.activityTitle.replace('%USER_NAME%', userName);
+    body.activityDescription = body.activityDescription.replace('%USER_NAME%', userName);
 
-  route.activityTitle = route.activityTitle.replace('%USER_NAME%', userName);
-  route.activityDescription = route.activityDescription.replace('%USER_NAME%', userName);
+    let q = Object.assign({}, body.req.query);
+    delete q.token;
+    delete q.urq;
 
-  let q = Object.assign({}, route.req.query);
-  delete q.token;
-  delete q.urq;
+    const md = {
+      title: body.activityTitle,
+      description: body.activityDescription,
+      visibility: body.activityVisibility,
+      path: body.path,
+      verb: body.verb,
+      permissions: body.permissions,
+      authLevel: body.auth,
+      params: body.req.params,
+      query: q,
+      body: body.req.body,
+      // response: response,
+      _token: Model.token.id,
+      _user: Model.authUser.id,
+      _app: Model.authApp.id
+    };
 
-  const activity = new ModelDef({
-    title: route.activityTitle,
-    description: route.activityDescription,
-    visibility: route.activityVisibility,
-    path: route.path,
-    verb: route.verb,
-    permissions: route.permissions,
-    authLevel: route.auth,
-    params: route.req.params,
-    query: q,
-    body: route.req.body,
-    // response: response,
-    _token: Model.token.id,
-    _user: Model.authUser,
-    _app: Model.authApp
-  });
+    if (body.id) {
+      md._id = new ObjectId(body.id);
+    }
 
-  return new Promise((resolve, reject) => {
-    collection.insert(activity.toObject(), (err, res) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      resolve(res.ops.map(c => c._id));
-    });
-  });
-
-  // return app.save();
+    const validated = Shared.applyAppProperties(collectionName, body);
+    return prev.concat([Object.assign(md, validated)]);
+  };
 };
+schema.statics.add = Shared.add(collection, __add);
 
 /**
  * @param {string} key - index name of the metadata
