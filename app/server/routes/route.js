@@ -130,26 +130,18 @@ class Route {
     }
 
     let broadcast = () => {
-      // if (this.activityBroadcast === false) {
-      //   return;
-      // }
-
       if (res) {
         const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.authAppToken.value);
-        nrp.emit('activity', {
+        this._activityBroadcastSocket({
           title: this.activityTitle,
           description: this.activityDescription,
           visibility: this.activityVisibility,
           broadcast: this.activityBroadcast,
-          path: this.req.path.replace(Config.app.apiPrefix, ''),
+          path: this.req.path,
           pathSpec: this.path,
           verb: this.verb,
-          permissions: this.permissions,
-          timestamp: new Date(),
-          response: res,
-          user: Model.authUser ? Model.authUser._id : '',
-          appPId: appPId ? appPId : ''
-        });
+          permissions: this.permissions
+        }, res, appPId);
       }
     };
 
@@ -157,7 +149,39 @@ class Route {
       const body = this.req.body;
       const path = this.path;
       const verb = this.verb;
-      Model.Activity.add(this, res)
+
+      const activityObj = {
+        activityTitle: this.activityTitle,
+        activityDescription: this.activityDescription,
+        activityVisibility: this.activityVisibility,
+        path: path,
+        verb: verb,
+        permissions: this.permissions,
+        authLevel: this.auth,
+        params: this.req.params,
+        req: {
+          query: this.req.query,
+          body: body,
+          params: this.req.params
+        },
+        res: {}
+      };
+
+      // Craft activity object and add
+      Model.Activity.add(activityObj)
+      .then(activity => {
+        // Activity doesn't get added via the API so we will just broadcast the data manually
+        this._activityBroadcastSocket({
+          title: 'Private Activity',
+          description: 'ADD ACTIVITY',
+          visibility: 'private',
+          broadcast: false,
+          path: `activity`,
+          pathSpec: 'activity',
+          verb: "post",
+          permissions: "write"
+        }, activity);
+      })
       .catch(e => {
         console.log(`[${verb.toUpperCase()}] ${path}`);
         console.log(body);
@@ -167,6 +191,23 @@ class Route {
     }, 50);
 
     return Promise.resolve(res);
+  }
+
+  _activityBroadcastSocket(activity, res, appPid) {
+    nrp.emit('activity', {
+      title: activity.title,
+      description: activity.description,
+      visibility: activity.visibility,
+      broadcast: activity.broadcast,
+      path: activity.path.replace(Config.app.apiPrefix, ''),
+      pathSpec: activity.pathSpec,
+      verb: activity.verb,
+      permissions: activity.permissions,
+      timestamp: new Date(),
+      response: res,
+      user: Model.authUser ? Model.authUser._id : '',
+      appPId: appPid ? appPid : ''
+    });
   }
 
   /**
