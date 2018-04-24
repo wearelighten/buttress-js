@@ -11,7 +11,7 @@
  *
  */
 const mongoose = require('mongoose');
-const ObjectId = require('mongodb').ObjectId
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Sugar = require('sugar');
@@ -116,8 +116,7 @@ schema.virtual('tokenValue').get(function() {
  */
 
 /**
- * @param {Object} route - route object that fulfilled the request
- * @param {Object} response - object containing the response data
+ * @param {Object} body - body passed through from a POST request
  * @return {Promise} - fulfilled with App Object when the database request is completed
  */
 const __add = body => {
@@ -144,6 +143,7 @@ const __add = body => {
       query: q,
       body: body.req.body,
       // response: response,
+      timestamp: new Date(),
       _token: Model.token.id,
       _user: Model.authUser.id,
       _app: Model.authApp.id

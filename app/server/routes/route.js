@@ -150,14 +150,15 @@ class Route {
       const path = this.path;
       const verb = this.verb;
 
-      const activityObj = {
+      // Craft activity object and add
+      Model.Activity.add({
         activityTitle: this.activityTitle,
         activityDescription: this.activityDescription,
         activityVisibility: this.activityVisibility,
         path: path,
         verb: verb,
         permissions: this.permissions,
-        authLevel: this.auth,
+        auth: this.auth,
         params: this.req.params,
         req: {
           query: this.req.query,
@@ -165,10 +166,7 @@ class Route {
           params: this.req.params
         },
         res: {}
-      };
-
-      // Craft activity object and add
-      Model.Activity.add(activityObj)
+      })
       .then(activity => {
         // Activity doesn't get added via the API so we will just broadcast the data manually
         this._activityBroadcastSocket({
