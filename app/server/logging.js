@@ -89,6 +89,16 @@ winston.add(winston.transports.Rotate, {
   colorize: 'none',
   timestamp: true
 });
+winston.add(winston.transports.Rotate, {
+  name: 'silly-file',
+  json: false,
+  file: `${Config.paths.logs}/log-silly.log`,
+  level: 'silly',
+  size: '1m',
+  keep: 1,
+  colorize: 'all',
+  timestamp: true
+});
 winston.addColors({
   info: 'white',
   error: 'red',
