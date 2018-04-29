@@ -12,7 +12,6 @@
  */
 
 const ObjectId = require('mongodb').ObjectId;
-const Model = require('./index');
 const Logging = require('../logging');
 const Shared = require('./shared');
 
@@ -37,7 +36,7 @@ class SchemaModel {
       invalid: []
     };
 
-    let app = Shared.validateAppProperties(this.collectionName, body);
+    let app = Shared.validateAppProperties(this.schema, body);
     if (app.isValid === false) {
       res.isValid = false;
       res.invalid = res.invalid.concat(app.invalid);
@@ -67,19 +66,22 @@ class SchemaModel {
         entity._id = new ObjectId(body.id);
       }
 
-      const validated = Shared.applyAppProperties(this.collectionName, body);
+      const validated = Shared.applyAppProperties(this.schema, body);
       return prev.concat([Object.assign(entity, validated)]);
     };
   }
   add(body) {
-    return Shared.add(this.collection, this.__add(body));
+    const sharedFn = Shared.add(this.collection, item => this.__add(item));
+    return sharedFn(body);
   }
 
-  validateUpdate() {
-    return Shared.validateUpdate({}, this.collectionName);
+  validateUpdate(body) {
+    const sharedFn = Shared.validateUpdate({}, this.schema);
+    return sharedFn(body);
   }
-  updateByPath(body) {
-    return Shared.validateUpdate({}, this.collectionName);
+  updateByPath(body, id) {
+    const sharedFn = Shared.updateByPath({}, this.schema, this.collection);
+    return sharedFn(body, id);
   }
 
   exists(id) {
@@ -93,7 +95,7 @@ class SchemaModel {
   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
   */
   isDuplicate(details) {
-    return Promise.resolve(false); // What even are duplicates?
+    return Promise.resolve(false);
   }
 
   /**
@@ -152,9 +154,10 @@ class SchemaModel {
    * @return {Promise} - resolves to an array of Companies
    */
   findAllById(ids) {
-    Logging.log(`findAllById: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+    // Logging.log(`findAllById: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
 
-    return this.collection.find({_id: {$in: ids.map(id => new ObjectId(id))}, _app: Model.authApp._id}, {metadata: 0});
+    // return this.collection.find({_id: {$in: ids.map(id => new ObjectId(id))}, _app: Model.authApp._id}, {metadata: 0});
+    return this.collection.find({_id: {$in: ids.map(id => new ObjectId(id))}}, {metadata: 0});
   }
 }
 

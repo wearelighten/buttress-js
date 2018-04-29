@@ -78,21 +78,6 @@ module.exports.add = (collection, __add) => {
 * SCHEMA HELPERS
 *
 **********************************************************************************/
-const __getCollectionSchema = collection => {
-  if (!Model.authApp.__schema) {
-    Logging.logSilly(`App property validation: no registered schema for ${Model.authApp.id}`);
-    return false;
-  }
-  const appSchema = Model.authApp.__schema;
-  const schema = appSchema.find(r => r.collection === collection);
-  if (!schema) {
-    Logging.logSilly(`App property validation: no registered schema for ${collection}`);
-    return false;
-  }
-
-  return schema;
-};
-
 const __getFlattenedSchema = schema => {
   const __buildFlattenedSchema = (property, parent, path, flattened) => {
     path.push(property);
@@ -343,8 +328,8 @@ const __validate = (schema, values, parentProperty) => {
 * APP-SPECIFIC SCHEMA
 *
 **********************************************************************************/
-const _validateAppProperties = function(collection, body) {
-  const schema = __getCollectionSchema(collection);
+const _validateAppProperties = function(schema, body) {
+  // const schema = __getCollectionSchema(collection);
   if (schema === false) return {isValid: true};
 
   const flattenedSchema = __getFlattenedSchema(schema);
@@ -413,8 +398,8 @@ const __populateObject = (schema, values) => {
  * @param {Object} body - object containing properties to be applied
  * @return {Object} - returns an object with only validated properties
  */
-const _applyAppProperties = function(collection, body) {
-  const schema = __getCollectionSchema(collection);
+const _applyAppProperties = function(schema, body) {
+  // const schema = __getCollectionSchema(collection);
   if (schema === false) return {isValid: true};
 
   const flattenedSchema = __getFlattenedSchema(schema);
@@ -664,14 +649,14 @@ const __extendPathContext = (pathContext, schema, prefix) => {
   return Object.assign(extended, pathContext);
 };
 
-module.exports.validateUpdate = function(pathContext, collection) {
+module.exports.validateUpdate = function(pathContext, schema) {
   return function(body) {
     Logging.logDebug(body instanceof Array);
     if (body instanceof Array === false) {
       body = [body];
     }
 
-    const schema = __getCollectionSchema(collection);
+    // const schema = __getCollectionSchema(collection);
     const flattenedSchema = schema ? __getFlattenedSchema(schema) : false;
     const extendedPathContext = __extendPathContext(pathContext, flattenedSchema, '');
 
@@ -681,12 +666,12 @@ module.exports.validateUpdate = function(pathContext, collection) {
   };
 };
 
-module.exports.updateByPath = function(pathContext, collectionName, collection) {
+module.exports.updateByPath = function(pathContext, schema, collection) {
   return function(body, id) {
     if (body instanceof Array === false) {
       body = [body];
     }
-    const schema = __getCollectionSchema(collectionName);
+    // const schema = __getCollectionSchema(collectionName);
     const flattenedSchema = schema ? __getFlattenedSchema(schema) : false;
     const extendedPathContext = __extendPathContext(pathContext, flattenedSchema, '');
     Logging.logSilly(extendedPathContext);
