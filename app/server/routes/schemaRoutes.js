@@ -48,11 +48,14 @@ routes.push(GetList);
  * @class GetOne
  */
 class GetOne extends Route {
-  constructor() {
-    super('entity/:id', 'GET ENTITY');
+  constructor(schema) {
+    super(`${schema.collection}/:id`, `GET ${schema.collection}`);
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.READ;
+
+    this.schema = schema;
+    this.model = Model[schema.collection];
 
     this._entity = false;
   }
@@ -62,7 +65,7 @@ class GetOne extends Route {
       this.model.getById(this.req.params.id)
         .then(entity => {
           if (!entity) {
-            this.log(`ERROR: Invalid ID: ${this.req.params.id}`, Route.LogLevel.ERR);
+            this.log(`${this.schema.collection}: Invalid ID: ${this.req.params.id}`, Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
@@ -76,20 +79,20 @@ class GetOne extends Route {
     return Promise.resolve(this._entity);
   }
 }
-// routes.push(GetOne);
+routes.push(GetOne);
 
 /**
  * @class AddOne
  */
 class AddOne extends Route {
-  constructor() {
-    super('entity', 'ADD ENTITY');
+  constructor(schema) {
+    super(`${schema.collection}`, `ADD ${schema.collection}`);
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.ADD;
 
-    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
-    this.activityBroadcast = true;
+    this.schema = schema;
+    this.model = Model[schema.collection];
   }
 
   _validate() {
@@ -97,25 +100,25 @@ class AddOne extends Route {
       let validation = this.model.validate(this.req.body);
       if (!validation.isValid) {
         if (validation.missing.length > 0) {
-          this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `COMPANY: Missing field: ${validation.missing[0]}`});
+          this.log(`${this.schema.collection}: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `${this.schema.collection}: Missing field: ${validation.missing[0]}`});
           return;
         }
         if (validation.invalid.length > 0) {
-          this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `COMPANY: Invalid value: ${validation.invalid[0]}`});
+          this.log(`${this.schema.collection}: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `${this.schema.collection}: Invalid value: ${validation.invalid[0]}`});
           return;
         }
 
-        this.log(`ERROR: COMPANY: Unhandled Error`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `COMPANY: Unhandled error.`});
+        this.log(`${this.schema.collection}: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `${this.schema.collection}: Unhandled error.`});
         return;
       }
 
       this.model.isDuplicate(this.req.body)
         .then(res => {
           if (res === true) {
-            this.log('ERROR: Duplicate company', Route.LogLevel.ERR);
+            this.log(`${this.schema.collection}: Duplicate entity`, Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
@@ -128,21 +131,22 @@ class AddOne extends Route {
     return this.model.add(this.req.body);
   }
 }
-// routes.push(AddOne);
+routes.push(AddOne);
 
 /**
  * @class UpdateOne
  */
 class UpdateOne extends Route {
-  constructor() {
-    super('entity/:id', 'UPDATE ENTITY');
+  constructor(schema) {
+    super(`${schema.collection}/:id`, `UPDATE ${schema.collection}`);
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-    this._entity = null;
 
-    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
-    this.activityBroadcast = true;
+    this.schema = schema;
+    this.model = Model[schema.collection];
+
+    this._entity = null;
   }
 
   _validate() {
@@ -150,16 +154,25 @@ class UpdateOne extends Route {
       let validation = this.model.validateUpdate(this.req.body);
       if (!validation.isValid) {
         if (validation.isPathValid === false) {
-          this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `COMPANY: Update path is invalid: ${validation.invalidPath}`});
+          this.log(`${this.schema.collection}: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+          reject({
+            statusCode: 400,
+            message: `${this.schema.collection}: Update path is invalid: ${validation.invalidPath}`
+          });
           return;
         }
         if (validation.isValueValid === false) {
-          this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+          this.log(`${this.schema.collection}: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
           if (validation.isMissingRequired) {
-            reject({statusCode: 400, message: `COMPANY: Missing required property updating ${this.req.body.path}: ${validation.missingRequired}`});
+            reject({
+              statusCode: 400,
+              message: `${this.schema.collection}: Missing required property updating ${this.req.body.path}: ${validation.missingRequired}`
+            });
           } else {
-            reject({statusCode: 400, message: `COMPANY: Update value is invalid for path ${this.req.body.path}: ${validation.invalidValue}`});
+            reject({
+              statusCode: 400,
+              message: `${this.schema.collection}: Update value is invalid for path ${this.req.body.path}: ${validation.invalidValue}`
+            });
           }
           return;
         }
@@ -181,17 +194,21 @@ class UpdateOne extends Route {
     return this.model.updateByPath(this.req.body, this.req.params.id);
   }
 }
-// routes.push(UpdateOne);
+routes.push(UpdateOne);
 
 /**
  * @class DeleteOne
  */
 class DeleteOne extends Route {
-  constructor() {
-    super('entity/:id', 'DELETE ENTITY');
+  constructor(schema) {
+    super(`${schema.collection}/:id`, `DELETE ${schema.collection}`);
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.DELETE;
+
+    this.schema = schema;
+    this.model = Model[schema.collection];
+
     this._entity = false;
   }
 
@@ -200,7 +217,7 @@ class DeleteOne extends Route {
       this.model.findById(this.req.params.id)
         .then(entity => {
           if (!entity) {
-            this.log('ERROR: Invalid ID', Route.LogLevel.ERR);
+            this.log(`${this.schema.collection}: Invalid ID`, Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
@@ -214,7 +231,7 @@ class DeleteOne extends Route {
     return this.model.rm(this._entity).then(() => true);
   }
 }
-// routes.push(DeleteOne);
+routes.push(DeleteOne);
 
 /**
  * @type {*[]}
