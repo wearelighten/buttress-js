@@ -129,6 +129,11 @@ class Route {
       return Promise.resolve(res);
     }
 
+    // Early out if tracking, we don't wan't to create activity for this
+    if (this.path === 'tracking') {
+      return Promise.resolve(res);
+    }
+
     let broadcast = () => {
       if (res) {
         const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.authAppToken.value);
