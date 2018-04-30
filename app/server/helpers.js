@@ -46,8 +46,12 @@ class JSONStringifyStream extends Transform {
   }
 
   _transform(chunk, encoding, cb) {
+    const nonReplacerKeys = [
+      '_id', '_app', '__v', '_user', '_token'
+    ];
+
     const __replacer = (key, value) => {
-      if (key === '_id' || key === '_app' || key === '__v') {
+      if (nonReplacerKeys.indexOf(key) !== -1) {
         return undefined;
       }
       if (key === 'metadata') {
@@ -71,6 +75,9 @@ class JSONStringifyStream extends Transform {
     }
     if (chunk._app) {
       chunk.appId = chunk._app;
+    }
+    if (chunk._user) {
+      chunk.userId = chunk._user;
     }
 
     const str = JSON.stringify(chunk, __replacer);
