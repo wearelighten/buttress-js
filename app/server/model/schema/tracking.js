@@ -147,7 +147,24 @@ const __add = body => {
   };
 };
 
-schema.statics.add = Shared.add(collection, __add);
+schema.statics.add = (body) => {
+  const sharedFn = Shared.add(collection, __add);
+  const result = sharedFn(body);
+
+  return result
+  .then(ids => {
+    return new Promise(resolve => {
+      if (Array.isArray(ids) === true) {
+        return collection.find({_id: {$in: ids}}, {}).toArray((err, docs) => {
+          if (err) throw new Error(err);
+          resolve(docs);
+        });
+      }
+
+      resolve(ids);
+    });
+  });
+};
 
 /**
  * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
