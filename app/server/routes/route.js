@@ -129,9 +129,11 @@ class Route {
       return Promise.resolve(res);
     }
 
+    let addActivty = true;
+
     // Early out if tracking, we don't wan't to create activity for this
     if (this.path === 'tracking') {
-      return Promise.resolve(res);
+      addActivty = false;
     }
 
     let broadcast = () => {
@@ -151,52 +153,64 @@ class Route {
     };
 
     setTimeout(() => {
-      const body = this.req.body;
-      const path = this.path;
-      const verb = this.verb;
-
       // Craft activity object and add
-      Model.Activity.add({
-        activityTitle: this.activityTitle,
-        activityDescription: this.activityDescription,
-        activityVisibility: this.activityVisibility,
-        path: path,
-        verb: verb,
-        permissions: this.permissions,
-        auth: this.auth,
-        params: this.req.params,
-        req: {
-          query: this.req.query,
-          body: body,
-          params: this.req.params
-        },
-        res: {}
-      })
-      .then(activity => {
-        // Activity doesn't get added via the API so we will just broadcast the data manually
-        this._activityBroadcastSocket({
-          title: 'Private Activity',
-          description: 'ADD ACTIVITY',
-          visibility: 'private',
-          broadcast: false,
-          path: `activity`,
-          pathSpec: 'activity',
-          verb: "post",
-          permissions: "write"
-        }, activity);
-      })
-      .catch(e => {
-        console.log(`[${verb.toUpperCase()}] ${path}`);
-        console.log(body);
-        console.log(e);
-      });
+      if (addActivty) {
+        this._addLogActivity(this.req.body, this.path, this.verb);
+      }
       broadcast();
     }, 50);
 
     return Promise.resolve(res);
   }
 
+  _addLogActivity(body, path, verb) {
+    return Model.Activity.add({
+      activityTitle: this.activityTitle,
+      activityDescription: this.activityDescription,
+      activityVisibility: this.activityVisibility,
+      path: path,
+      verb: verb,
+      permissions: this.permissions,
+      auth: this.auth,
+      params: this.req.params,
+      req: {
+        query: this.req.query,
+        body: body,
+        params: this.req.params
+      },
+      res: {}
+    })
+    .then(activity => {
+      // Activity doesn't get added via the API so we will just broadcast the data manually
+      this._activityBroadcastSocket({
+        title: 'Private Activity',
+        description: 'ADD ACTIVITY',
+        visibility: 'private',
+        broadcast: false,
+        path: `activity`,
+        pathSpec: 'activity',
+        verb: "post",
+        permissions: "write"
+      }, activity);
+    })
+    .catch(e => {
+      console.log(`[${verb.toUpperCase()}] ${path}`);
+      console.log(body);
+      console.log(e);
+    });
+  }
+
   _activityBroadcastSocket(activity, res, appPid) {
+    if (res._id) {
+      res.id = res._id;
+    }
+    if (res._app) {
+      res.appId = res._app;
+    }
+    if (res._user) {
+      res.userId = res._user;
+    }
+
     nrp.emit('activity', {
       title: activity.title,
       description: activity.description,
