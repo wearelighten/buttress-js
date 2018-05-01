@@ -39,6 +39,26 @@ class Timer {
 
 module.exports.Timer = Timer;
 
+module.exports.prepareResult = result => {
+  const prepare = chunk => {
+    if (chunk._id) {
+      chunk.id = chunk._id;
+      delete chunk._id;
+    }
+    if (chunk._app) {
+      chunk.appId = chunk._app;
+      delete chunk._app;
+    }
+    if (chunk._user) {
+      chunk.userId = chunk._user;
+      delete chunk._user;
+    }
+    return chunk;
+  };
+
+  return (Array.isArray(result)) ? result.map(c => prepare(c)) : prepare(result);
+};
+
 class JSONStringifyStream extends Transform {
   constructor(options) {
     super(Object.assign(options || {}, {objectMode: true}));

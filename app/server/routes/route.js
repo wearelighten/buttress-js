@@ -16,6 +16,7 @@ const Model = require('../model');
 const _ = require('underscore');
 const Mongo = require('mongodb');
 const NRP = require('node-redis-pubsub');
+const Helpers = require('../helpers');
 
 const nrp = new NRP(Config.redis);
 
@@ -201,16 +202,6 @@ class Route {
   }
 
   _activityBroadcastSocket(activity, res, appPid) {
-    if (res._id) {
-      res.id = res._id;
-    }
-    if (res._app) {
-      res.appId = res._app;
-    }
-    if (res._user) {
-      res.userId = res._user;
-    }
-
     nrp.emit('activity', {
       title: activity.title,
       description: activity.description,
@@ -221,7 +212,7 @@ class Route {
       verb: activity.verb,
       permissions: activity.permissions,
       timestamp: new Date(),
-      response: res,
+      response: Helpers.prepareResult(res),
       user: Model.authUser ? Model.authUser._id : '',
       appPId: appPid ? appPid : ''
     });
