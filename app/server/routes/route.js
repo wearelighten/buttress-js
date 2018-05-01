@@ -147,6 +147,7 @@ class Route {
           broadcast: this.activityBroadcast,
           path: this.req.path,
           pathSpec: this.path,
+          params: this.req.params,
           verb: this.verb,
           permissions: this.permissions
         }, res, appPId);
@@ -191,6 +192,7 @@ class Route {
         path: `activity`,
         pathSpec: 'activity',
         verb: "post",
+        params: activity.params,
         permissions: "write"
       }, activity);
     })
@@ -211,6 +213,7 @@ class Route {
       pathSpec: activity.pathSpec,
       verb: activity.verb,
       permissions: activity.permissions,
+      params: activity.params,
       timestamp: new Date(),
       response: Helpers.prepareResult(res),
       user: Model.authUser ? Model.authUser._id : '',
