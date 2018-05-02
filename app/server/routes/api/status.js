@@ -11,7 +11,7 @@
  */
 
 const Route = require('../route');
-const Model = require('../../model');
+// const Model = require('../../model');
 const os = require('os');
 
 let routes = [];

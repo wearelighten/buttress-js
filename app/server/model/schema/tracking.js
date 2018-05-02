@@ -147,7 +147,7 @@ const __add = body => {
   };
 };
 
-schema.statics.add = (body) => {
+schema.statics.add = body => {
   const sharedFn = Shared.add(collection, __add);
   const result = sharedFn(body);
 
@@ -206,7 +206,7 @@ schema.statics.exists = id => {
  */
 schema.statics.getAll = () => {
   Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  
+
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
     return collection.find({});
   }

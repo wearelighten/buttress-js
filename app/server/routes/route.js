@@ -197,9 +197,9 @@ class Route {
       }, activity);
     })
     .catch(e => {
-      console.log(`[${verb.toUpperCase()}] ${path}`);
-      console.log(body);
-      console.log(e);
+      Logging.logError(`[${verb.toUpperCase()}] ${path}`);
+      Logging.logError(body);
+      Logging.logError(e);
     });
   }
 

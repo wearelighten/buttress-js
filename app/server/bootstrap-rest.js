@@ -154,7 +154,7 @@ const __initWorker = () => {
   app.use(express.static(`${Config.paths.appData}/public`));
 
   process.on('unhandledRejection', error => {
-    console.log(error);
+    Logging.logError(error);
   });
 
   process.on('message', payload => {
