@@ -2,33 +2,33 @@
 Realtime datastore for business software.
 
 # What's New
-### version: 1.6.0
+
+### Version: 1.6.1
+- Activity will broadcast to super tokens regardless of broadcast setting
+- Fixed Auth & Params not being passed to activity
+- Activity is now added via Shared.add
+- Activity findAll is now passed via Mongo native
+### 1.6.0
 - Added: Socket connections are now namespaced based on public app id
 - Added: User token is required to be passed to the socket on handshake
-
-### version: 1.5.4 - 1.5.12
+### 1.5.4 - 1.5.12
 - NOTE: Verison information required
-
-### version: 1.5.3
+### 1.5.3
 - Fixed: error with objectid's in arrays with schemas
 - Fixed: mongoose validation errors now return a 400
 - Removed references to taskType in task collection
 - Fixed: if there's no contact primaryContact is null not undefined
-
-### version: 1.5.0
+### 1.5.0
 - Added App schema for flexible extension of existing models via JSON notation
 - Added new service Model & API
 - Added support for addition/update of arrays of objects
 - Import optimisations and support for bulk operations add/delete
 - Various model properties changes and fixes
 - Added Sugar for date management
-
 ### 1.0.5
 - API compatibility fixes
-
 ### 1.0.2
 - Patch bug fix
-
 ### 1.0.0
 - Production Ready.
 - Scalable socket and rest processes
