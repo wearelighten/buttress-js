@@ -145,7 +145,7 @@ const __add = body => {
       // response: response,
       timestamp: new Date(),
       _token: Model.token.id,
-      _user: Model.authUser.id,
+      _user: (Model.authUser) ? Model.authUser.id : null,
       _app: Model.authApp.id
     };
 
