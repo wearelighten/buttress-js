@@ -427,7 +427,7 @@ let _doValidateUpdate = function(pathContext, flattenedSchema) {
     Logging.logDebug(`_doValidateUpdate: path: ${body.path}, value: ${body.value}`);
     let res = {
       isValid: false,
-      isMissingRequired: true,
+      isMissingRequired: false,
       missingRequired: '',
       isPathValid: false,
       invalidPath: '',
