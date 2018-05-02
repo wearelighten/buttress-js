@@ -16,6 +16,7 @@ const Model = require('../model');
 const _ = require('underscore');
 const Mongo = require('mongodb');
 const NRP = require('node-redis-pubsub');
+const Helpers = require('../helpers');
 
 const nrp = new NRP(Config.redis);
 
@@ -129,43 +130,95 @@ class Route {
       return Promise.resolve(res);
     }
 
-    let broadcast = () => {
-      if (this.activityBroadcast === false) {
-        return;
-      }
+    let addActivty = true;
 
+    // Early out if tracking, we don't wan't to create activity for this
+    if (this.path === 'tracking') {
+      addActivty = false;
+    }
+
+    let broadcast = () => {
       if (res) {
         const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.authAppToken.value);
-        nrp.emit('activity', {
+        this._activityBroadcastSocket({
           title: this.activityTitle,
           description: this.activityDescription,
           visibility: this.activityVisibility,
-          path: this.req.path.replace(Config.app.apiPrefix, ''),
+          broadcast: this.activityBroadcast,
+          path: this.req.path,
           pathSpec: this.path,
+          params: this.req.params,
           verb: this.verb,
-          permissions: this.permissions,
-          timestamp: new Date(),
-          response: res,
-          user: Model.authUser ? Model.authUser._id : '',
-          appPId: appPId ? appPId : ''
-        });
+          permissions: this.permissions
+        }, res, appPId);
       }
     };
 
     setTimeout(() => {
-      const body = this.req.body;
-      const path = this.path;
-      const verb = this.verb;
-      Model.Activity.add(this, res)
-      .catch(e => {
-        console.log(`[${verb.toUpperCase()}] ${path}`);
-        console.log(body);
-        console.log(e);
-      });
+      // Craft activity object and add
+      if (addActivty) {
+        this._addLogActivity(this.req.body, this.path, this.verb);
+      }
       broadcast();
     }, 50);
 
     return Promise.resolve(res);
+  }
+
+  _addLogActivity(body, path, verb) {
+    return Model.Activity.add({
+      activityTitle: this.activityTitle,
+      activityDescription: this.activityDescription,
+      activityVisibility: this.activityVisibility,
+      path: path,
+      verb: verb,
+      permissions: this.permissions,
+      auth: this.auth,
+      params: this.req.params,
+      req: {
+        query: this.req.query,
+        body: body,
+        params: this.req.params
+      },
+      res: {}
+    })
+    .then(activity => {
+      // Activity doesn't get added via the API so we will just broadcast the data manually
+      this._activityBroadcastSocket({
+        title: 'Private Activity',
+        description: 'ADD ACTIVITY',
+        visibility: 'private',
+        broadcast: false,
+        path: `activity`,
+        pathSpec: 'activity',
+        verb: 'post',
+        params: activity.params,
+        permissions: 'write'
+      }, activity);
+    })
+    .catch(e => {
+      Logging.logError(`[${verb.toUpperCase()}] ${path}`);
+      Logging.logError(body);
+      Logging.logError(e);
+    });
+  }
+
+  _activityBroadcastSocket(activity, res, appPid) {
+    nrp.emit('activity', {
+      title: activity.title,
+      description: activity.description,
+      visibility: activity.visibility,
+      broadcast: activity.broadcast,
+      path: activity.path.replace(Config.app.apiPrefix, ''),
+      pathSpec: activity.pathSpec,
+      verb: activity.verb,
+      permissions: activity.permissions,
+      params: activity.params,
+      timestamp: new Date(),
+      response: Helpers.prepareResult(res),
+      user: Model.authUser ? Model.authUser._id : '',
+      appPId: appPid ? appPid : ''
+    });
   }
 
   /**

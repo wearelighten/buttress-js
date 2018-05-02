@@ -317,7 +317,7 @@ schema.statics.validate = body => {
  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
  */
 const __add = body => {
-  return prev => {
+  return prev => { // eslint-disable-line complexity
     let contacts = [];
     let locations = [];
     if (body.locations) {

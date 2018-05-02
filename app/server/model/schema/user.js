@@ -245,7 +245,7 @@ schema.statics.getAll = () => {
   Logging.logSilly(`getAll: ${Model.authApp._id}`);
 
   if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
-    return ModelDef.find({});
+    return ModelDef.find({}).populate('_person');
   }
 
   return ModelDef.find({_apps: Model.authApp._id}).populate('_person');

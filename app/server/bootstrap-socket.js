@@ -172,17 +172,37 @@ const __initMaster = express => {
       Logging.logDebug(`Activity: ${data.path}`);
 
       // Super apps?
-      superApps.forEach(publicId => {
-        namespace[publicId].emit('db-activity', data);
+      superApps.forEach(superPublicId => {
+        namespace[superPublicId].sequence++;
+        namespace[superPublicId].emitter.emit('db-activity', {
+          data: data,
+          sequence: namespace[superPublicId].sequence
+        });
       });
+
+      // Disable broadcasting to public space
+      if (data.broadcast === false) {
+        return;
+      }
+      // Don't emit activity if activity has super app PId, as it's already been sent
+      if (superApps[data.appPId]) {
+        return;
+      }
 
       // Broadcast on requested channel
       const publicId = data.appPId;
       if (!namespace[publicId]) {
-        namespace[publicId] = emitter.of(`/${publicId}`);
+        namespace[publicId] = {
+          emitter: emitter.of(`/${publicId}`),
+          sequence: 0
+        };
       }
 
-      namespace[publicId].emit('db-activity', data);
+      namespace[publicId].sequence++;
+      namespace[publicId].emitter.emit('db-activity', {
+        data: data,
+        sequence: namespace[publicId].sequence
+      });
     });
   }
 
@@ -221,7 +241,10 @@ const __initMaster = express => {
       Logging.logDebug(`App Public ID: ${app.name}, ${app.publicId}`);
 
       if (token.authLevel > 2) {
-        namespace[app.publicId] = emitter.of(`/${app.publicId}`);
+        namespace[app.publicId] = {
+          emitter: emitter.of(`/${app.publicId}`),
+          sequence: 0
+        };
         superApps.push(app.publicId);
       }
 

@@ -12,8 +12,8 @@
 
 const Route = require('../route');
 const Model = require('../../model');
-const Helpers = require('../../helpers');
-const Logging = require('../../logging');
+// const Helpers = require('../../helpers');
+// const Logging = require('../../logging');
 
 const routes = [];
 
@@ -33,9 +33,7 @@ class GetActivityList extends Route {
   }
 
   _exec() {
-    return Model.Activity.findAll(this._timer)
-      .then(Logging.Promise.logTimer(`LOADED: ${this.name}`, this._timer, Logging.Constants.LogLevel.INFO))
-      .then(Helpers.Promise.arrayProp('details'));
+    return Model.Activity.findAll();
   }
 }
 routes.push(GetActivityList);

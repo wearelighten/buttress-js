@@ -39,6 +39,26 @@ class Timer {
 
 module.exports.Timer = Timer;
 
+module.exports.prepareResult = result => {
+  const prepare = chunk => {
+    if (chunk._id) {
+      chunk.id = chunk._id;
+      delete chunk._id;
+    }
+    if (chunk._app) {
+      chunk.appId = chunk._app;
+      delete chunk._app;
+    }
+    if (chunk._user) {
+      chunk.userId = chunk._user;
+      delete chunk._user;
+    }
+    return chunk;
+  };
+
+  return (Array.isArray(result)) ? result.map(c => prepare(c)) : prepare(result);
+};
+
 class JSONStringifyStream extends Transform {
   constructor(options) {
     super(Object.assign(options || {}, {objectMode: true}));
@@ -46,8 +66,12 @@ class JSONStringifyStream extends Transform {
   }
 
   _transform(chunk, encoding, cb) {
+    const nonReplacerKeys = [
+      '_id', '_app', '__v', '_user', '_token'
+    ];
+
     const __replacer = (key, value) => {
-      if (key === '_id' || key === '_app' || key === '__v') {
+      if (nonReplacerKeys.indexOf(key) !== -1) {
         return undefined;
       }
       if (key === 'metadata') {
@@ -68,6 +92,12 @@ class JSONStringifyStream extends Transform {
 
     if (chunk._id) {
       chunk.id = chunk._id;
+    }
+    if (chunk._app) {
+      chunk.appId = chunk._app;
+    }
+    if (chunk._user) {
+      chunk.userId = chunk._user;
     }
 
     const str = JSON.stringify(chunk, __replacer);
