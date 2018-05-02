@@ -117,20 +117,20 @@ class AddApp extends Route {
           } break;
           case Model.Constants.Token.AuthLevel.ADMIN: {
             let permissions = [
-              {route: "org/*", permission: "*"},
-              {route: "group/*", permission: "*"},
-              {route: "user/*", permission: "*"},
-              {route: "person/*", permission: "*"},
-              {route: "campaign/*", permission: "*"},
-              {route: "activity/*", permission: "*"},
-              {route: "company/*", permission: "*"},
-              {route: "contact-list/*", permission: "*"},
-              {route: "call/*", permission: "*"},
-              {route: "task/*", permission: "*"},
-              {route: "appointment/*", permission: "*"},
-              {route: "notification/*", permission: "*"},
-              {route: "contract/*", permission: "*"},
-              {route: "document/*", permission: "*"}
+              {route: 'org/*', permission: '*'},
+              {route: 'group/*', permission: '*'},
+              {route: 'user/*', permission: '*'},
+              {route: 'person/*', permission: '*'},
+              {route: 'campaign/*', permission: '*'},
+              {route: 'activity/*', permission: '*'},
+              {route: 'company/*', permission: '*'},
+              {route: 'contact-list/*', permission: '*'},
+              {route: 'call/*', permission: '*'},
+              {route: 'task/*', permission: '*'},
+              {route: 'appointment/*', permission: '*'},
+              {route: 'notification/*', permission: '*'},
+              {route: 'contract/*', permission: '*'},
+              {route: 'document/*', permission: '*'}
             ];
 
             this.req.body.permissions = JSON.stringify(permissions);

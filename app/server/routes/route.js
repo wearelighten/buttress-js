@@ -191,9 +191,9 @@ class Route {
         broadcast: false,
         path: `activity`,
         pathSpec: 'activity',
-        verb: "post",
+        verb: 'post',
         params: activity.params,
-        permissions: "write"
+        permissions: 'write'
       }, activity);
     })
     .catch(e => {
