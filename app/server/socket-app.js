@@ -10,7 +10,7 @@
  *
  */
 
-const Config = require('./config')(process.cwd() + '/../');
+const Config = require('node-env-obj')('../');
 const Logging = require('./logging');
 const Bootstrap = require('./bootstrap');
 
