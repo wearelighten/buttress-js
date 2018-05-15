@@ -43,6 +43,13 @@
         "dev": "%BUTTRESS_MONGO_URL_DEV%",
         "prod": "%BUTTRESS_MONGO_URL_PROD%",
         "test": "%BUTTRESS_MONGO_URL_TEST%"
+      },
+      "options": {
+        "reconnectTries": 17280,
+        "reconnectInterval": 5000,
+        "useMongoClient": true,
+        "native_parser": true,
+        "bufferMaxEntries": 0
       }
     },
     "redis": {
