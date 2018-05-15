@@ -178,6 +178,7 @@ schema.add({
       default: Sugar.Date.create
     }}]
 });
+schema.set('bufferCommands', false);
 
 /* ********************************************************************************
  *

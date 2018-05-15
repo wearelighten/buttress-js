@@ -45,6 +45,7 @@ const schema = new mongoose.Schema({
   refreshToken: String,
   extras: String
 });
+schema.set('bufferCommands', false);
 
 let ModelDef = null;
 

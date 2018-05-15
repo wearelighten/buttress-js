@@ -81,6 +81,7 @@ schema.add({
     ref: 'User'
   }
 });
+schema.set('bufferCommands', false);
 
 let ModelDef = null;
 

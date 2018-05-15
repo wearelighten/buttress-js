@@ -108,6 +108,7 @@ var schema = new mongoose.Schema({
     default: false
   }
 });
+schema.set('bufferCommands', false);
 
 /**
  * Schema Virtual Methods
