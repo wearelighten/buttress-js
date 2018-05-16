@@ -97,7 +97,7 @@ function _authenticateToken(req, res, next) {
     })
     .then(Helpers.Promise.inject())
     .then(next)
-    .catch(err => {
+    .catch(() => {
       // Logging.logError(err);
       res.status(503);
       res.end();

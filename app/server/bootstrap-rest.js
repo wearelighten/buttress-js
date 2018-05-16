@@ -129,7 +129,6 @@ const __systemInstall = () => {
  * MONGODB
  *
  **********************************************************************************/
-const POOL_SIZE = 10;
 const __nativeMongoConnect = app => {
   const mongoUrl = `mongodb://${Config.mongoDb.url}`;
   const dbName = `${Config.app.code}-${Config.env}`;
