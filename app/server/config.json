@@ -49,7 +49,7 @@
         "reconnectInterval": 5000,
         "useMongoClient": true,
         "native_parser": true,
-        "pool_size": 10,
+        "poolSize": 10,
         "bufferMaxEntries": 0
       }
     },

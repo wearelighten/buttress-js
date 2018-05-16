@@ -21,6 +21,7 @@ const Logging = require('./logging');
 
 Logging.setLogApp('rest');
 
+mongoose.Promise = global.Promise;
 mongoose.connection.on('error', () => mongoose.disconnect());
 mongoose.connect(`mongodb://${Config.mongoDb.url}/${Config.app.code}-${Config.env}`, Config.mongoDb.options)
   .then(() => {
