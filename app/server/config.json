@@ -24,7 +24,7 @@
     "app": {
       "title": "%BUTTRESS_APP_TITLE%",
       "description": "Realtime datastore for business software",
-      "code": "buttressjs",
+      "code": "%BUTTRESS_APP_CODE%",
       "version": "1.6.1",
       "protocol": "http",
       "host": "%BUTTRESS_HOST_URL%",
