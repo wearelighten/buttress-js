@@ -10,7 +10,7 @@
  *
  */
 
-const Config = require('node-env-obj')('../../');
+const Config = require('node-env-obj')('../');
 const Logging = require('../logging');
 const Model = require('../model');
 const _ = require('underscore');
