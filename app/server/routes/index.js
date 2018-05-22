@@ -197,6 +197,9 @@ function _configCrossDomain(req, res, next) {
     return;
   }
   if (req.token.type !== Model.Constants.Token.Type.USER) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'content-type');
     next();
     return;
   }
