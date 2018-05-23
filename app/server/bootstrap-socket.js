@@ -237,7 +237,7 @@ const __initMaster = express => {
 
       app.token = token;
       app.publicId = Model.App.genPublicUID(app.name, token.value);
-      Logging.logDebug(`App Public ID: ${app.name}, ${app.publicId}`);
+      Logging.log(`App Public ID: ${app.name}, ${app.publicId}`);
 
       if (token.authLevel > 2) {
         namespace[app.publicId] = {
