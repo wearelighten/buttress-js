@@ -249,10 +249,10 @@ class Route {
 
       /**
        * @description Route:
-       *                  '*' - all routes (SUPER)
-       *                  'route' - specific route (ALL)
-       *                  'route/subroute' - specific route (ALL)
-       *                  'route/*' name plus all children (ADMIN)
+       *  '*' - all routes (SUPER)
+       *  'route' - specific route (ALL)
+       *  'route/subroute' - specific route (ALL)
+       *  'route/*' name plus all children (ADMIN)
        * @TODO Improve the pattern matching granularity ie like Glob
        * @TODO Support Regex in specific ie match routes like app/:id/permission
        */
@@ -283,8 +283,8 @@ class Route {
    * @private
    */
   _matchRoute(routeSpec) {
-    if (routeSpec === '*' &&
-      this.req.token.authLevel >= Constants.Auth.SUPER) {
+    // if (routeSpec === '*' && this.req.token.authLevel >= Constants.Auth.SUPER) {
+    if (routeSpec === '*') {
       return true;
     }
 
