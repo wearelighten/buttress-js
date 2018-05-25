@@ -90,6 +90,7 @@ schema.add({
     default: false
   }
 });
+schema.set('bufferCommands', false);
 
 /* ********************************************************************************
  *

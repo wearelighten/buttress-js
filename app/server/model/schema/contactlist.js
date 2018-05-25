@@ -95,6 +95,7 @@ schema.add({
     default: null
   }
 });
+schema.set('bufferCommands', false);
 
 /*
  VIRTUALS

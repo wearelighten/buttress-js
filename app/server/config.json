@@ -22,7 +22,7 @@
       "title": "ButtressJS",
       "description": "Realtime datastore for business software",
       "code": "buttressjs",
-      "version": "1.6.1",
+      "version": "1.6.2",
       "protocol": "http",
       "host": "%BUTTRESS_HOST_URL%",
       "apiPrefix": "/api/v1/"
@@ -43,6 +43,14 @@
         "dev": "%BUTTRESS_MONGO_URL_DEV%",
         "prod": "%BUTTRESS_MONGO_URL_PROD%",
         "test": "%BUTTRESS_MONGO_URL_TEST%"
+      },
+      "options": {
+        "reconnectTries": 17280,
+        "reconnectInterval": 5000,
+        "useMongoClient": true,
+        "native_parser": true,
+        "poolSize": 10,
+        "bufferMaxEntries": 0
       }
     },
     "redis": {

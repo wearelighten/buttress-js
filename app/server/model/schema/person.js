@@ -54,6 +54,7 @@ var schema = new mongoose.Schema({
     ref: 'Group'
   }
 });
+schema.set('bufferCommands', false);
 
 var ModelDef = null;
 

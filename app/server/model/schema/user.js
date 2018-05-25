@@ -64,6 +64,7 @@ schema.add({
   }],
   auth: [Model.Schema.Appauth]
 });
+schema.set('bufferCommands', false);
 
 let ModelDef = null;
 

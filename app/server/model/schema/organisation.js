@@ -53,6 +53,7 @@ schema.add({
     ref: 'Application'
   }
 });
+schema.set('bufferCommands', false);
 
 var ModelDef = null;
 

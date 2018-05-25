@@ -34,6 +34,7 @@ schema.add({
   county: String,
   postcode: String
 });
+schema.set('bufferCommands', false);
 
 /* ********************************************************************************
  *

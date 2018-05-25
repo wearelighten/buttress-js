@@ -104,6 +104,7 @@ schema.add({
     }
   }]
 });
+schema.set('bufferCommands', false);
 
 /*
   VIRTUALS

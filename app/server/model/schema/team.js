@@ -33,6 +33,7 @@ schema.add({
   }],
   metadata: [{key: String, value: String}]
 });
+schema.set('bufferCommands', false);
 
 ModelDef = mongoose.model('Team', schema);
 

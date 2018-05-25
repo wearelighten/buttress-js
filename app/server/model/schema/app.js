@@ -62,6 +62,7 @@ schema.add({
   },
   __schema: []
 });
+schema.set('bufferCommands', false);
 
 var ModelDef = null;
 Model.initModel('Token');
