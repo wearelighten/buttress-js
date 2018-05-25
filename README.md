@@ -3,7 +3,11 @@ Realtime datastore for business software.
 
 # What's New
 
-### Version: 1.6.1
+### Version: 1.6.2
+- TWEAK: Updated to use the latest 4.x build of mongoose
+- TWEAK: Moved Mongo options to config
+- TWEAK: Will no longer buffer Mongo commands, just return error if connection fails
+### 1.6.1
 - Activity will broadcast to super tokens regardless of broadcast setting
 - Fixed Auth & Params not being passed to activity
 - Activity is now added via Shared.add
