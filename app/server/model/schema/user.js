@@ -40,6 +40,7 @@ schema.add({
   orgRole: String,
   teamName: String,
   teamRole: String,
+  teamPrimary: Boolean,
   metadata: [{
     _app: {
       type: mongoose.Schema.Types.ObjectId,
@@ -78,6 +79,7 @@ schema.virtual('details').get(function() {
     orgRole: this.orgRole,
     teamName: this.teamName,
     teamRole: this.teamRole,
+    teamPrimary: this.teamPrimary,
     auth: this.auth.map(a => a.details),
     person: this.tryPerson
   };
@@ -115,7 +117,8 @@ schema.statics.add = (body, personDetails, auth) => {
     _person: personDetails.id,
     orgRole: body.orgRole,
     teamName: body.teamName,
-    teamRole: body.teamRole
+    teamRole: body.teamRole,
+    teamPrimary: false
   });
 
   // Logging.logDebug(body);
@@ -355,7 +358,7 @@ schema.methods.findMetadata = function(key) {
  **********************************************************************************/
 
 const PATH_CONTEXT = {
-  '^(teamRole|teamName|orgRole)$': {type: 'scalar', values: []}
+  '^(teamRole|teamName|orgRole|teamPrimary)$': {type: 'scalar', values: []}
 };
 
 schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
