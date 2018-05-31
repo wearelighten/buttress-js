@@ -283,8 +283,8 @@ class Route {
    * @private
    */
   _matchRoute(routeSpec) {
-    if (routeSpec === '*' &&
-      this.req.token.authLevel >= Constants.Auth.SUPER) {
+    // if (routeSpec === '*' && this.req.token.authLevel >= Constants.Auth.SUPER) {
+    if (routeSpec === '*') {
       return true;
     }
 
