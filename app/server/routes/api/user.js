@@ -96,7 +96,7 @@ routes.push(GetUser);
  */
 class FindUser extends Route {
   constructor() {
-    super('user/:app(twitter|facebook|google)/:id', 'FIND USER');
+    super('user/:app(twitter|facebook|google|app-*)/:id', 'FIND USER');
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.READ;
