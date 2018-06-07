@@ -154,7 +154,7 @@ const __add = body => {
       md._id = new ObjectId(body.id);
     }
 
-    const validated = Shared.applyAppProperties(collectionName, body);
+    const validated = Shared.applyAppProperties(false, body);
     return prev.concat([Object.assign(md, validated)]);
   };
 };

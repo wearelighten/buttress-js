@@ -136,6 +136,9 @@ class Route {
     if (this.path === 'tracking') {
       addActivty = false;
     }
+    if (this.path === 'user/:app?') {
+      addActivty = false;
+    }
 
     let broadcast = () => {
       if (res) {
