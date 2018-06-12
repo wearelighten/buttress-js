@@ -23,7 +23,7 @@ class GetList extends Route {
   constructor(schema) {
     super(`${schema.collection}`, `GET ${schema.collection} LIST`);
     this.verb = Route.Constants.Verbs.GET;
-    this.auth = Route.Constants.Auth.ADMIN;
+    this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.LIST;
 
     // Fetch model
@@ -51,7 +51,7 @@ class GetOne extends Route {
   constructor(schema) {
     super(`${schema.collection}/:id`, `GET ${schema.collection}`);
     this.verb = Route.Constants.Verbs.GET;
-    this.auth = Route.Constants.Auth.ADMIN;
+    this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.READ;
 
     this.schema = schema;
@@ -88,7 +88,7 @@ class AddOne extends Route {
   constructor(schema) {
     super(`${schema.collection}`, `ADD ${schema.collection}`);
     this.verb = Route.Constants.Verbs.POST;
-    this.auth = Route.Constants.Auth.ADMIN;
+    this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.ADD;
 
     this.schema = schema;
@@ -140,7 +140,7 @@ class UpdateOne extends Route {
   constructor(schema) {
     super(`${schema.collection}/:id`, `UPDATE ${schema.collection}`);
     this.verb = Route.Constants.Verbs.PUT;
-    this.auth = Route.Constants.Auth.ADMIN;
+    this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.WRITE;
 
     this.schema = schema;
@@ -203,7 +203,7 @@ class DeleteOne extends Route {
   constructor(schema) {
     super(`${schema.collection}/:id`, `DELETE ${schema.collection}`);
     this.verb = Route.Constants.Verbs.DEL;
-    this.auth = Route.Constants.Auth.ADMIN;
+    this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.DELETE;
 
     this.schema = schema;
