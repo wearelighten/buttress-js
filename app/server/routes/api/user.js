@@ -36,13 +36,29 @@ class GetUserList extends Route {
     return Model.User.getAll()
       .then(users => {
         if (this.req.token.authLevel >= Route.Constants.Auth.ADMIN) {
-          return users.map(u => u.details);
+          return users.map(u => {
+            const details = u.details;
+            details.profiles = details.auth.map(a => ({
+              app: a.app,
+              username: a.username,
+              email: a.email,
+              url: a.profileUrl,
+              image: a.images.profile
+            }));
+            return details;
+          });
         }
         return users.map(u => {
           const details = u.details;
           return {
             id: details.id,
-            profiles: details.auth.map(a => ({app: a.app, username: a.username, url: a.profileUrl, image: a.images.profile})),
+            profiles: details.auth.map(a => ({
+              app: a.app,
+              username: a.username,
+              email: a.email,
+              url: a.profileUrl,
+              image: a.images.profile
+            })),
             formalName: details.person.formalName,
             name: details.person.name
           };
