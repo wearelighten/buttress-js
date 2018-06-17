@@ -1,0 +1,17 @@
+{
+  "name": "timestamps",
+  "type": "template",
+  "properties": {
+    "createdAt": {
+      "__type": "date",
+      "__value": "now",
+      "__required": false,
+      "__allowUpdate": false
+    },
+    "updatedAt": {
+      "__type": "date",
+      "__required": false,
+      "__allowUpdate": true
+    }
+  }
+}
