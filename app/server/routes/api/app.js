@@ -13,6 +13,7 @@
 var Route = require('../route');
 var Model = require('../../model');
 var Logging = require('../../logging');
+const Schema = require('../../schema');
 
 var routes = [];
 
@@ -366,6 +367,7 @@ class GetAppSchema extends Route {
     this.permissions = Route.Constants.Permissions.READ;
 
     this._app = false;
+    this._schema = null;
   }
 
   _validate() {
@@ -381,12 +383,15 @@ class GetAppSchema extends Route {
         reject({statusCode: 400, message: 'No authenticated app schema'});
         return;
       }
+
+      this._schmea = Schema.buildCollections(this.req.authApp.__schema);
+
       resolve(true);
     });
   }
 
   _exec() {
-    return this.req.authApp.__schema;
+    return this._schmea;
   }
 }
 routes.push(GetAppSchema);

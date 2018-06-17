@@ -14,6 +14,7 @@ const path = require('path');
 const fs = require('fs');
 const Logging = require('../logging');
 const Sugar = require('sugar');
+const Schema = require('../schema');
 const SchemaModel = require('./schemaModel');
 
 /**
@@ -49,7 +50,7 @@ class Model {
     .then(apps => {
       apps.forEach(app => {
         if (app.__schema) {
-          app.__schema.forEach(schema => {
+          Schema.buildCollections(app.__schema).forEach(schema => {
             this._initSchemaModel(app, schema);
           });
         }
