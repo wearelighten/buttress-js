@@ -278,10 +278,10 @@ schema.statics.findAll = () => {
 };
 
 schema.statics.updateSchema = (app, schema) => {
-  nrp.emit('app-metadata:changed', {appId: app.id});
+  nrp.emit('app-metadata:changed', {appId: app._id});
 
   return new Promise((resolve, reject) => {
-    collection.update({_id: new ObjectId(app.id)}, {$set: {__schema: schema}}, {}, (err, object) => {
+    collection.update({_id: new ObjectId(app._id)}, {$set: {__schema: schema}}, {}, (err, object) => {
       if (err) throw new Error(err);
 
       resolve(object);

@@ -165,11 +165,27 @@ const __initMaster = () => {
     p = __nativeMongoConnect()
       .then(db => Model.init(db))
       .then(() => __systemInstall())
-      .then(app => {
+      .then(() => Model.App.findAll().toArray())
+      .then(apps => {
         // Load local defined schemas into super app
-        const schema = _getLocalSchemas();
-        Model.App.updateSchema(app, schema);
-        return schema;
+        const coreSchema = _getLocalSchemas();
+        apps.forEach(app => {
+          const appSchema = app.__schema;
+          Logging.log(`Updating ${coreSchema.length} core schema for ${app.name}:${appSchema.length}`);
+          coreSchema.forEach(cS => {
+            const appSchemaIdx = appSchema.findIndex(s => s.name === cS.name);
+            let schema = appSchema[appSchemaIdx];
+            if (!schema) {
+              return appSchema.push(cS);
+            }
+            schema.properties = Object.assign(schema.properties, cS.properties);
+            appSchema[appSchemaIdx] = schema;
+          });
+
+          Model.App.updateSchema(app, appSchema);
+        });
+
+        return coreSchema;
       })
       .catch(e => Logging.logError(e));
   } else {
