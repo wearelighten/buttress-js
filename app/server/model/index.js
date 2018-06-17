@@ -39,13 +39,25 @@ class Model {
     this.mongoDb = db;
 
     // Core Models
+    this.initCoreModels();
+
+    // Load schema models
+    this.initSchema();
+  }
+
+  initCoreModels(db) {
+    if (db) this.mongoDb = db;
+    // Core Models
     let models = _getModels();
     Logging.log(models, Logging.Constants.LogLevel.SILLY);
     for (let x = 0; x < models.length; x++) {
       this._initModel(models[x]);
     }
+  }
 
-    // Load schema models
+  initSchema(db) {
+    if (db) this.mongoDb = db;
+
     return this.Schema.App.statics.findAll().toArray()
     .then(apps => {
       apps.forEach(app => {

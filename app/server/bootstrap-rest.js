@@ -163,7 +163,7 @@ const __initMaster = () => {
   if (isPrimary) {
     Logging.logVerbose(`Primary Master REST`);
     p = __nativeMongoConnect()
-      .then(db => Model.init(db))
+      .then(db => Model.initCoreModels(db))
       .then(() => __systemInstall())
       .then(() => Model.App.findAll().toArray())
       .then(apps => {
@@ -187,6 +187,7 @@ const __initMaster = () => {
 
         return coreSchema;
       })
+      .then(() => Model.initSchema())
       .catch(e => Logging.logError(e));
   } else {
     Logging.logVerbose(`Secondary Master REST`);
