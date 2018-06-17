@@ -66,6 +66,11 @@ class SchemaModel {
         entity._id = new ObjectId(body.id);
       }
 
+      if (this.schema.extends.includes('timestamps')) {
+        entity.createdAt = new Date();
+        entity.updatedAt = null;
+      }
+
       const validated = Shared.applyAppProperties(this.schema, body);
       return prev.concat([Object.assign(entity, validated)]);
     };
@@ -81,6 +86,19 @@ class SchemaModel {
   }
   updateByPath(body, id) {
     const sharedFn = Shared.updateByPath({}, this.schema, this.collection);
+
+    if (body instanceof Array === false) {
+      body = [body];
+    }
+
+    if (this.schema.extends.includes('timestamps')) {
+      body.push({
+        path: 'updatedAt',
+        value: new Date(),
+        contextPath: '^updatedAt$'
+      });
+    }
+
     return sharedFn(body, id);
   }
 
