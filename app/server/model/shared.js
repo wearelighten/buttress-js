@@ -470,7 +470,8 @@ let _doValidateUpdate = function(pathContext, flattenedSchema) {
     }
 
     res.isPathValid = true;
-    if (pathContext[body.contextPath].values.length > 0 &&
+    if (body.value !== null &&
+        pathContext[body.contextPath].values.length > 0 &&
         pathContext[body.contextPath].values.indexOf(body.value) === -1) {
       res.invalidValue = `${body.value} <> ${pathContext[body.contextPath].values}`;
       return res;
