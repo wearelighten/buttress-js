@@ -82,6 +82,10 @@ schema.add({
     ram: String
   },
 
+  hide: {
+    type: Boolean
+  },
+
   _app: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Application',
@@ -142,6 +146,7 @@ const __add = body => {
       interaction: body.interaction,
       error: body.error,
       logging: body.logging,
+      hide: false,
       environment: body.environment
     });
     return prev;
@@ -218,6 +223,19 @@ schema.statics.getAll = () => {
 schema.statics.rmAll = () => {
   return ModelDef.remove({_app: Model.authApp._id});
 };
+
+/* ********************************************************************************
+ *
+ * UPDATE BY PATH
+ *
+ **********************************************************************************/
+
+const PATH_CONTEXT = {
+  '^(hide)$': {type: 'scalar', values: []}
+};
+
+schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
+schema.statics.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
 
 /* ********************************************************************************
 *
