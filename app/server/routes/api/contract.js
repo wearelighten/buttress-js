@@ -88,7 +88,7 @@ class GetContract extends Route {
   }
 
   _exec() {
-    return Promise.resolve(this._contract.details);
+    return Promise.resolve(this._contract);
   }
 }
 routes.push(GetContract);
