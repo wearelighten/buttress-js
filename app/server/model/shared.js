@@ -294,7 +294,7 @@ const __validate = (schema, values, parentProperty) => {
     let propVal = values.find(v => v.path === property);
     const config = schema[property];
 
-    if (propVal === undefined && config.__default !== undefined) {
+    if (propVal === undefined) {
       propVal = {
         path: property,
         value: __getPropDefault(config)
@@ -381,7 +381,7 @@ const __populateObject = (schema, values) => {
     let propVal = values.find(v => v.path === property);
     const config = schema[property];
 
-    if (propVal === undefined && config.__default !== undefined) {
+    if (propVal === undefined) {
       propVal = {
         path: property,
         value: __getPropDefault(config)
