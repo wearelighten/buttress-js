@@ -171,18 +171,22 @@ const __getPropDefault = config => {
   switch (config.__type) {
     default:
     case 'boolean':
+      res = config.__default === undefined ? false : config.__default;
+      break;
     case 'string':
+      res = config.__default === undefined ? '' : config.__default;
+      break;
     case 'number':
+      res = config.__default === undefined ? 0 : config.__default;
+      break;
     case 'array':
+      res = config.__default === undefined ? [] : config.__default;
+      break;
     case 'object':
-      res = config.__default;
+      res = config.__default === undefined ? {} : config.__default;
       break;
     case 'id':
-      if (config.__default === 'auto') {
-        res = (new ObjectId()).toHexString();
-      } else {
-        res = config.__default;
-      }
+      res = config.__default === undefined ? (new ObjectId()).toHexString() : config.__default;
       break;
     case 'date':
       if (config.__default === null) {
@@ -192,6 +196,7 @@ const __getPropDefault = config => {
       } else {
         res = new Date();
       }
+      break;
   }
   return res;
 };
@@ -289,7 +294,7 @@ const __validate = (schema, values, parentProperty) => {
     let propVal = values.find(v => v.path === property);
     const config = schema[property];
 
-    if (propVal === undefined && config.__default !== undefined) {
+    if (propVal === undefined) {
       propVal = {
         path: property,
         value: __getPropDefault(config)
@@ -376,7 +381,7 @@ const __populateObject = (schema, values) => {
     let propVal = values.find(v => v.path === property);
     const config = schema[property];
 
-    if (propVal === undefined && config.__default !== undefined) {
+    if (propVal === undefined) {
       propVal = {
         path: property,
         value: __getPropDefault(config)
