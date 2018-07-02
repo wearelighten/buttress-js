@@ -121,10 +121,14 @@ class SchemaModel {
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
   // NOTE: Convert away from Mongoose
-  rm(company) {
-    Logging.log(`DELETING: ${company._id}`, Logging.Constants.LogLevel.DEBUG);
-    // Logging.log(org.details, Logging.Constants.LogLevel.VERBOSE);
-    // return ModelDef.remove({_id: company._id});
+  rm(entity) {
+    Logging.log(`DELETING: ${entity._id}`, Logging.Constants.LogLevel.DEBUG);
+    return new Promise(resolve => {
+      this.collection.remove({_id: new ObjectId(entity._id)}, (err, cursor) => {
+        if (err) throw err;
+        resolve(cursor);
+      });
+    });
   }
 
   /**
@@ -150,7 +154,7 @@ class SchemaModel {
    * @return {Promise} - resolves to an array of Companies
    */
   getById(id) {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       this.collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
         if (err) throw err;
         resolve(doc);

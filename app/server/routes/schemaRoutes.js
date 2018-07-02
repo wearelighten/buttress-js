@@ -213,22 +213,20 @@ class DeleteOne extends Route {
   }
 
   _validate() {
-    return new Promise((resolve, reject) => {
-      this.model.findById(this.req.params.id)
-        .then(entity => {
-          if (!entity) {
-            this.log(`${this.schema.collection}: Invalid ID`, Route.LogLevel.ERR);
-            reject({statusCode: 400});
-            return;
-          }
-          this._entity = entity;
-          resolve(true);
-        });
+    return this.model.getById(this.req.params.id)
+    .then(entity => {
+      if (!entity) {
+        this.log(`${this.schema.collection}: Invalid ID`, Route.LogLevel.ERR);
+        return {statusCode: 400};
+      }
+      this._entity = entity;
+      return true;
     });
   }
 
   _exec() {
-    return this.model.rm(this._entity).then(() => true);
+    return this.model.rm(this._entity)
+    .then(() => true);
   }
 }
 routes.push(DeleteOne);
