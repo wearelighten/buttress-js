@@ -83,7 +83,8 @@ const outcome = [
   'appointment-made',
   'successful-transaction',
   'invalid-number',
-  'wrong-number'
+  'wrong-number',
+  'dead'
 ];
 const Outcome = {
   NO_OUTCOME: outcome[0],
@@ -92,7 +93,8 @@ const Outcome = {
   APPOINTMENT_MADE: outcome[3],
   SUCCESSFUL_TRANSACTION: outcome[4],
   INVALID_NUMBER: outcome[5],
-  WRONG_NUMBER: outcome[6]
+  WRONG_NUMBER: outcome[6],
+  DEAD: outcome[7]
 };
 
 constants.Status = Status;
