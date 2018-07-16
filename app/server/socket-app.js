@@ -18,7 +18,7 @@ const Bootstrap = require('./bootstrap');
  *
  */
 
-Logging.setLogApp('socket');
+Logging.init('socket');
 
 Bootstrap
   .socket()

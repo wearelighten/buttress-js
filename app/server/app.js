@@ -19,7 +19,7 @@ const Logging = require('./logging');
  *
  */
 
-Logging.setLogApp('rest');
+Logging.init('rest');
 
 mongoose.Promise = global.Promise;
 mongoose.connection.on('error', () => mongoose.disconnect());

@@ -39,73 +39,77 @@ module.exports.Constants = {
   LogLevel: LogLevel
 };
 
-let _logApp = '';
+let _logApp = 'app';
+let _logLabel = '';
 module.exports.setLogApp = app => {
   _logApp = app;
   if (cluster.isWorker) {
-    _logApp = `${cluster.worker.id}:${app}`;
+    _logLabel = `${cluster.worker.id}`;
   }
 };
 
 /**
  *
  */
+module.exports.init = logApp => {
+  this.setLogApp(logApp);
 
-winston.remove(winston.transports.Console);
-winston.add(winston.transports.Console, {
-  name: 'console',
-  colorize: 'all',
-  timestamp: true,
-  level: 'info'
-});
+  winston.remove(winston.transports.Console);
+  winston.add(winston.transports.Console, {
+    name: 'console',
+    colorize: 'all',
+    timestamp: true,
+    level: 'info'
+  });
 
-winston.add(winston.transports.Rotate, {
-  name: 'debug-file',
-  json: false,
-  file: `${Config.paths.logs}/log-debug.log`,
-  level: 'debug',
-  size: '1m',
-  keep: 2,
-  colorize: 'all',
-  timestamp: true
-});
-winston.add(winston.transports.Rotate, {
-  name: 'info-file',
-  json: false,
-  file: `${Config.paths.logs}/log-info.log`,
-  size: '1m',
-  keep: 5,
-  colorize: 'all',
-  level: 'info',
-  timestamp: true
-});
-winston.add(winston.transports.Rotate, {
-  name: 'error-file',
-  json: false,
-  file: `${Config.paths.logs}/log-err.log`,
-  size: '1m',
-  keep: 10,
-  level: 'error',
-  colorize: 'none',
-  timestamp: true
-});
-winston.add(winston.transports.Rotate, {
-  name: 'silly-file',
-  json: false,
-  file: `${Config.paths.logs}/log-silly.log`,
-  level: 'silly',
-  size: '1m',
-  keep: 1,
-  colorize: 'all',
-  timestamp: true
-});
-winston.addColors({
-  info: 'white',
-  error: 'red',
-  warn: 'yellow',
-  verbose: 'white',
-  debug: 'white'
-});
+  winston.add(winston.transports.Rotate, {
+    name: 'debug-file',
+    json: false,
+    file: `${Config.paths.logs}/log-${_logApp}-debug.log`,
+    level: 'debug',
+    size: '1m',
+    keep: 2,
+    colorize: 'all',
+    timestamp: true
+  });
+  winston.add(winston.transports.Rotate, {
+    name: 'info-file',
+    json: false,
+    file: `${Config.paths.logs}/log-${_logApp}-info.log`,
+    size: '1m',
+    keep: 5,
+    colorize: 'all',
+    level: 'info',
+    timestamp: true
+  });
+  winston.add(winston.transports.Rotate, {
+    name: 'error-file',
+    json: false,
+    file: `${Config.paths.logs}/log-${_logApp}-err.log`,
+    size: '1m',
+    keep: 10,
+    level: 'error',
+    colorize: 'none',
+    timestamp: true
+  });
+  winston.add(winston.transports.Rotate, {
+    name: 'silly-file',
+    json: false,
+    file: `${Config.paths.logs}/log-${_logApp}-silly.log`,
+    level: 'silly',
+    size: '1m',
+    keep: 1,
+    colorize: 'all',
+    timestamp: true
+  });
+  winston.addColors({
+    info: 'white',
+    error: 'red',
+    warn: 'yellow',
+    verbose: 'white',
+    debug: 'white'
+  });
+};
 
 /**
  *
@@ -114,7 +118,7 @@ winston.addColors({
  * @private
  */
 function _log(log, level) {
-  winston.log(level, `[${_logApp}]: ${log}`);
+  winston.log(level, `[${_logLabel}]: ${log}`);
   // if (typeof log === 'string') {
   //   winston.log(level, log);
   // } else {
