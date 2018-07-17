@@ -168,6 +168,7 @@ const __initMaster = express => {
   if (isPrimary) {
     Logging.logDebug(`Primary Master`);
     nrp.on('activity', data => {
+      const publicId = data.appPId;
       Logging.logDebug(`[${data.appPId}]: ${data.verb} ${data.path}`);
 
       // Super apps?
@@ -184,12 +185,11 @@ const __initMaster = express => {
         return;
       }
       // Don't emit activity if activity has super app PId, as it's already been sent
-      if (superApps[data.appPId]) {
+      if (superApps.includes(publicId)) {
         return;
       }
 
       // Broadcast on requested channel
-      const publicId = data.appPId;
       if (!namespace[publicId]) {
         namespace[publicId] = {
           emitter: emitter.of(`/${publicId}`),
@@ -237,9 +237,10 @@ const __initMaster = express => {
 
       app.token = token;
       app.publicId = Model.App.genPublicUID(app.name, token.value);
-      Logging.log(`App Public ID: ${app.name}, ${app.publicId}`);
+      let isSuper = token.authLevel > 2;
+      Logging.log(`App Public ID: ${app.name}, ${app.publicId}, ${(isSuper) ? 'SUPER' : ''}`);
 
-      if (token.authLevel > 2) {
+      if (isSuper) {
         namespace[app.publicId] = {
           emitter: emitter.of(`/${app.publicId}`),
           sequence: 0
