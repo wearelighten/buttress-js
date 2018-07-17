@@ -168,7 +168,7 @@ const __initMaster = express => {
   if (isPrimary) {
     Logging.logDebug(`Primary Master`);
     nrp.on('activity', data => {
-      Logging.logDebug(`Activity: ${data.path}`);
+      Logging.logDebug(`[${data.appPId}]: ${data.verb} ${data.path}`);
 
       // Super apps?
       superApps.forEach(superPublicId => {

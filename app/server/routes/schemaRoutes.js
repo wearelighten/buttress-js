@@ -91,6 +91,9 @@ class AddOne extends Route {
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.ADD;
 
+    this.activityDescription = `ADD ${schema.collection}`;
+    this.activityBroadcast = true;
+
     this.schema = schema;
     this.model = Model[schema.collection];
   }
@@ -142,6 +145,9 @@ class UpdateOne extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.WRITE;
+
+    this.activityDescription = `ADD ${schema.collection}`;
+    this.activityBroadcast = true;
 
     this.schema = schema;
     this.model = Model[schema.collection];
@@ -205,6 +211,9 @@ class DeleteOne extends Route {
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.DELETE;
+
+    this.activityDescription = `ADD ${schema.collection}`;
+    this.activityBroadcast = true;
 
     this.schema = schema;
     this.model = Model[schema.collection];
