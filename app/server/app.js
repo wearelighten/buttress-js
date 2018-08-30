@@ -12,7 +12,7 @@
 
 const mongoose = require('mongoose');
 const Bootstrap = require('./bootstrap');
-const Config = require('./config');
+const Config = require('node-env-obj')('../');
 const Logging = require('./logging');
 
 /**

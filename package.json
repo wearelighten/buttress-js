@@ -33,6 +33,7 @@
     "mongodb": "^2.x.x",
     "mongoose": "^4.x.x",
     "morgan": "~1.7.x",
+    "node-env-obj": "^0.1.0",
     "node-redis-pubsub": "^1.0.2",
     "passport": "~0.3.x",
     "proxyquire": "~1.7.x",

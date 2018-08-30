@@ -17,7 +17,7 @@ const sio = require('socket.io');
 const sioRedis = require('socket.io-redis');
 const sioEmitter = require('socket.io-emitter');
 
-const Config = require('./config');
+const Config = require('node-env-obj')('../');
 const Model = require('./model');
 const Logging = require('./logging');
 const MongoClient = require('mongodb').MongoClient;
