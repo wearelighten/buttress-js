@@ -177,6 +177,7 @@ const __initMaster = express => {
           data: data,
           sequence: namespace[superPublicId].sequence
         });
+        Logging.logDebug(`Activity: ${namespace[superPublicId].sequence} ${superPublicId}`);
       });
 
       // Disable broadcasting to public space
@@ -202,6 +203,7 @@ const __initMaster = express => {
         data: data,
         sequence: namespace[publicId].sequence
       });
+      Logging.logDebug(`Activity: ${namespace[publicId].sequence} ${publicId}`);
     });
   }
 
@@ -237,7 +239,8 @@ const __initMaster = express => {
 
       app.token = token;
       app.publicId = Model.App.genPublicUID(app.name, token.value);
-      Logging.logDebug(`App Public ID: ${app.name}, ${app.publicId}`);
+
+      let superApp = false;
 
       if (token.authLevel > 2) {
         namespace[app.publicId] = {
@@ -245,7 +248,11 @@ const __initMaster = express => {
           sequence: 0
         };
         superApps.push(app.publicId);
+
+        superApp = true;
       }
+
+      Logging.logDebug(`App Public ID: ${app.name}, ${app.publicId}, Super: ${superApp}`);
 
       return app;
     }).filter(app => app);
