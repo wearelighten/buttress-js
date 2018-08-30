@@ -3,7 +3,10 @@ Realtime datastore for business software.
 
 # What's New
 
-### Version: 1.6.4
+### Version: 1.6.5
+- ADDED: node-env-obj to replace project config loader (config.js)
+- ADDED: Schema & route api for "Location"
+### 1.6.4
 - ADDED: Ability to update tracking boolean  "hide"
 ### 1.6.3
 - TWEAK: Added Boolean property teamPrimary to users
