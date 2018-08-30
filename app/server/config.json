@@ -1,6 +1,9 @@
 {
   "environment": {
     "NODE_ENV": "development",
+    "BUTTRESS_APP_TITLE": "ButtressJS",
+    "BUTTRESS_APP_CODE": "buttressjs",
+    "BUTTRESS_APP_PROTOCOL": "http",
     "BUTTRESS_HOST_URL": "",
     "BUTTRESS_REST_LISTEN_PORT_PROD": "6000",
     "BUTTRESS_REST_LISTEN_PORT_DEV": "6001",
@@ -19,11 +22,11 @@
   "global": {
     "env": "%NODE_ENV%",
     "app": {
-      "title": "ButtressJS",
+      "title": "%BUTTRESS_APP_TITLE%",
       "description": "Realtime datastore for business software",
-      "code": "buttressjs",
+      "code": "%BUTTRESS_APP_CODE%",
       "version": "1.6.5",
-      "protocol": "http",
+      "protocol": "%BUTTRESS_APP_PROTOCOL%",
       "host": "%BUTTRESS_HOST_URL%",
       "apiPrefix": "/api/v1/"
     },
