@@ -108,9 +108,9 @@ const __initSocketNamespace = (io, publicId, appTokens) => {
       return socket.disconnect(0);
     }
 
-    Logging.logSilly(`${socket.id} Connected on ${publicId}`);
+    Logging.logDebug(`${socket.id} Connected on ${publicId}`);
     socket.on('disconnect', () => {
-      Logging.logSilly(`${socket.id} Disconnect on ${publicId}`);
+      Logging.logDebug(`${socket.id} Disconnect on ${publicId}`);
     });
   });
 
@@ -126,9 +126,9 @@ const __initWorker = () => {
   io.adapter(sioRedis(Config.redis));
 
   io.on('connect', socket => {
-    Logging.logSilly(`${socket.id} Connected on global space`);
+    Logging.logDebug(`${socket.id} Connected on global space`);
     socket.on('disconnect', socket => {
-      Logging.logSilly(`${socket.id} Disconnect on global space`);
+      Logging.logDebug(`${socket.id} Disconnect on global space`);
     });
   });
 
