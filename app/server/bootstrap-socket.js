@@ -177,7 +177,7 @@ const __initMaster = express => {
           data: data,
           sequence: namespace[superPublicId].sequence
         });
-        Logging.logDebug(`Activity: ${namespace[superPublicId].sequence} ${superPublicId}`);
+        Logging.logDebug(`Activity Super: ${namespace[superPublicId].sequence} ${superPublicId}`);
       });
 
       // Disable broadcasting to public space
