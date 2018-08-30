@@ -44,3 +44,7 @@ jspm_packages
 .node_repl_history
 
 app_data
+
+# Env files
+*.env
+!.example.env

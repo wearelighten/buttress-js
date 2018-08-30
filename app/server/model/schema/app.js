@@ -16,7 +16,7 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
-const Config = require('../../config');
+const Config = require('node-env-obj')('../');
 const NRP = require('node-redis-pubsub');
 const nrp = new NRP(Config.redis);
 
