@@ -25,7 +25,7 @@
       "title": "%BUTTRESS_APP_TITLE%",
       "description": "Realtime datastore for business software",
       "code": "%BUTTRESS_APP_CODE%",
-      "version": "1.6.5",
+      "version": "1.6.6",
       "protocol": "%BUTTRESS_APP_PROTOCOL%",
       "host": "%BUTTRESS_HOST_URL%",
       "apiPrefix": "/api/v1/"
@@ -59,7 +59,7 @@
     "redis": {
       "port": "%BUTTRESS_REDIS_PORT%",
       "host": "%BUTTRESS_REDIS_HOST%",
-      "scope": "buttress-internal"
+      "scope": "%BUTTRESS_APP_CODE%-internal"
     },
     "sio": {
       "app": "%BUTTRESS_SOCKET_APP%"
