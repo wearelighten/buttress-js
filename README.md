@@ -3,7 +3,10 @@ Realtime datastore for business software.
 
 # What's New
 
-### Version: 1.6.5
+### Version: 1.6.6
+- FIX: Added instance namespacing to redis scope in config
+- TWEAK: Bumped logging level of socket activity
+### 1.6.5
 - ADDED: node-env-obj to replace project config loader (config.js)
 - ADDED: Schema & route api for "Location"
 ### 1.6.4
