@@ -86,7 +86,9 @@ class Model {
   }
 
   /**
-   * @param {string} model - demand loads the schema
+   * @param {object} app - application container
+   * @param {object} schema - schema object
+   * @return {object} SchemaModel - initiated schema model built from passed schema object
    * @private
    */
   _initSchemaModel(app, schema) {

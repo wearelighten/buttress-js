@@ -49,7 +49,7 @@ module.exports.setLogApp = app => {
 };
 
 /**
- *
+ * @param {String} logApp - Log applcation label (rest / socket)
  */
 module.exports.init = logApp => {
   this.setLogApp(logApp);

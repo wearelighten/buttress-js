@@ -31,7 +31,6 @@ class GetList extends Route {
     if (!this.model) {
       // Somthing went wrong!!1?
     }
-
   }
 
   _validate() {

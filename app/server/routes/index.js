@@ -51,6 +51,12 @@ function _initRoute(app, Route) {
       });
   });
 }
+
+/**
+ * @param  {Object} express - express applcation container
+ * @param  {Object} app - application container
+ * @param  {Object} schema - schema object
+ */
 function _initSchemaRoutes(express, app, schema) {
   SchemaRoutes.forEach(Route => {
     let route = new Route(schema);

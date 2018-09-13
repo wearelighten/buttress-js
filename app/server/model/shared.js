@@ -398,7 +398,7 @@ const __populateObject = (schema, values) => {
 };
 
 /**
- * @param {String} collection - name of the collection
+ * @param {Object} schema - schema object
  * @param {Object} body - object containing properties to be applied
  * @return {Object} - returns an object with only validated properties
  */
