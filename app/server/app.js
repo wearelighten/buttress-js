@@ -29,10 +29,10 @@ mongoose.connect(`mongodb://${Config.mongoDb.url}/${Config.app.code}-${Config.en
   })
   .then(isMaster => {
     if (isMaster) {
-      Logging.log(`${Config.app.title} REST Server Master v${Config.app.version} listening on port ` +
+      Logging.log(`${Config.app.title}:${Config.app.code} REST Server Master v${Config.app.version} listening on port ` +
         `${Config.listenPorts.rest} in ${Config.env} mode.`);
     } else {
-      Logging.log(`${Config.app.title} REST Server Worker v${Config.app.version} ` +
+      Logging.log(`${Config.app.title}:${Config.app.code} REST Server Worker v${Config.app.version} ` +
         `in ${Config.env} mode.`);
     }
   })
