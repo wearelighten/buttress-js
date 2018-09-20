@@ -48,3 +48,6 @@ nginx/*
 # Env files
 *.env
 !.example.env
+
+# App Data
+app_data/*
