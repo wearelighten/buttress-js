@@ -23,9 +23,10 @@ const Shared = require('./shared');
 
 class SchemaModel {
 
-  constructor(MongoDb, schema) {
+  constructor(MongoDb, schema, app) {
     this.schema = schema;
-    this.collectionName = schema.collection;
+    this.app = app;
+    this.collectionName = `${app._id}-${schema.collection}`;
     this.collection = MongoDb.collection(this.collectionName);
   }
 

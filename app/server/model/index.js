@@ -95,7 +95,7 @@ class Model {
     const name = schema.collection;
 
     if (!this.models[name]) {
-      this.models[name] = new SchemaModel(this.mongoDb, schema);
+      this.models[name] = new SchemaModel(this.mongoDb, schema, app);
     }
 
     this.__defineGetter__(name, () => this.models[name]);

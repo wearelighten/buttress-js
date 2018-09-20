@@ -167,6 +167,8 @@ const __initMaster = () => {
       .then(() => __systemInstall())
       .then(() => Model.App.findAll().toArray())
       .then(apps => {
+        let schemaUpdates = [];
+
         // Load local defined schemas into super app
         const coreSchema = _getLocalSchemas();
         apps.forEach(app => {
@@ -182,10 +184,12 @@ const __initMaster = () => {
             appSchema[appSchemaIdx] = schema;
           });
 
-          Model.App.updateSchema(app, appSchema);
+          schemaUpdates.push(() => Model.App.updateSchema(app, appSchema));
         });
 
-        return coreSchema;
+        return schemaUpdates.reduce((prev, task) => {
+          return prev.then(() => task());
+        }, Promise.resolve());
       })
       .then(() => Model.initSchema())
       .catch(e => Logging.logError(e));
