@@ -53,8 +53,8 @@ const __indexFromIP = (ip, spread) => {
  *
  **********************************************************************************/
 const __nativeMongoConnect = app => {
-  const mongoUrl = `mongodb://${Config.mongoDb.url}`;
   const dbName = `${Config.app.code}-${Config.env}`;
+  const mongoUrl = `mongodb://${Config.mongoDb.url}/?authMechanism=DEFAULT&authSource=${dbName}`;
   return MongoClient.connect(mongoUrl, Config.mongoDb.options) // eslint-disable-line camelcase
   .then(client => {
     return client.db(dbName);
