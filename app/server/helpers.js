@@ -133,3 +133,37 @@ module.exports.Promise = {
   arrayProp: prop => (arr => arr.map(a => a[prop]))
 };
 
+module.exports.ShortId = id => {
+  const toBase = (num, base) => {
+    const symbols = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-".split("");
+    let decimal = num;
+    let temp;
+    let output = '';
+
+    if (base > symbols.length || base <= 1) {
+      throw new RangeError(`Radix must be less than ${symbols.length} and greater than 1`);
+    }
+
+    while (decimal > 0) {
+      temp = Math.floor(decimal / base);
+      output = symbols[(decimal - (base * temp))] + output;
+      decimal = temp;
+    }
+
+    return output;
+  };
+
+  let output = '';
+
+  const date = id.getTimestamp();
+  let time = date.getTime();
+
+  let counter = parseInt(id.toHexString().slice(-6), 16);
+  counter = parseInt(counter.toString().slice(-3), 10);
+
+  time = counter + time;
+  output = toBase(time, 64);
+  output = output.slice(1);
+
+  return output;
+}

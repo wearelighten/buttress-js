@@ -14,6 +14,7 @@
 const ObjectId = require('mongodb').ObjectId;
 const Logging = require('../logging');
 const Shared = require('./shared');
+const shortId = require('../helpers').ShortId;
 
 /* ********************************************************************************
  *
@@ -26,7 +27,9 @@ class SchemaModel {
   constructor(MongoDb, schema, app) {
     this.schema = schema;
     this.app = app;
-    this.collectionName = `${app._id}-${schema.collection}`;
+
+    this.appShortId = shortId(app._id);
+    this.collectionName = `${this.appShortId}-${schema.collection}`;
     this.collection = MongoDb.collection(this.collectionName);
   }
 
