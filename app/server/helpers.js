@@ -163,7 +163,7 @@ module.exports.ShortId = id => {
 
   time = counter + time;
   output = toBase(time, 64);
-  output = output.slice(1);
+  output = output.slice(3);
 
   return output;
 }
