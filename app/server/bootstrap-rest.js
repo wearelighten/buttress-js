@@ -25,6 +25,7 @@ const Routes = require('./routes');
 const Logging = require('./logging');
 const MongoClient = require('mongodb').MongoClient;
 const NRP = require('node-redis-pubsub');
+const shortId = require('./helpers').ShortId;
 
 Error.stackTraceLimit = Infinity;
 
@@ -173,7 +174,8 @@ const __initMaster = () => {
         const coreSchema = _getLocalSchemas();
         apps.forEach(app => {
           const appSchema = app.__schema;
-          Logging.log(`Updating ${coreSchema.length} core schema for ${app.name}:${appSchema.length}`);
+          const appShortId = shortId(app._id);
+          Logging.log(`Updating ${coreSchema.length} core schema for ${appShortId}:${app.name}:${appSchema.length}`);
           coreSchema.forEach(cS => {
             const appSchemaIdx = appSchema.findIndex(s => s.name === cS.name);
             let schema = appSchema[appSchemaIdx];
