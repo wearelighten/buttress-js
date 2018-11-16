@@ -39,7 +39,7 @@ class Model {
     this.mongoDb = db;
 
     // Core Models
-    this.initCoreModels();
+    // this.initCoreModels();
 
     // Load schema models
     // this.initSchema();
@@ -80,8 +80,8 @@ class Model {
    */
   _initModel(model) {
     this.__defineGetter__(model, () => this._require(model).model);
-    this.Schema.__defineGetter__(model, () => this._require(model).schema);
-    this.Constants.__defineGetter__(model, () => this._require(model).constants);
+    // this.Schema.__defineGetter__(model, () => this._require(model).schema);
+    // this.Constants.__defineGetter__(model, () => this._require(model).constants);
     this._require(model);
   }
 
@@ -118,13 +118,16 @@ class Model {
 function _getModels() {
   let filenames = fs.readdirSync(`${__dirname}/schema`);
 
-  let files = [];
-  for (let x = 0; x < filenames.length; x++) {
-    let file = filenames[x];
-    if (path.extname(file) === '.js') {
-      files.push(Sugar.String.capitalize(path.basename(file, '.js')));
-    }
-  }
+  // Increment core models after conversion
+  let files = [
+    'Activity'
+  ];
+  // for (let x = 0; x < filenames.length; x++) {
+  //   let file = filenames[x];
+  //   if (path.extname(file) === '.js') {
+  //     files.push(Sugar.String.capitalize(path.basename(file, '.js')));
+  //   }
+  // }
   return files;
 }
 

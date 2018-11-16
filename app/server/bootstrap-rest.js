@@ -35,7 +35,7 @@ Error.stackTraceLimit = Infinity;
  *
  **********************************************************************************/
 // const processes = os.cpus().length;
-const processes = 1;
+const processes = 0;
 const _workers = [];
 
 /* ********************************************************************************
@@ -165,54 +165,54 @@ const __initMaster = () => {
   if (isPrimary) {
     Logging.logVerbose(`Primary Master REST`);
     p = __nativeMongoConnect()
-      .then(db => Model.initCoreModels(db))
-      .then(() => __systemInstall())
-      .then(() => Model.App.findAll().toArray())
-      .then(apps => {
-        let schemaUpdates = [];
+      .then(db => Model.initCoreModels(db));
+      // .then(() => __systemInstall())
+      // .then(() => Model.App.findAll().toArray())
+      // .then(apps => {
+      //   let schemaUpdates = [];
 
-        // Load local defined schemas into super app
-        const coreSchema = _getLocalSchemas();
-        apps.forEach(app => {
-          const appSchema = app.__schema;
-          const appShortId = shortId(app._id);
-          Logging.log(`Updating ${coreSchema.length} core schema for ${appShortId}:${app.name}:${appSchema.length}`);
-          coreSchema.forEach(cS => {
-            const appSchemaIdx = appSchema.findIndex(s => s.name === cS.name);
-            let schema = appSchema[appSchemaIdx];
-            if (!schema) {
-              return appSchema.push(cS);
-            }
-            schema.properties = Object.assign(schema.properties, cS.properties);
-            appSchema[appSchemaIdx] = schema;
-          });
+      //   // Load local defined schemas into super app
+      //   const coreSchema = _getLocalSchemas();
+      //   apps.forEach(app => {
+      //     const appSchema = app.__schema;
+      //     const appShortId = shortId(app._id);
+      //     Logging.log(`Updating ${coreSchema.length} core schema for ${appShortId}:${app.name}:${appSchema.length}`);
+      //     coreSchema.forEach(cS => {
+      //       const appSchemaIdx = appSchema.findIndex(s => s.name === cS.name);
+      //       let schema = appSchema[appSchemaIdx];
+      //       if (!schema) {
+      //         return appSchema.push(cS);
+      //       }
+      //       schema.properties = Object.assign(schema.properties, cS.properties);
+      //       appSchema[appSchemaIdx] = schema;
+      //     });
 
-          schemaUpdates.push(() => Model.App.updateSchema(app, appSchema));
-        });
+      //     schemaUpdates.push(() => Model.App.updateSchema(app, appSchema));
+      //   });
 
-        return schemaUpdates.reduce((prev, task) => {
-          return prev.then(() => task());
-        }, Promise.resolve());
-      })
-      .then(() => Model.initSchema())
-      .catch(e => Logging.logError(e));
+      //   return schemaUpdates.reduce((prev, task) => {
+      //     return prev.then(() => task());
+      //   }, Promise.resolve());
+      // })
+      // .then(() => Model.initSchema())
+      // .catch(e => Logging.logError(e));
   } else {
     Logging.logVerbose(`Secondary Master REST`);
   }
 
-  const nrp = new NRP(Config.redis);
-  nrp.on('app-metadata:changed', data => {
-    Logging.logDebug(`App Metadata Changed: ${data.appId}, ${_workers.length} Workers`);
-    _workers.forEach(w => {
-      w.send({
-        appId: data.appId
-      });
-    });
-  });
+  // const nrp = new NRP(Config.redis);
+  // nrp.on('app-metadata:changed', data => {
+  //   Logging.logDebug(`App Metadata Changed: ${data.appId}, ${_workers.length} Workers`);
+  //   _workers.forEach(w => {
+  //     w.send({
+  //       appId: data.appId
+  //     });
+  //   });
+  // });
 
-  p.then(__spawnWorkers);
+  // p.then(__spawnWorkers);
 
-  return Promise.resolve();
+  return p;
 };
 
 /**

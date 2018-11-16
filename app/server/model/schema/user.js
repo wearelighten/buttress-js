@@ -11,7 +11,7 @@
  *
  */
 
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 const Model = require('../');
 const Logging = require('../../logging');
 const Shared = require('../shared');

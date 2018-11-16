@@ -12,7 +12,7 @@
  */
 
 var crypto = require('crypto');
-var mongoose = require('mongoose');
+// var mongoose = require('mongoose');
 var Logging = require('../../logging');
 var Model = require('../');
 

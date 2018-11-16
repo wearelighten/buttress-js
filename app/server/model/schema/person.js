@@ -11,7 +11,7 @@
  *
  */
 
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 const humanname = require('humanname');
 const Model = require('../../model');
 const Logging = require('../../logging');

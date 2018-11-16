@@ -15,7 +15,7 @@ const Logging = require('../logging');
 const Model = require('./index');
 const ObjectId = require('mongodb').ObjectId;
 const Sugar = require('sugar');
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 
 /* ********************************************************************************
  *

@@ -10,7 +10,7 @@
  * @author Chris Bates-Keegan
  *
  */
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');

@@ -13,7 +13,7 @@
 
 const fs = require('fs');
 const crypto = require('crypto');
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
