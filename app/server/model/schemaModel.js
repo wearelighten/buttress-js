@@ -26,10 +26,15 @@ class SchemaModel {
 
   constructor(MongoDb, schema, app) {
     this.schema = schema;
-    this.app = app;
+    this.app = app || null;
 
-    this.appShortId = shortId(app._id);
-    this.collectionName = `${this.appShortId}-${schema.collection}`;
+    this.appShortId = shortId(app._id) || null;
+    this.collectionName = `${schema.collection}`;
+
+    if (this.appShortId) {
+      this.collectionName = `${this.appShortId}-${this.collectionName}`;
+    }
+
     this.collection = MongoDb.collection(this.collectionName);
   }
 

@@ -10,7 +10,6 @@
  *
  */
 
-const mongoose = require('mongoose');
 const Bootstrap = require('./bootstrap');
 const Config = require('node-env-obj')('../');
 const Logging = require('./logging');
@@ -21,12 +20,7 @@ const Logging = require('./logging');
 
 Logging.init('rest');
 
-mongoose.Promise = global.Promise;
-mongoose.connection.on('error', () => mongoose.disconnect());
-mongoose.connect(`mongodb://${Config.mongoDb.url}/${Config.app.code}-${Config.env}`, Config.mongoDb.options)
-  .then(() => {
-    return Bootstrap.rest();
-  })
+Bootstrap.rest()
   .then(isMaster => {
     if (isMaster) {
       Logging.log(`${Config.app.title}:${Config.app.code} REST Server Master v${Config.app.version} listening on port ` +
