@@ -11,13 +11,11 @@
  *
  */
 
-var crypto = require('crypto');
+const Crypto = require('crypto');
 const SchemaModel = require('../schemaModel');
-var Logging = require('../../logging');
-var Model = require('../');
-
-const collectionName = 'tokens';
-const collection = Model.mongoDb.collection(collectionName);
+const ObjectId = require('mongodb').ObjectId;
+const Shared = require('../shared');
+const Logging = require('../../logging');
 
 /**
  * Constants
@@ -36,21 +34,24 @@ const AuthLevel = {
   SUPER: 3
 };
 
-const constants = {
-  Type: Type,
-  AuthLevel: AuthLevel
-};
-
 class TokenSchemaModel extends SchemaModel {
   constructor(MongoDb) {
-    let schema = TokenSchemaModel.getSchema();
+    let schema = TokenSchemaModel.Schema;
     super(MongoDb, schema);
   }
 
-  static get getSchema() {
+  static get Constants() {
     return {
-      name: "app",
+      Type: Type,
+      AuthLevel: AuthLevel
+    };
+  }
+
+  static get Schema() {
+    return {
+      name: "tokens",
       type: "collection",
+      collection: "tokens",
       properties: {
         name: {
           __type: "string",
@@ -89,7 +90,7 @@ class TokenSchemaModel extends SchemaModel {
               __type: "string",
               __required: true,
               __allowUpdate: true
-            },
+            }
           }
         },
         uses: {
@@ -128,7 +129,7 @@ class TokenSchemaModel extends SchemaModel {
     var string = '';
 
     try {
-      var bytes = crypto.randomBytes(length);
+      var bytes = Crypto.randomBytes(length);
       for (var x = 0; x < bytes.length; x++) {
         var byte = bytes[x];
         string += chars[byte & mask];
@@ -142,26 +143,28 @@ class TokenSchemaModel extends SchemaModel {
     return string;
   }
 
-  /**
-   * @param {Object} details - type, app, user, authLevel, permissions
-   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-   */
-  add(details) {
-    Logging.logDebug(`Add User Token: ${details.user ? details.user._id : false}`);
+  /*
+    * @param {Object} body - body passed through from a POST request
+    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+    */
+  __add(body) {
+    return prev => {
+      const entity = {};
 
-    var token = new ModelDef({
-      // _id: details.id,
-      type: details.type,
-      value: this._createTokenString(),
-      _app: details.app,
-      _user: details.user,
-      domains: details.domains,
-      authLevel: details.authLevel,
-      permissions: details.permissions,
-      allocated: true
-    });
+      if (body.id) {
+        entity._id = new ObjectId(body.id);
+      }
 
-    return token.save();
+      entity.value = this._createTokenString();
+
+      if (this.schema.extends.includes('timestamps')) {
+        entity.createdAt = new Date();
+        entity.updatedAt = null;
+      }
+
+      const validated = Shared.applyAppProperties(this.schema, body);
+      return prev.concat([Object.assign(entity, validated)]);
+    };
   }
 
   /**
@@ -187,35 +190,21 @@ class TokenSchemaModel extends SchemaModel {
   }
 
   /**
-   * Schema Static Methods
-   */
-
-  findAll() {
-    return collection.find({});
-  }
-
-  /**
-   * @return {Promise} - resolves to an array of Tokens (native Mongoose objects)
-   */
-  findAllNative() {
-    return ModelDef.find({allocated: true}).populate('_app').populate({path: '_user', populate: {path: '_person'}});
-  }
-
-  /**
    * @param {String} userId - DB id for the user
    * @param {String} appId - DB id for the app
    * @return {Promise} - resolves to an array of Tokens (native Mongoose objects)
    */
   findUserAuthToken(userId, appId) {
-    return ModelDef.findOne({allocated: true, _app: appId, _user: userId});
-  }
-
-  /**
-   * @param {Enum} type - OPTIONAL 'app' or 'user'
-   * @return {Promise} - resolves when done
-   */
-  rmAll(type) {
-    return ModelDef.remove({type: type}).then(r => true);
+    return new Promise(resolve => {
+      this.collection.findOne({
+        allocated: true,
+        _app: appId,
+        _user: userId
+      }, {}, (err, doc) => {
+        if (err) throw err;
+        resolve(doc);
+      });
+    });
   }
 }
 

@@ -35,21 +35,24 @@ const Type = {
   BROWSER: type[3]
 };
 
-const constants = {
-  Type: Type,
-  PUBLIC_DIR: true
-};
-
 class AppSchemaModel extends SchemaModel {
   constructor(MongoDb) {
-    let schema = AppSchemaModel.getSchema();
+    let schema = AppSchemaModel.Schema;
     super(MongoDb, schema);
   }
 
-  static get getSchema() {
+  static get Constants() {
     return {
-      name: "app",
+      Type: Type,
+      PUBLIC_DIR: true
+    };
+  }
+
+  static get Schema() {
+    return {
+      name: "apps",
       type: "collection",
+      collection: "apps",
       properties: {
         name: {
           __type: "string",
@@ -93,15 +96,14 @@ class AppSchemaModel extends SchemaModel {
   add(body) {
     Logging.log(body, Logging.Constants.LogLevel.DEBUG);
 
-    var app = new ModelDef({
-      // _id: body.id,
+    var app = {
       name: body.name,
       type: body.type,
       authLevel: body.authLevel,
       permissions: body.permissions,
       domain: body.domain,
       _owner: body.ownerGroupId
-    });
+    };
 
     var _token = false;
     return Model.Token
@@ -200,31 +202,6 @@ class AppSchemaModel extends SchemaModel {
    */
   getToken() {
     return Model.Token.findOne({_id: this._token}).populate('_user');
-  }
-
-  /**
-   * @param {App} app - App object to be deleted
-   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-   */
-  rm(app) {
-    // Logging.log(app.details);
-    return new Promise((resolve, reject) => {
-      Model.Token.remove({_id: app._token})
-        .then(() => ModelDef.remove({_id: app._id}))
-        .then(resolve, reject);
-    });
-  }
-
-  /**
-   * @return {Promise} - resolves to an array of Apps (App.details)
-   */
-  findAll() {
-      // return new Promise((resolve, reject) => {
-    //   ModelDef.find({}).populate('_owner').populate('_token')
-    //   .then(res => resolve(res.map(d => d.details)), reject);
-    // });
-    // NOTE: Doesn't populate owner/token
-    return collection.find({});
   }
 
   /**

@@ -15,7 +15,6 @@ const Logging = require('../logging');
 const Model = require('./index');
 const ObjectId = require('mongodb').ObjectId;
 const Sugar = require('sugar');
-// const mongoose = require('mongoose');
 
 /* ********************************************************************************
  *
@@ -224,7 +223,7 @@ const __validateProp = (prop, config) => {
     case 'id':
       if (type === 'string') {
         try {
-          prop.value = mongoose.Types.ObjectId(prop.value); // eslint-disable-line new-cap
+          prop.value = ObjectId(prop.value); // eslint-disable-line new-cap
         } catch (e) {
           valid = false;
           return;

@@ -28,7 +28,7 @@ class SchemaModel {
     this.schema = schema;
     this.app = app || null;
 
-    this.appShortId = shortId(app._id) || null;
+    this.appShortId = (app) ? shortId(app._id) : null;
     this.collectionName = `${schema.collection}`;
 
     if (this.appShortId) {

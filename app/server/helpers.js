@@ -166,4 +166,4 @@ module.exports.ShortId = id => {
   output = output.slice(3);
 
   return output;
-}
+};

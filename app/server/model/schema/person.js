@@ -13,19 +13,27 @@
 
 const SchemaModel = require('../schemaModel');
 const humanname = require('humanname');
+const ObjectId = require('mongodb').ObjectId;
+const Shared = require('../shared');
 // const Model = require('../../model');
 // const Logging = require('../../logging');
 
 class PersonSchemaModel extends SchemaModel {
   constructor(MongoDb) {
-    let schema = PersonSchemaModel.getSchema();
+    let schema = PersonSchemaModel.Schema;
     super(MongoDb, schema);
   }
 
-  static get getSchema() {
+  static get Constants() {
+    return {
+    };
+  }
+
+  static get Schema() {
     return {
       name: "person",
       type: "collection",
+      collection: "people",
       properties: {
         title: {
           __type: "string",
@@ -106,7 +114,7 @@ class PersonSchemaModel extends SchemaModel {
     var name = humanname.parse(body.name);
 
     return new Promise((resolve, reject) => {
-      var md = new ModelDef({
+      var md = {
         title: name.salutation,
         forename: name.firstName,
         initials: name.initials,
@@ -120,11 +128,39 @@ class PersonSchemaModel extends SchemaModel {
         address: body.address,
         postcode: body.postcode,
         _dataOwner: owner
-      });
+      };
 
       md.save().then(res => resolve(res.details), reject);
     });
-  };
+  }
+  /*
+    * @param {Object} body - body passed through from a POST request
+    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+    */
+  __add(body) {
+    return prev => {
+      const entity = {};
+
+      if (body.id) {
+        entity._id = new ObjectId(body.id);
+      }
+
+      let name = humanname.parse(body.name);
+      entity.title = name.salutation;
+      entity.forename = name.firstName;
+      entity.initials = name.initials;
+      entity.surname = name.lastName;
+      entity.suffix = name.suffix;
+
+      if (this.schema.extends.includes('timestamps')) {
+        entity.createdAt = new Date();
+        entity.updatedAt = null;
+      }
+
+      const validated = Shared.applyAppProperties(this.schema, body);
+      return prev.concat([Object.assign(entity, validated)]);
+    };
+  }
 
   /**
    * @param {Object} appAuth - app auth details
@@ -142,41 +178,7 @@ class PersonSchemaModel extends SchemaModel {
     this.emails.push(appAuth.email);
 
     return this.save();
-  };
-
-  /**
-   * @return {Promise} - resolves to an array of Apps (App.details)
-   */
-  findAll() {
-    return ModelDef
-      .find({}).populate('_owner')
-      .then(res => res.map(p => p.details));
-  };
-
-  /**
-   * @param {Object} details - currently requires 'email' only
-   * @return {Promise} - resolves to a person matching details or null if not found
-   */
-  findByDetails(details) {
-    if (!details.email) {
-      return Promise.reject(new Error('missing_required_field_email'));
-    }
-    return ModelDef.findOne({emails: details.email});
-  };
-
-  /**
-   * @return {Promise} - resolves once all have been deleted
-   */
-  rmAll() {
-    return ModelDef.remove({});
-  };
-
-  /**
-   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-   */
-  rm() {
-    return ModelDef.remove({_id: this._id});
-  };
+  }
 }
 
 // schema.virtual('details').get(function() {

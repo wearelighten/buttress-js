@@ -31,20 +31,23 @@ const App = {
   LINKEDIN: apps[3]
 };
 
-const Constants = {
-  App: App
-};
-
 class UserSchemaModel extends SchemaModel {
   constructor(MongoDb) {
-    let schema = UserSchemaModel.getSchema();
+    let schema = UserSchemaModel.Schema;
     super(MongoDb, schema);
   }
 
-  static get getSchema() {
+  static get Constants() {
     return {
-      name: "app",
+      App: App
+    };
+  }
+
+  static get Schema() {
+    return {
+      name: "users",
       type: "collection",
+      collection: "users",
       properties: {
         username: {
           __type: "string",
@@ -149,7 +152,7 @@ class UserSchemaModel extends SchemaModel {
           __type: "array",
           __required: true,
           __allowUpdate: true
-        },
+        }
       }
     };
   }
@@ -161,13 +164,13 @@ class UserSchemaModel extends SchemaModel {
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
   add(body, personDetails, auth) {
-    var user = new ModelDef({
+    var user = {
       _apps: [Model.authApp],
       _person: personDetails.id,
       orgRole: body.orgRole,
       teamName: body.teamName,
       teamRole: body.teamRole
-    });
+    };
 
     // Logging.logDebug(body);
     // Logging.logDebug(auth);
@@ -275,32 +278,17 @@ class UserSchemaModel extends SchemaModel {
   }
 
   /**
-   * @return {Promise} - resolves once all have been deleted
-   */
-  rmAll() {
-    return ModelDef.remove({});
-  }
-
-  /**
-   * @param {Object} user - User object to remove
-   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-   */
-  rm(user) {
-    return ModelDef.remove({_id: user._id});
-  }
-
-  /**
    * @param {ObjectId} appId - id of the App that owns the user
    * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
    */
-  getAll() {
-    Logging.logSilly(`getAll: ${Model.authApp._id}`);
+  findAll() {
+    Logging.logSilly(`findAll: ${Model.authApp._id}`);
 
     if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
-      return ModelDef.find({}).populate('_person');
+      return this.collection.find({}).populate('_person');
     }
 
-    return ModelDef.find({_apps: Model.authApp._id}).populate('_person');
+    return this.collection.find({_apps: Model.authApp._id}).populate('_person');
   }
 
   /**
@@ -308,7 +296,7 @@ class UserSchemaModel extends SchemaModel {
    */
   getSimplified() {
     Logging.logSilly(`getSimplified: ${Model.authApp._id}`);
-    return collection.find({_apps: Model.authApp._id}, {_id: 1});
+    return this.collection.find({_apps: Model.authApp._id}, {_id: 1});
   }
 
   /**
@@ -316,7 +304,7 @@ class UserSchemaModel extends SchemaModel {
    * @return {Promise} - resolves to a User object or null
    */
   getByUsername(username) {
-    return ModelDef.findOne({username: username}).select('id');
+    return this.collection.findOne({username: username}).select('id');
   }
 
   /**
@@ -327,7 +315,10 @@ class UserSchemaModel extends SchemaModel {
   getByAppId(appName, appUserId) {
     Logging.log(`getByAppId: ${appName} - ${appUserId}`, Logging.Constants.LogLevel.VERBOSE);
 
-    return ModelDef.findOne({'auth.app': appName, 'auth.appId': appUserId}).select('id');
+    return this.collection.findOne({
+      'auth.app': appName,
+      'auth.appId': appUserId
+    }).select('id');
   }
 
   attachToPerson(person, details) {

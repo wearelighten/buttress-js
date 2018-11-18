@@ -12,21 +12,11 @@
  */
 
 const SchemaModel = require('../schemaModel');
-const ObjectId = require('mongodb').ObjectId;
+// const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
-const Shared = require('../shared');
-const Sugar = require('sugar');
-
-/* ********************************************************************************
- *
- * LOCALS
- *
- **********************************************************************************/
-const schema = new mongoose.Schema();
-let ModelDef = null;
-const collectionName = 'trackings';
-const collection = Model.mongoDb.collection(collectionName);
+// const Shared = require('../shared');
+// const Sugar = require('sugar');
 
 /**
  * Constants
@@ -38,20 +28,23 @@ const Type = {
   LOGGING: type[2]
 };
 
-const constants = {
-  Type: Type
-};
-
 class TrackingSchemaModel extends SchemaModel {
   constructor(MongoDb) {
-    let schema = TrackingSchemaModel.getSchema();
+    let schema = TrackingSchemaModel.Schema;
     super(MongoDb, schema);
   }
 
-  static get getSchema() {
+  static get Constants() {
     return {
-      name: "tracking",
+      Type: Type
+    };
+  }
+
+  static get Schema() {
+    return {
+      name: "trackings",
       type: "collection",
+      collection: "trackings",
       properties: {
         timestamp: {
           __type: "date",
@@ -188,46 +181,6 @@ class TrackingSchemaModel extends SchemaModel {
     return validation.length >= 1 ? validation[0] : {isValid: true};
   }
 
-  /*
-  * @param {Object} body - body passed through from a POST request
-  * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-  */
-  __add(body) {
-    return prev => {
-      prev.push({
-        _app: Model.authApp._id,
-        userId: Model.authUser._id,
-        timestamp: Sugar.Date.create(),
-        name: body.name,
-        type: body.type,
-        interaction: body.interaction,
-        error: body.error,
-        logging: body.logging,
-        environment: body.environment
-      });
-      return prev;
-    };
-  };
-
-  add(body) {
-    const sharedFn = Shared.add(collection, __add);
-    const result = sharedFn(body);
-
-    return result
-    .then(ids => {
-      return new Promise(resolve => {
-        if (Array.isArray(ids) === true) {
-          return collection.find({_id: {$in: ids}}, {}).toArray((err, docs) => {
-            if (err) throw new Error(err);
-            resolve(docs);
-          });
-        }
-
-        resolve(ids);
-      });
-    });
-  }
-
   /**
    * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
    */
@@ -235,49 +188,10 @@ class TrackingSchemaModel extends SchemaModel {
     Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
 
     if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
-      return ModelDef.find({});
+      return this.collection.find({});
     }
 
-    return ModelDef.find({_app: Model.authApp._id});
-  }
-
-  /**
-   * @param {String} id - Object id as a hex string
-   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
-   */
-  getFromId(id) {
-    return new Promise(resolve => {
-      collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
-        if (err) throw err;
-        doc.id = doc._id;
-        delete doc._id;
-        resolve(doc);
-      });
-    });
-  }
-
-  exists(id) {
-    return collection.find({_id: new ObjectId(id)})
-      .limit(1)
-      .count()
-      .then(count => count > 0);
-  }
-
-    /**
-   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
-   */
-  getAll() {
-    Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-
-    if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
-      return collection.find({});
-    }
-
-    return collection.find({_app: Model.authApp._id}, {metadata: 0});
-  }
-
-  rmAll() {
-    return ModelDef.remove({_app: Model.authApp._id});
+    return this.collection.find({_app: Model.authApp._id});
   }
 }
 

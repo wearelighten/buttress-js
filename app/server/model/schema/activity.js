@@ -28,20 +28,23 @@ const Visibility = {
   PRIVATE: visibility[1]
 };
 
-const constants = {
-  Visibility: Visibility
-};
-
 class ActivitySchemaModel extends SchemaModel {
   constructor(MongoDb) {
-    let schema = ActivitySchemaModel.getSchema();
+    let schema = ActivitySchemaModel.Schema;
     super(MongoDb, schema);
   }
 
-  static get getSchema() {
+  static get Constants() {
+    return {
+      Visibility: Visibility
+    };
+  }
+
+  static get Schema() {
     return {
       name: "activities",
       type: "collection",
+      collection: "activities",
       properties: {
         timestamp: {
           __type: "date",
@@ -159,7 +162,7 @@ class ActivitySchemaModel extends SchemaModel {
 
     return this.collection.find({
       _app: Model.authApp._id,
-      visibility: constants.Visibility.PUBLIC
+      visibility: ActivitySchemaModel.constants.Visibility.PUBLIC
     });
   }
 
