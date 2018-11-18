@@ -11,10 +11,10 @@
  *
  */
 
-// const mongoose = require('mongoose');
+const SchemaModel = require('../schemaModel');
 const Model = require('../');
 const Logging = require('../../logging');
-const Shared = require('../shared');
+// const Shared = require('../shared');
 const ObjectId = require('mongodb').ObjectId;
 
 const collectionName = 'users';
@@ -23,349 +23,356 @@ const collection = Model.mongoDb.collection(collectionName);
 /**
  * Constants
 */
-
-const constants = {
+const apps = ['google', 'facebook', 'twitter', 'linkedin'];
+const App = {
+  GOOGLE: apps[0],
+  FACEBOOK: apps[1],
+  TWITTER: apps[2],
+  LINKEDIN: apps[3]
 };
 
-Model.initModel('Person');
-Model.initModel('Appauth');
-// Model.Schema.Person;
+const Constants = {
+  App: App
+};
 
-/**
- * Schema
- */
-const schema = new mongoose.Schema();
-schema.add({
-  username: String,
-  orgRole: String,
-  teamName: String,
-  teamRole: String,
-  metadata: [{
-    _app: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Application'
-    },
-    key: String,
-    value: String
-  }],
-  _apps: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Application'
+class UserSchemaModel extends SchemaModel {
+  constructor(MongoDb) {
+    let schema = UserSchemaModel.getSchema();
+    super(MongoDb, schema);
+  }
+
+  static get getSchema() {
+    return {
+      name: "app",
+      type: "collection",
+      properties: {
+        username: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        orgRole: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        teamName: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        teamRole: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        auth: {
+          __type: "array",
+          __required: true,
+          __allowUpdate: true,
+          __schema: {
+            app: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            },
+            appId: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            },
+            username: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            },
+            profileUrl: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            },
+            images: {
+              profile: {
+                __type: "string",
+                __default: "",
+                __allowUpdate: true
+              },
+              banner: {
+                __type: "string",
+                __default: "",
+                __allowUpdate: true
+              }
+            },
+            email: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            },
+            locale: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            },
+            token: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            },
+            tokenSecret: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            },
+            refreshToken: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            },
+            extras: {
+              __type: "string",
+              __default: "",
+              __allowUpdate: true
+            }
+          }
+        },
+        _apps: {
+          __type: "array",
+          __required: true,
+          __allowUpdate: true
+        },
+        _person: {
+          __type: "id",
+          __required: true,
+          __allowUpdate: false
+        },
+        _tokens: {
+          __type: "array",
+          __required: true,
+          __allowUpdate: true
+        },
+      }
+    };
+  }
+
+  /**
+   * @param {Object} body - body passed through from a POST request
+   * @param {Object} personDetails - details of the person to which the user is attached
+   * @param {Object} auth - OPTIONAL authentication details for a user token
+   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+   */
+  add(body, personDetails, auth) {
+    var user = new ModelDef({
+      _apps: [Model.authApp],
+      _person: personDetails.id,
+      orgRole: body.orgRole,
+      teamName: body.teamName,
+      teamRole: body.teamRole
+    });
+
+    // Logging.logDebug(body);
+    // Logging.logDebug(auth);
+
+    user.auth.push(new Model.Appauth({
+      // _id: body.id,
+      app: body.app,
+      appId: body.id,
+      username: body.username,
+      profileUrl: body.profileUrl,
+      images: {
+        profile: body.profileImgUrl,
+        banner: body.bannerImgUrl
+      },
+      email: body.email,
+      token: body.token,
+      tokenSecret: body.tokenSecret
+    }));
+
+    Logging.logDebug(personDetails.name);
+    Logging.logDebug(user.auth[0].app);
+    Logging.logDebug(user.auth[0].appId);
+
+    let saveUser = user.save().then(u => Object.assign(u.details, {person: personDetails}));
+    let getToken = auth ? Model.Token.add(Object.assign(auth, {user: user})) : Promise.resolve(null);
+
+    return Promise.all([saveUser, getToken]);
+  }
+
+  addAuth(auth) {
+    Logging.log(`addAuth: ${auth.app}`, Logging.Constants.LogLevel.INFO);
+    let existing = this.auth.find(a => a.app === auth.app && a.id == auth.id); // eslint-disable-line eqeqeq
+    if (existing) {
+      Logging.log(`present: ${auth.app}:${auth.id}`, Logging.Constants.LogLevel.DEBUG);
+      return Promise.resolve(this);
     }
-  ],
-  _person: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Person'
-  },
-  _tokens: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Token'
-  }],
-  auth: [Model.Schema.Appauth]
-});
-schema.set('bufferCommands', false);
 
-let ModelDef = null;
-
-/**
- * Schema Virtual Methods
- */
-schema.virtual('details').get(function() {
-  return {
-    id: this._id,
-    username: this.username,
-    orgRole: this.orgRole,
-    teamName: this.teamName,
-    teamRole: this.teamRole,
-    auth: this.auth.map(a => a.details),
-    person: this.tryPerson
-  };
-});
-
-schema.virtual('authenticatedMetadata').get(function() {
-  if (!this.metadata) {
-    return [];
-  }
-  return this.metadata
-    .filter(m => `${m._app}` === Model.authApp.id)
-    .map(m => ({key: m.key, value: JSON.parse(m.value)}));
-});
-
-schema.virtual('tryPerson').get(function() {
-  if (!this._person) {
-    return false;
-  }
-  return this._person.details ? this._person.details : this._person;
-});
-
-/**
- * Schema Static Methods
- */
-
-/**
- * @param {Object} body - body passed through from a POST request
- * @param {Object} personDetails - details of the person to which the user is attached
- * @param {Object} auth - OPTIONAL authentication details for a user token
- * @return {Promise} - returns a promise that is fulfilled when the database request is completed
- */
-schema.statics.add = (body, personDetails, auth) => {
-  var user = new ModelDef({
-    _apps: [Model.authApp],
-    _person: personDetails.id,
-    orgRole: body.orgRole,
-    teamName: body.teamName,
-    teamRole: body.teamRole
-  });
-
-  // Logging.logDebug(body);
-  // Logging.logDebug(auth);
-
-  user.auth.push(new Model.Appauth({
-    // _id: body.id,
-    app: body.app,
-    appId: body.id,
-    username: body.username,
-    profileUrl: body.profileUrl,
-    images: {
-      profile: body.profileImgUrl,
-      banner: body.bannerImgUrl
-    },
-    email: body.email,
-    token: body.token,
-    tokenSecret: body.tokenSecret
-  }));
-
-  Logging.logDebug(personDetails.name);
-  Logging.logDebug(user.auth[0].app);
-  Logging.logDebug(user.auth[0].appId);
-
-  let saveUser = user.save().then(u => Object.assign(u.details, {person: personDetails}));
-  let getToken = auth ? Model.Token.add(Object.assign(auth, {user: user})) : Promise.resolve(null);
-
-  return Promise.all([saveUser, getToken]);
-};
-
-schema.methods.addAuth = function(auth) {
-  Logging.log(`addAuth: ${auth.app}`, Logging.Constants.LogLevel.INFO);
-  let existing = this.auth.find(a => a.app === auth.app && a.id == auth.id); // eslint-disable-line eqeqeq
-  if (existing) {
-    Logging.log(`present: ${auth.app}:${auth.id}`, Logging.Constants.LogLevel.DEBUG);
-    return Promise.resolve(this);
-  }
-
-  Logging.log(`not present: ${auth.app}:${auth.id}`, Logging.Constants.LogLevel.DEBUG);
-  this.auth.push(new Model.Appauth({
-    app: auth.app,
-    appId: auth.id,
-    username: auth.username,
-    profileUrl: auth.profileUrl,
-    images: {
-      profile: auth.profileImgUrl,
-      banner: auth.bannerImgUrl
-    },
-    email: auth.email,
-    token: auth.token,
-    tokenSecret: auth.tokenSecret,
-    refreshToken: auth.refreshToken
-  }));
-  return this.save();
-};
-
-/**
- * @param {string} app - name of the app for which the token is being updated
- * @param {Object} updated - updated app information passed through from a PUT request
- * @return {Promise} - returns a promise that is fulfilled when the database request is completed
- */
-schema.methods.updateAppInfo = function(app, updated) {
-  var auth = this.auth.find(a => a.app === app);
-  if (!auth) {
-    Logging.log(`Unable to find Appauth for ${app}`, Logging.Constants.LogLevel.DEBUG);
-    return Promise.resolve(false);
-  }
-
-  auth.username = updated.username;
-  auth.profileUrl = updated.profileUrl;
-  auth.images.profile = updated.profileImgUrl;
-  auth.images.banner = updated.bannerImgUrl;
-  auth.email = updated.email;
-  auth.token = updated.token;
-  auth.tokenSecret = updated.tokenSecret;
-  auth.refreshToken = updated.refreshToken;
-
-  Logging.logDebug(updated.profileImgUrl);
-
-  return this.save().then(() => true);
-};
-
-schema.methods.updateApps = function(app) {
-  Logging.log(`updateApps: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
-  if (!this._apps) {
-    this._apps = [];
-  }
-  let matches = this._apps.filter(function(a) {
-    return a._id === app._id;
-  });
-  if (matches.length > 0) {
-    Logging.log(`present: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-    return Promise.resolve();
-  }
-
-  Logging.log(`not present: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  this._apps.push(app._id);
-  return this.save();
-};
-
-schema.statics.exists = id => {
-  return collection.find({_id: new ObjectId(id)})
-    .limit(1)
-    .count()
-    .then(count => count > 0);
-};
-
-/**
- * @return {Promise} - resolves once all have been deleted
- */
-schema.statics.rmAll = () => {
-  return ModelDef.remove({});
-};
-
-/**
- * @param {Object} user - User object to remove
- * @return {Promise} - returns a promise that is fulfilled when the database request is completed
- */
-schema.statics.rm = function(user) {
-  return ModelDef.remove({_id: user._id});
-};
-
-/**
- * @param {ObjectId} appId - id of the App that owns the user
- * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
- */
-schema.statics.getAll = () => {
-  Logging.logSilly(`getAll: ${Model.authApp._id}`);
-
-  if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
-    return ModelDef.find({}).populate('_person');
-  }
-
-  return ModelDef.find({_apps: Model.authApp._id}).populate('_person');
-};
-
-/**
- * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
- */
-schema.statics.getSimplified = () => {
-  Logging.logSilly(`getSimplified: ${Model.authApp._id}`);
-  return collection.find({_apps: Model.authApp._id}, {_id: 1});
-};
-
-/**
- * @param {string} username - username to check for
- * @return {Promise} - resolves to a User object or null
- */
-schema.statics.getByUsername = username => {
-  return ModelDef.findOne({username: username}).select('id');
-};
-
-/**
- * @param {string} appName - Name of the authenticating App (facebook|twitter|google) that owns the user
- * @param {string} appUserId - AppId of the user
- * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
- */
-schema.statics.getByAppId = (appName, appUserId) => {
-  Logging.log(`getByAppId: ${appName} - ${appUserId}`, Logging.Constants.LogLevel.VERBOSE);
-
-  return ModelDef.findOne({'auth.app': appName, 'auth.appId': appUserId}).select('id');
-};
-
-schema.methods.attachToPerson = function(person, details) {
-  if (person !== null) {
-    this._person = person;
+    Logging.log(`not present: ${auth.app}:${auth.id}`, Logging.Constants.LogLevel.DEBUG);
+    this.auth.push(new Model.Appauth({
+      app: auth.app,
+      appId: auth.id,
+      username: auth.username,
+      profileUrl: auth.profileUrl,
+      images: {
+        profile: auth.profileImgUrl,
+        banner: auth.bannerImgUrl
+      },
+      email: auth.email,
+      token: auth.token,
+      tokenSecret: auth.tokenSecret,
+      refreshToken: auth.refreshToken
+    }));
     return this.save();
   }
 
-  return new Promise((resolve, reject) => {
-    Model.Person
-      .add(details, Model.authApp._owner)
-      .then(person => {
-        Logging.log(person, Logging.Constants.LogLevel.DEBUG);
-        this._person = person.id;
-        return this.save();
-      })
-      .then(resolve, reject);
-  });
-};
+  /**
+   * @param {string} app - name of the app for which the token is being updated
+   * @param {Object} updated - updated app information passed through from a PUT request
+   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+   */
+  updateAppInfo(app, updated) {
+    var auth = this.auth.find(a => a.app === app);
+    if (!auth) {
+      Logging.log(`Unable to find Appauth for ${app}`, Logging.Constants.LogLevel.DEBUG);
+      return Promise.resolve(false);
+    }
 
-/**
- * @param {string} app - name of the app for which the token is being updated
- * @param {Object} body - body passed through from a PUT request
- * @return {Promise} - returns a promise that is fulfilled when the database request is completed
- */
-schema.methods.updateToken = function(app, body) {
-  var auth = this.auth.find(a => a.app === app);
-  if (!auth) {
-    Logging.log(`Unable to find Appauth for ${app}`, Logging.Constants.LogLevel.DEBUG);
-    return Promise.resolve(false);
+    auth.username = updated.username;
+    auth.profileUrl = updated.profileUrl;
+    auth.images.profile = updated.profileImgUrl;
+    auth.images.banner = updated.bannerImgUrl;
+    auth.email = updated.email;
+    auth.token = updated.token;
+    auth.tokenSecret = updated.tokenSecret;
+    auth.refreshToken = updated.refreshToken;
+
+    Logging.logDebug(updated.profileImgUrl);
+
+    return this.save().then(() => true);
   }
 
-  Logging.log(`Old Token: ${auth.token}`, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(`Old Token Secret: ${auth.tokenSecret}`, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(`New Token: ${body.token}`, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(`New Token Secret: ${body.tokenSecret}`, Logging.Constants.LogLevel.DEBUG);
+  updateApps(app) {
+    Logging.log(`updateApps: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
+    if (!this._apps) {
+      this._apps = [];
+    }
+    let matches = this._apps.filter(function(a) {
+      return a._id === app._id;
+    });
+    if (matches.length > 0) {
+      Logging.log(`present: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+      return Promise.resolve();
+    }
 
-  auth.token = body.token;
-  auth.tokenSecret = body.tokenSecret;
-
-  return this.save().then(() => true);
-};
-
-/**
- * @param {string} key - index name of the metadata
- * @param {*} value - value of the meta data
- * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
- */
-schema.methods.addOrUpdateMetadata = function(key, value) {
-  Logging.log(`${Model.authApp.id}`, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(key, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(value, Logging.Constants.LogLevel.DEBUG);
-
-  var exists = this.metadata.find(m => `${m._app}` === Model.authApp.id && m.key === key);
-  if (exists) {
-    exists.value = value;
-  } else {
-    this.metadata.push({_app: Model.authApp, key: key, value: value});
+    Logging.log(`not present: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+    this._apps.push(app._id);
+    return this.save();
   }
 
-  return this.save().then(u => ({key: key, value: JSON.parse(value)}));
-};
+  exists(id) {
+    return collection.find({_id: new ObjectId(id)})
+      .limit(1)
+      .count()
+      .then(count => count > 0);
+  }
 
-schema.methods.findMetadata = function(key) {
-  Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-  Logging.log(this.metadata.map(m => ({app: `${m._app}`, key: m.key, value: m.value})),
-              Logging.Constants.LogLevel.DEBUG);
-  var md = this.metadata.find(m => `${m._app}` === `${Model.authApp._id}` && m.key === key);
-  return md ? {key: md.key, value: JSON.parse(md.value)} : false;
-};
+  /**
+   * @return {Promise} - resolves once all have been deleted
+   */
+  rmAll() {
+    return ModelDef.remove({});
+  }
 
-/* ********************************************************************************
- *
- * UPDATE BY PATH
- *
- **********************************************************************************/
+  /**
+   * @param {Object} user - User object to remove
+   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+   */
+  rm(user) {
+    return ModelDef.remove({_id: user._id});
+  }
 
-const PATH_CONTEXT = {
-  '^(teamRole|teamName|orgRole)$': {type: 'scalar', values: []}
-};
+  /**
+   * @param {ObjectId} appId - id of the App that owns the user
+   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+   */
+  getAll() {
+    Logging.logSilly(`getAll: ${Model.authApp._id}`);
 
-schema.statics.validateUpdate = Shared.validateUpdate(PATH_CONTEXT, collectionName);
-schema.statics.updateByPath = Shared.updateByPath(PATH_CONTEXT, collectionName, collection);
+    if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+      return ModelDef.find({}).populate('_person');
+    }
 
-ModelDef = mongoose.model('User', schema);
+    return ModelDef.find({_apps: Model.authApp._id}).populate('_person');
+  }
+
+  /**
+   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+   */
+  getSimplified() {
+    Logging.logSilly(`getSimplified: ${Model.authApp._id}`);
+    return collection.find({_apps: Model.authApp._id}, {_id: 1});
+  }
+
+  /**
+   * @param {string} username - username to check for
+   * @return {Promise} - resolves to a User object or null
+   */
+  getByUsername(username) {
+    return ModelDef.findOne({username: username}).select('id');
+  }
+
+  /**
+   * @param {string} appName - Name of the authenticating App (facebook|twitter|google) that owns the user
+   * @param {string} appUserId - AppId of the user
+   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+   */
+  getByAppId(appName, appUserId) {
+    Logging.log(`getByAppId: ${appName} - ${appUserId}`, Logging.Constants.LogLevel.VERBOSE);
+
+    return ModelDef.findOne({'auth.app': appName, 'auth.appId': appUserId}).select('id');
+  }
+
+  attachToPerson(person, details) {
+    if (person !== null) {
+      this._person = person;
+      return this.save();
+    }
+
+    return new Promise((resolve, reject) => {
+      Model.Person
+        .add(details, Model.authApp._owner)
+        .then(person => {
+          Logging.log(person, Logging.Constants.LogLevel.DEBUG);
+          this._person = person.id;
+          return this.save();
+        })
+        .then(resolve, reject);
+    });
+  }
+
+  /**
+   * @param {string} app - name of the app for which the token is being updated
+   * @param {Object} body - body passed through from a PUT request
+   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+   */
+  updateToken(app, body) {
+    var auth = this.auth.find(a => a.app === app);
+    if (!auth) {
+      Logging.log(`Unable to find Appauth for ${app}`, Logging.Constants.LogLevel.DEBUG);
+      return Promise.resolve(false);
+    }
+
+    Logging.log(`Old Token: ${auth.token}`, Logging.Constants.LogLevel.DEBUG);
+    Logging.log(`Old Token Secret: ${auth.tokenSecret}`, Logging.Constants.LogLevel.DEBUG);
+    Logging.log(`New Token: ${body.token}`, Logging.Constants.LogLevel.DEBUG);
+    Logging.log(`New Token Secret: ${body.tokenSecret}`, Logging.Constants.LogLevel.DEBUG);
+
+    auth.token = body.token;
+    auth.tokenSecret = body.tokenSecret;
+
+    return this.save().then(() => true);
+  }
+}
 
 /**
  * Exports
  */
-module.exports.constants = constants;
-module.exports.schema = schema;
-module.exports.model = ModelDef;
+module.exports = UserSchemaModel;

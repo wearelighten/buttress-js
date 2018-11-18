@@ -19,6 +19,9 @@ const Shared = require('../shared');
 // const Helpers = require('../../helpers');
 // const Config = require('node-env-obj')('../../');
 
+/**
+ * Constants
+*/
 const visibility = ['public', 'private'];
 const Visibility = {
   PUBLIC: visibility[0],

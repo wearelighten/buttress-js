@@ -11,230 +11,200 @@
  *
  */
 
-// const mongoose = require('mongoose');
+const SchemaModel = require('../schemaModel');
 const humanname = require('humanname');
-const Model = require('../../model');
-const Logging = require('../../logging');
+// const Model = require('../../model');
+// const Logging = require('../../logging');
 
-/**
- * Constants
-*/
-
-var constants = {
-};
-
-/**
- * Schema
- */
-var schema = new mongoose.Schema({
-  title: String,
-  forename: String,
-  initials: String,
-  surname: String,
-  suffix: String,
-  emails: [String],
-  address: String,
-  postcode: String,
-  phone: {
-    landline: String,
-    mobile: String
-  },
-  company: String,
-  role: String,
-  metadata: [{
-    _app: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Application'
-    },
-    key: String,
-    value: String
-  }],
-  _dataOwner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group'
+class PersonSchemaModel extends SchemaModel {
+  constructor(MongoDb) {
+    let schema = PersonSchemaModel.getSchema();
+    super(MongoDb, schema);
   }
-});
-schema.set('bufferCommands', false);
 
-var ModelDef = null;
-
-/**
- * Schema Virtual Methods
- */
-schema.virtual('details').get(function() {
-  var formalName =
-    `${this.title ? this.title + ' ' : ''}${this.forename} ${this.initials ? this.initials + ' ' : ''}${this.surname}`;
-
-  return {
-    id: this._id,
-    title: this.title,
-    forename: this.forename,
-    initials: this.initials,
-    surname: this.surname,
-    formalName: formalName,
-    name: `${this.forename} ${this.surname}`,
-    address: this.address,
-    postcode: this.postcode,
-    phone: {
-      landline: this.landline,
-      mobile: this.mobile
-    },
-    company: this.company,
-    role: this.role,
-    dataOwner: this.tryOwner,
-    metadata: this.authenticatedMetadata
-  };
-});
-
-schema.virtual('authenticatedMetadata').get(function() {
-  return this.metadata
-    .filter(m => `${m._app}` === Model.authApp._id)
-    .map(m => ({key: m.key, value: JSON.parse(m.value)}));
-});
-
-schema.virtual('tryOwner').get(function() {
-  if (!this._dataOwner) {
-    return false;
+  static get getSchema() {
+    return {
+      name: "person",
+      type: "collection",
+      properties: {
+        title: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        forename: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        initials: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        surname: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        suffix: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        emails: {
+          __type: "array",
+          __allowUpdate: true
+        },
+        address: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        postcode: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        phone: {
+          landline: {
+            __type: "string",
+            __default: "",
+            __allowUpdate: true
+          },
+          mobile: {
+            __type: "string",
+            __default: "",
+            __allowUpdate: true
+          }
+        },
+        company: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        role: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        _dataOwner: {
+          __type: "id",
+          __required: true,
+          __allowUpdate: false
+        }
+      }
+    };
   }
-  return this._dataOwner.details ? this._dataOwner.details : this._dataOwner;
-});
 
-/**
- * Schema Static Methods
- */
+  /**
+   * @param {Object} body - person details
+   * @param {Object} owner - Owner group Mongoose object
+   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+   */
+  add(body, owner) {
+    var name = humanname.parse(body.name);
 
-/**
- * @param {Object} body - person details
- * @param {Object} owner - Owner group Mongoose object
- * @return {Promise} - returns a promise that is fulfilled when the database request is completed
- */
-schema.statics.add = (body, owner) => {
-  var name = humanname.parse(body.name);
+    return new Promise((resolve, reject) => {
+      var md = new ModelDef({
+        title: name.salutation,
+        forename: name.firstName,
+        initials: name.initials,
+        surname: name.lastName,
+        suffix: name.suffix,
+        emails: [body.email],
+        telephone: {
+          landline: body.landline,
+          mobile: body.mobile
+        },
+        address: body.address,
+        postcode: body.postcode,
+        _dataOwner: owner
+      });
 
-  return new Promise((resolve, reject) => {
-    var md = new ModelDef({
-      title: name.salutation,
-      forename: name.firstName,
-      initials: name.initials,
-      surname: name.lastName,
-      suffix: name.suffix,
-      emails: [body.email],
-      telephone: {
-        landline: body.landline,
-        mobile: body.mobile
-      },
-      address: body.address,
-      postcode: body.postcode,
-      _dataOwner: owner
+      md.save().then(res => resolve(res.details), reject);
     });
+  };
 
-    md.save().then(res => resolve(res.details), reject);
-  });
-};
+  /**
+   * @param {Object} appAuth - app auth details
+   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+   */
+  updateFromAuth(appAuth) {
+    if (!appAuth.email) {
+      return Promise.resolve();
+    }
 
-/**
- * @param {Object} appAuth - app auth details
- * @return {Promise} - returns a promise that is fulfilled when the database request is completed
- */
-schema.methods.updateFromAuth = function(appAuth) {
-  if (!appAuth.email) {
-    return Promise.resolve();
-  }
+    if (this.emails.findIndex(e => e === appAuth.email) !== -1) {
+      return Promise.resolve();
+    }
 
-  if (this.emails.findIndex(e => e === appAuth.email) !== -1) {
-    return Promise.resolve();
-  }
+    this.emails.push(appAuth.email);
 
-  this.emails.push(appAuth.email);
+    return this.save();
+  };
 
-  return this.save();
-};
+  /**
+   * @return {Promise} - resolves to an array of Apps (App.details)
+   */
+  findAll() {
+    return ModelDef
+      .find({}).populate('_owner')
+      .then(res => res.map(p => p.details));
+  };
 
-/**
- * @return {Promise} - resolves to an array of Apps (App.details)
- */
-schema.statics.findAll = () => {
-  return ModelDef
-    .find({}).populate('_owner')
-    .then(res => res.map(p => p.details));
-};
+  /**
+   * @param {Object} details - currently requires 'email' only
+   * @return {Promise} - resolves to a person matching details or null if not found
+   */
+  findByDetails(details) {
+    if (!details.email) {
+      return Promise.reject(new Error('missing_required_field_email'));
+    }
+    return ModelDef.findOne({emails: details.email});
+  };
 
-/**
- * @param {Object} details - currently requires 'email' only
- * @return {Promise} - resolves to a person matching details or null if not found
- */
-schema.statics.findByDetails = details => {
-  if (!details.email) {
-    return Promise.reject(new Error('missing_required_field_email'));
-  }
-  return ModelDef.findOne({emails: details.email});
-};
+  /**
+   * @return {Promise} - resolves once all have been deleted
+   */
+  rmAll() {
+    return ModelDef.remove({});
+  };
 
-/**
- * @return {Promise} - resolves once all have been deleted
- */
-schema.statics.rmAll = () => {
-  return ModelDef.remove({});
-};
+  /**
+   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+   */
+  rm() {
+    return ModelDef.remove({_id: this._id});
+  };
+}
 
-/**
- * Schema Methods
- */
+// schema.virtual('details').get(function() {
+//   var formalName =
+//     `${this.title ? this.title + ' ' : ''}${this.forename} ${this.initials ? this.initials + ' ' : ''}${this.surname}`;
 
-/**
- * @return {Promise} - returns a promise that is fulfilled when the database request is completed
- */
-schema.methods.rm = function() {
-  return ModelDef.remove({_id: this._id});
-};
-
-/**
- * @param {string} key - index name of the metadata
- * @param {*} value - value of the meta data
- * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
- */
-schema.methods.addOrUpdateMetadata = function(key, value) {
-  Logging.log(`${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(key, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(value, Logging.Constants.LogLevel.DEBUG);
-
-  var exists = this.metadata.find(m => `${m._app}` === Model.authApp._id && m.key === key);
-  if (exists) {
-    exists.value = value;
-  } else {
-    this.metadata.push({_app: Model.authApp, key: key, value: value});
-  }
-
-  return this.save().then(p => ({key: key, value: JSON.parse(value)}));
-};
-
-schema.methods.findMetadata = function(key) {
-  Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-  Logging.log(`AppId: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-  Logging.log(this.metadata.map(m => ({app: `${m._app}`, key: m.key, value: m.value})),
-    Logging.Constants.LogLevel.DEBUG);
-  var md = this.metadata.find(m => `${m._app}` === `${Model.authApp._id}` && m.key === key);
-  return md ? {key: md.key, value: JSON.parse(md.value)} : false;
-};
-
-schema.methods.rmMetadata = function(key) {
-  Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-  // Logging.log(this.metadata.map(m => ({app: `${m._app}`, key: m.key, value: m.value})),
-  //   Logging.Constants.LogLevel.DEBUG);
-  // var md = this.metadata.find(m => `${m._app}` === Model.authApp._id && m.key === key);
-  // Logging.log(md.id, Logging.Constants.LogLevel.DEBUG);
-
-  return this
-    .update({$pull: {metadata: {_app: Model.authApp._id, key: key}}})
-    .then(Logging.Promise.log('removeMetadata'))
-    .then(res => res.nModified !== 0);
-};
-
-ModelDef = mongoose.model('Person', schema);
+//   return {
+//     id: this._id,
+//     title: this.title,
+//     forename: this.forename,
+//     initials: this.initials,
+//     surname: this.surname,
+//     formalName: formalName,
+//     name: `${this.forename} ${this.surname}`,
+//     address: this.address,
+//     postcode: this.postcode,
+//     phone: {
+//       landline: this.landline,
+//       mobile: this.mobile
+//     },
+//     company: this.company,
+//     role: this.role,
+//     dataOwner: this.tryOwner,
+//     metadata: this.authenticatedMetadata
+//   };
+// });
 
 /**
  * Exports
  */
-module.exports.constants = constants;
-module.exports.schema = schema;
-module.exports.model = ModelDef;
+module.exports = PersonSchemaModel;

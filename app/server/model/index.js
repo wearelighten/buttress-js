@@ -118,16 +118,13 @@ class Model {
 function _getModels() {
   let filenames = fs.readdirSync(`${__dirname}/schema`);
 
-  // Increment core models after conversion
-  let files = [
-    'Activity'
-  ];
-  // for (let x = 0; x < filenames.length; x++) {
-  //   let file = filenames[x];
-  //   if (path.extname(file) === '.js') {
-  //     files.push(Sugar.String.capitalize(path.basename(file, '.js')));
-  //   }
-  // }
+  let files = [];
+  for (let x = 0; x < filenames.length; x++) {
+    let file = filenames[x];
+    if (path.extname(file) === '.js') {
+      files.push(Sugar.String.capitalize(path.basename(file, '.js')));
+    }
+  }
   return files;
 }
 
