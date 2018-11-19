@@ -67,9 +67,9 @@ class SchemaModel {
   * @param {Object} body - body passed through from a POST request
   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
   */
-  __add(body) {
+  __add(body, internals) {
     return prev => {
-      const entity = {};
+      const entity = Object.assign({}, internals);
 
       if (body.id) {
         entity._id = new ObjectId(body.id);
@@ -81,12 +81,12 @@ class SchemaModel {
       }
 
       const validated = Shared.applyAppProperties(this.schema, body);
-      return prev.concat([Object.assign(entity, validated)]);
+      return prev.concat([Object.assign(validated, entity)]);
     };
   }
-  add(body) {
-    const sharedFn = Shared.add(this.collection, item => this.__add(item));
-    return sharedFn(body);
+  add(body, internals) {
+    const sharedAddFn = Shared.add(this.collection, item => this.__add(item, internals));
+    return sharedAddFn(body);
   }
 
   validateUpdate(body) {

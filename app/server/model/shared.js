@@ -118,7 +118,7 @@ const __getFlattenedSchema = schema => {
 
 const __getFlattenedBody = body => {
   const __buildFlattenedBody = (property, parent, path, flattened) => {
-    // if (/^__/.test(property)) continue; // ignore internals
+    if (/^_/.test(property)) return; // ignore internals
     path.push(property);
 
     if (typeof parent[property] !== 'object' || parent[property] instanceof Date || Array.isArray(parent[property]) || parent[property] === null) {
