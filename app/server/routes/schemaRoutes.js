@@ -61,7 +61,7 @@ class GetOne extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      this.model.getById(this.req.params.id)
+      this.model.findById(this.req.params.id)
         .then(entity => {
           if (!entity) {
             this.log(`${this.schema.collection}: Invalid ID: ${this.req.params.id}`, Route.LogLevel.ERR);
@@ -221,7 +221,7 @@ class DeleteOne extends Route {
   }
 
   _validate() {
-    return this.model.getById(this.req.params.id)
+    return this.model.findById(this.req.params.id)
     .then(entity => {
       if (!entity) {
         this.log(`${this.schema.collection}: Invalid ID`, Route.LogLevel.ERR);
