@@ -55,6 +55,7 @@ class TokenSchemaModel extends SchemaModel {
       name: "tokens",
       type: "collection",
       collection: "tokens",
+      extends: [],
       properties: {
         name: {
           __type: "string",

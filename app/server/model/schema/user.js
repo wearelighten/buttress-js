@@ -51,6 +51,7 @@ class UserSchemaModel extends SchemaModel {
       name: "users",
       type: "collection",
       collection: "users",
+      extends: [],
       properties: {
         username: {
           __type: "string",

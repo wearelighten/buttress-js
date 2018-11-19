@@ -48,6 +48,7 @@ class TrackingSchemaModel extends SchemaModel {
       name: "trackings",
       type: "collection",
       collection: "trackings",
+      extends: [],
       properties: {
         timestamp: {
           __type: "date",

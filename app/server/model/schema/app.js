@@ -56,6 +56,7 @@ class AppSchemaModel extends SchemaModel {
       name: "apps",
       type: "collection",
       collection: "apps",
+      extends: [],
       properties: {
         name: {
           __type: "string",

@@ -37,6 +37,7 @@ class PersonSchemaModel extends SchemaModel {
       name: "person",
       type: "collection",
       collection: "people",
+      extends: [],
       properties: {
         title: {
           __type: "string",
