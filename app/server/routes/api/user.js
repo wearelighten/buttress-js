@@ -173,7 +173,7 @@ class CreateUserAuthToken extends Route {
         reject({statusCode: 400});
         return;
       }
-      this.req.body.auth.type = Model.Constants.Token.Type.USER;
+      this.req.body.auth.type = Model.Token.Constants.Type.USER;
       this.req.body.auth.app = this.req.authApp;
 
       Model.User.findById(this.req.params.id).select('-metadata').then(user => {
@@ -272,7 +272,7 @@ class AddUser extends Route {
           reject({statusCode: 400});
           return;
         }
-        this.req.body.auth.type = Model.Constants.Token.Type.USER;
+        this.req.body.auth.type = Model.Token.Constants.Type.USER;
         this.req.body.auth.app = this.req.authApp.id;
       }
 
@@ -410,7 +410,7 @@ class UpdateUser extends Route {
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
 
-    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityVisibility = Model.Activity.Constants.Visibility.PRIVATE;
     this.activityBroadcast = true;
   }
 

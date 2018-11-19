@@ -172,6 +172,22 @@ class SchemaModel {
   }
 
   /**
+   * @param {Object} query - mongoDB query
+   * @param {Object} excludes - mongoDB query excludes
+   * @return {Promise} - resolves to an array of docs
+   */
+  find(query, excludes = {}) {
+    Logging.logSilly(`find: `);
+
+    return new Promise(resolve => {
+      this.collection.find(query, excludes, (err, doc) => {
+        if (err) throw err;
+        resolve(doc);
+      });
+    });
+  }
+
+  /**
    * @return {Promise} - resolves to an array of Companies
    */
   findAll() {

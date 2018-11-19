@@ -84,7 +84,7 @@ class Route {
     this.auth = Constants.Auth.SUPER;
     this.permissions = Constants.Permissions.READ;
     this.activityBroadcast = false;
-    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityVisibility = Model.Activity.Constants.Visibility.PRIVATE;
     this.activityTitle = 'Private Activity';
     this.activityDescription = '';
 

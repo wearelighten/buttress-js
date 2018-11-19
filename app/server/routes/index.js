@@ -156,7 +156,7 @@ function _getToken(req) {
   }
 
   return new Promise(resolve => {
-    Model.Token.findAllNative()
+    Model.Token.findAll().toArray()
       .then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
       .then(tokens => {
         Logging.logDebug(`_getToken:Load: ${req.timer.interval.toFixed(3)}`);
@@ -184,7 +184,7 @@ function _lookupToken(tokens, value) {
  * @private
  */
 function _loadTokens() {
-  return Model.Token.findAllNative()
+  return Model.Token.findAll().toArray()
     .then(tokens => {
       _tokens = tokens;
     });
@@ -202,7 +202,7 @@ function _configCrossDomain(req, res, next) {
     res.status(401).json({message: 'Auth token is required'});
     return;
   }
-  if (req.token.type !== Model.Constants.Token.Type.USER) {
+  if (req.token.type !== Model.Token.Constants.Type.USER) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'content-type');

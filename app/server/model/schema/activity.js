@@ -39,6 +39,9 @@ class ActivitySchemaModel extends SchemaModel {
       Visibility: Visibility
     };
   }
+  get Constants() {
+    return ActivitySchemaModel.Constants;
+  }
 
   static get Schema() {
     return {
@@ -156,13 +159,13 @@ class ActivitySchemaModel extends SchemaModel {
   findAll() {
     Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
 
-    if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
       return this.collection.find({});
     }
 
     return this.collection.find({
       _app: Model.authApp._id,
-      visibility: ActivitySchemaModel.constants.Visibility.PUBLIC
+      visibility: ActivitySchemaModel.Constants.Visibility.PUBLIC
     });
   }
 

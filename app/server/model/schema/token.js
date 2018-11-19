@@ -46,6 +46,9 @@ class TokenSchemaModel extends SchemaModel {
       AuthLevel: AuthLevel
     };
   }
+  get Constants() {
+    return TokenSchemaModel.Constants;
+  }
 
   static get Schema() {
     return {
@@ -157,10 +160,10 @@ class TokenSchemaModel extends SchemaModel {
 
       entity.value = this._createTokenString();
 
-      if (this.schema.extends.includes('timestamps')) {
-        entity.createdAt = new Date();
-        entity.updatedAt = null;
-      }
+      // if (TokenSchemaModel.Schema.extends.includes('timestamps')) {
+      //   entity.createdAt = new Date();
+      //   entity.updatedAt = null;
+      // }
 
       const validated = Shared.applyAppProperties(this.schema, body);
       return prev.concat([Object.assign(entity, validated)]);

@@ -97,7 +97,7 @@ class AddApp extends Route {
         reject({statusCode: 400});
         return;
       }
-      if (this.req.body.type === Model.Constants.App.Type.Browser && !this.req.body.domain) {
+      if (this.req.body.type === Model.App.Constants.Type.Browser && !this.req.body.domain) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
@@ -109,14 +109,14 @@ class AddApp extends Route {
             this.req.body.permissions = JSON.stringify([]);
             Logging.logDebug('Creating default permissions');
             break;
-          case Model.Constants.Token.AuthLevel.SUPER: {
+          case Model.Token.Constants.AuthLevel.SUPER: {
             let permissions = [
               {route: '*', permission: '*'}
             ];
             this.req.body.permissions = JSON.stringify(permissions);
             Logging.logDebug('Creating default SUPER permissions');
           } break;
-          case Model.Constants.Token.AuthLevel.ADMIN: {
+          case Model.Token.Constants.AuthLevel.ADMIN: {
             let permissions = [
               {route: 'org/*', permission: '*'},
               {route: 'group/*', permission: '*'},

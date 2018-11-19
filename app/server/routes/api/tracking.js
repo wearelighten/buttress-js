@@ -46,7 +46,7 @@ class AddTracking extends Route {
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.ADD;
 
-    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityVisibility = Model.Activity.Constants.Visibility.PRIVATE;
     this.activityBroadcast = false;
   }
 

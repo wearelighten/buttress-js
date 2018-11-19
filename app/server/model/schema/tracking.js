@@ -39,6 +39,9 @@ class TrackingSchemaModel extends SchemaModel {
       Type: Type
     };
   }
+  get Constants() {
+    return TrackingSchemaModel.Constants;
+  }
 
   static get Schema() {
     return {
@@ -187,7 +190,7 @@ class TrackingSchemaModel extends SchemaModel {
   findAll() {
     Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
 
-    if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
       return this.collection.find({});
     }
 

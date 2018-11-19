@@ -47,6 +47,9 @@ class AppSchemaModel extends SchemaModel {
       PUBLIC_DIR: true
     };
   }
+  get Constants() {
+    return AppSchemaModel.Constants;
+  }
 
   static get Schema() {
     return {
@@ -108,7 +111,7 @@ class AppSchemaModel extends SchemaModel {
     var _token = false;
     return Model.Token
       .add({
-        type: Model.Constants.Token.Type.APP,
+        type: Model.Token.Constants.Type.APP,
         app: app,
         authLevel: body.authLevel,
         permissions: body.permissions
@@ -117,7 +120,7 @@ class AppSchemaModel extends SchemaModel {
         _token = token;
         Logging.log(token.value, Logging.Constants.LogLevel.DEBUG);
         app._token = token.id;
-        return app.save();
+        return Model.App.add(app);
       })
       .then(app => {
         return Promise.resolve({app: app, token: _token});
@@ -125,11 +128,12 @@ class AppSchemaModel extends SchemaModel {
   }
 
   /**
-   * @param {object} schema - schema object for the app
+    * @param {ObjectId} appId - app id which needs to be updated
+    * @param {object} schema - schema object for the app
    * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
    */
-  updateSchema(schema) {
-    const appId = Model.authApp._id;
+  updateSchema(appId, schema) {
+    // const appId = Model.authApp._id;
     this.__schema = schema;
 
     nrp.emit('app-metadata:changed', {appId: appId});

@@ -42,6 +42,9 @@ class UserSchemaModel extends SchemaModel {
       App: App
     };
   }
+  get Constants() {
+    return UserSchemaModel.Constants;
+  }
 
   static get Schema() {
     return {
@@ -284,7 +287,7 @@ class UserSchemaModel extends SchemaModel {
   findAll() {
     Logging.logSilly(`findAll: ${Model.authApp._id}`);
 
-    if (Model.token.authLevel === Model.Constants.Token.AuthLevel.SUPER) {
+    if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
       return this.collection.find({}).populate('_person');
     }
 

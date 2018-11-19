@@ -28,6 +28,9 @@ class PersonSchemaModel extends SchemaModel {
     return {
     };
   }
+  get Constants() {
+    return PersonSchemaModel.Constants;
+  }
 
   static get Schema() {
     return {
@@ -152,7 +155,7 @@ class PersonSchemaModel extends SchemaModel {
       entity.surname = name.lastName;
       entity.suffix = name.suffix;
 
-      if (this.schema.extends.includes('timestamps')) {
+      if (PersonSchemaModel.Schema.extends.includes('timestamps')) {
         entity.createdAt = new Date();
         entity.updatedAt = null;
       }

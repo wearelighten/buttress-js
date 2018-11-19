@@ -58,7 +58,7 @@ class Model {
   initSchema(db) {
     if (db) this.mongoDb = db;
 
-    return this.Schema.App.statics.findAll().toArray()
+    return this.models.App.findAll().toArray()
     .then(apps => {
       apps.forEach(app => {
         if (app.__schema) {
