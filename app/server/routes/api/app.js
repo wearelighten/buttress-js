@@ -366,7 +366,6 @@ class GetAppSchema extends Route {
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.READ;
 
-    this._app = false;
     this._schema = null;
   }
 
@@ -377,7 +376,6 @@ class GetAppSchema extends Route {
         reject({statusCode: 400, message: 'No authenticated app'});
         return;
       }
-      // console.log(this.req.authApp.__schema);
       if (!this.req.authApp.__schema) {
         this.log('ERROR: No app schema defined', Route.LogLevel.ERR);
         reject({statusCode: 400, message: 'No authenticated app schema'});
@@ -405,27 +403,22 @@ class UpdateAppSchema extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-
-    this._app = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.App.findById(this.req.authApp._id).then(app => {
-        if (!app) {
-          this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
+      if (!this.req.authApp) {
+        this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'No authenticated app'});
+        return;
+      }
 
-        this._app = app;
-        resolve(true);
-      });
+      resolve(true);
     });
   }
 
   _exec() {
-    return this._app.updateSchema(this.req.body);
+    return Model.App.updateSchema(this.req.authApp._id, this.req.body);
   }
 }
 routes.push(UpdateAppSchema);
