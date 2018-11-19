@@ -167,7 +167,7 @@ const __getPropDefault = config => {
       res = config.__default === undefined ? [] : config.__default;
       break;
     case 'object':
-      res = config.__default === undefined ? (new ObjectId()).toHexString() : config.__default;
+      res = config.__default === undefined ? {} : config.__default;
       break;
     case 'id':
       res = config.__default === undefined ? null : config.__default;
