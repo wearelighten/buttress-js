@@ -75,7 +75,7 @@ const __systemInstall = () => {
 
     Logging.log('No apps found - Creating super app.');
     return Model.App.add({
-      name: 'ButrressJS ADMIN',
+      name: `${Config.app.title} ADMIN`,
       type: Model.App.Constants.Type.SERVER,
       authLevel: Model.Token.Constants.AuthLevel.SUPER,
       permissions: [{route: '*', permission: '*'}],
@@ -86,17 +86,16 @@ const __systemInstall = () => {
     if (isInstalled) {
       return res.app;
     }
-    Logging.logDebug('APP ADDED');
-    Logging.logDebug(res.app.id);
+
+    const pathName = path.join(Config.paths.appData, 'super.json');
+    Logging.log(`Super app created: ${res.app.id}`);
     return new Promise((resolve, reject) => {
-      let pathName = path.join(Config.paths.appData, 'super.json');
-      let app = Object.assign(res.app.details, {token: res.token.value});
+      let app = Object.assign(res.app, {token: res.token.value});
       fs.writeFile(pathName, JSON.stringify(app), err => {
         if (err) {
           return reject(err);
         }
-        Logging.logVerbose(`Written ${pathName}`);
-        Logging.logSilly(app);
+        Logging.log(`Created ${pathName}`);
 
         resolve(res.app);
       });
