@@ -36,7 +36,7 @@ const AuthLevel = {
 
 class TokenSchemaModel extends SchemaModel {
   constructor(MongoDb) {
-    let schema = TokenSchemaModel.Schema;
+    const schema = TokenSchemaModel.Schema;
     super(MongoDb, schema);
   }
 
@@ -57,7 +57,7 @@ class TokenSchemaModel extends SchemaModel {
       collection: "tokens",
       extends: [],
       properties: {
-        name: {
+        type: {
           __type: "string",
           __default: "user",
           __enum: type,
@@ -85,7 +85,7 @@ class TokenSchemaModel extends SchemaModel {
           __required: true,
           __allowUpdate: true,
           __schema: {
-            value: {
+            route: {
               __type: "string",
               __required: true,
               __allowUpdate: true
@@ -151,29 +151,10 @@ class TokenSchemaModel extends SchemaModel {
     * @param {Object} body - body passed through from a POST request
     * @return {Promise} - returns a promise that is fulfilled when the database request is completed
     */
-  __add(body) {
-    return prev => {
-      const entity = {};
-
-      if (body.id) {
-        entity._id = new ObjectId(body.id);
-      }
-
-      entity.value = this._createTokenString();
-
-      // if (TokenSchemaModel.Schema.extends.includes('timestamps')) {
-      //   entity.createdAt = new Date();
-      //   entity.updatedAt = null;
-      // }
-
-      const validated = Shared.applyAppProperties(this.schema, body);
-      return prev.concat([Object.assign(entity, validated)]);
-    };
+  add(body, internals) {
+    body.value = this._createTokenString();
+    return super.add(body, internals);
   }
-
-  /**
-   * Schema Methods
-   */
 
   /**
    * @param {string} route - route for the permission
