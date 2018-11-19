@@ -114,25 +114,27 @@ function _authenticateToken(req, res, next) {
           return;
         }
 
-        Model.token = req.token = token.details;
-        Model.authApp = req.authApp = token._app;
-        Model.authUser = req.authUser = token._user;
+        Model.token = req.token = token;
 
-        Model.Token.update({_id: token.id}, {$push: {
+        Model.Token.collection.update({_id: token._id}, {$push: {
           uses: new Date()
         }});
 
-        resolve();
+        resolve(token);
       });
     })
-    .then(() => Model.authApp.getToken())
-    .then(appToken => {
-      Model.authAppToken = req.authAppToken = appToken;
+    .then(token => Model.App.findById(req.token._app))
+    .then(app => {
+      Model.authApp = req.authApp = app;
+    })
+    .then(token => Model.App.findById(req.token._user))
+    .then(user => {
+      Model.authUser = req.authUser = user;
     })
     .then(Helpers.Promise.inject())
     .then(next)
-    .catch(() => {
-      // Logging.logError(err);
+    .catch(err => {
+      Logging.logError(err);
       res.status(503);
       res.end();
       return;
