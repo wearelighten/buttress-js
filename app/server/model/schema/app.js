@@ -14,7 +14,7 @@
 const fs = require('fs');
 const crypto = require('crypto');
 const SchemaModel = require('../schemaModel');
-// const ObjectId = require('mongodb').ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 const Config = require('node-env-obj')('../');
@@ -98,9 +98,8 @@ class AppSchemaModel extends SchemaModel {
    * @return {Promise} - fulfilled with App Object when the database request is completed
    */
   add(body) {
-    Logging.log(body, Logging.Constants.LogLevel.DEBUG);
-
-    var app = {
+    const app = {
+      id: new ObjectId(),
       name: body.name,
       type: body.type,
       authLevel: body.authLevel,
@@ -108,20 +107,21 @@ class AppSchemaModel extends SchemaModel {
       domain: body.domain,
       _owner: body.ownerGroupId
     };
+    let _token = null;
 
-    var _token = false;
-    return Model.Token
-      .add({
-        type: Model.Token.Constants.Type.APP,
-        app: app,
-        authLevel: body.authLevel,
-        permissions: body.permissions
-      })
+    return Model.Token.add({
+      type: Model.Token.Constants.Type.APP,
+      authLevel: body.authLevel,
+      permissions: body.permissions
+    }, {
+      _app: app.id
+    })
       .then(token => {
         _token = token;
-        Logging.log(token.value, Logging.Constants.LogLevel.DEBUG);
-        app._token = token.id;
-        return Model.App.add(app);
+        Logging.log(token.value);
+        return super.add(app, {
+          _token: token.id
+        });
       })
       .then(app => {
         return Promise.resolve({app: app, token: _token});
@@ -129,18 +129,17 @@ class AppSchemaModel extends SchemaModel {
   }
 
   /**
-    * @param {ObjectId} appId - app id which needs to be updated
-    * @param {object} schema - schema object for the app
+   * @param {ObjectId} appId - app id which needs to be updated
+   * @param {object} schema - schema object for the app
    * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
    */
   updateSchema(appId, schema) {
-    // const appId = Model.authApp._id;
     this.__schema = schema;
 
     nrp.emit('app-metadata:changed', {appId: appId});
 
     return new Promise((resolve, reject) => {
-      collection.update({_id: appId}, {$set: {__schema: schema}}, {}, (err, object) => {
+      this.collection.update({_id: appId}, {$set: {__schema: schema}}, {}, (err, object) => {
         if (err) throw new Error(err);
 
         resolve(object);
@@ -206,7 +205,7 @@ class AppSchemaModel extends SchemaModel {
    * @return {Promise} - resolves to the token
    */
   getToken() {
-    return Model.Token.findOne({_id: this._token}).populate('_user');
+    return Model.Token.findOne({_id: this._token});
   }
 
   /**
