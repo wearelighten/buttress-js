@@ -162,7 +162,7 @@ class SchemaModel {
    * @param {String} id - company id to get
    * @return {Promise} - resolves to an array of Companies
    */
-  getById(id) {
+  findById(id) {
     return new Promise(resolve => {
       this.collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
         if (err) throw err;
@@ -183,6 +183,22 @@ class SchemaModel {
       this.collection.find(query, excludes, (err, doc) => {
         if (err) throw err;
         resolve(doc);
+      });
+    });
+  }
+
+  /**
+   * @param {Object} query - mongoDB query
+   * @param {Object} excludes - mongoDB query excludes
+   * @return {Promise} - resolves to an array of docs
+   */
+  findOne(query, excludes = {}) {
+    Logging.logSilly(`findOne: ${query}`);
+
+    return new Promise(resolve => {
+      this.collection.find(query, excludes).toArray((err, doc) => {
+        if (err) throw err;
+        resolve(doc[0]);
       });
     });
   }
