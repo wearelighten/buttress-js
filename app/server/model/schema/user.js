@@ -167,7 +167,7 @@ class UserSchemaModel extends SchemaModel {
    * @param {Object} auth - OPTIONAL authentication details for a user token
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
-  add(body, personDetails, auth) {
+  add(body, person, auth) {
     const user = {
       auth: [{
         app: body.app,
@@ -187,20 +187,22 @@ class UserSchemaModel extends SchemaModel {
       teamRole: body.teamRole
     };
 
-    Logging.logDebug(personDetails.name);
+    Logging.logDebug(person.name);
     Logging.logDebug(user.auth[0].app);
     Logging.logDebug(user.auth[0].appId);
 
     return super.add(user, {
       _apps: [Model.authApp.id],
-      _person: personDetails.id
+      _person: person.id
     })
     .then(user => {
       if (!auth) {
-        return Promise.resolve(null);
+        return Promise.resolve(user);
       }
 
-      return Model.Token.add(Object.assign(auth, {user: user}));
+      return Model.Token.add(auth, {
+        _app: Model.authApp.id
+      });
     });
   }
 
@@ -256,12 +258,12 @@ class UserSchemaModel extends SchemaModel {
     return this.save().then(() => true);
   }
 
-  updateApps(app) {
+  updateApps(user, app) {
     Logging.log(`updateApps: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
-    if (!this._apps) {
-      this._apps = [];
+    if (!user._apps) {
+      user._apps = [];
     }
-    let matches = this._apps.filter(function(a) {
+    let matches = user._apps.filter(function(a) {
       return a._id === app._id;
     });
     if (matches.length > 0) {
@@ -270,8 +272,11 @@ class UserSchemaModel extends SchemaModel {
     }
 
     Logging.log(`not present: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
-    this._apps.push(app._id);
-    return this.save();
+    user._apps.push(app._id);
+
+    return super.update({
+      _apps: user._apps
+    }, user.id);
   }
 
   exists(id) {

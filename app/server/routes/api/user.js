@@ -14,6 +14,7 @@ const Route = require('../route');
 const Model = require('../../model');
 const Logging = require('../../logging');
 const Helpers = require('../../helpers');
+const ObjectId = require('mongodb').ObjectId;
 
 let routes = [];
 
@@ -36,31 +37,30 @@ class GetUserList extends Route {
     return Model.User.findAll()
       .then(users => {
         if (this.req.token.authLevel >= Route.Constants.Auth.ADMIN) {
-          return users.map(u => {
-            const details = u.details;
-            details.profiles = details.auth.map(a => ({
+          return users.map(user => {
+            user.profiles = user.auth.map(a => ({
               app: a.app,
               username: a.username,
               email: a.email,
               url: a.profileUrl,
               image: a.images.profile
             }));
-            return details;
+            return user;
           });
         }
-        return users.map(u => {
-          const details = u.details;
+
+        return users.map(user => {
           return {
-            id: details.id,
-            profiles: details.auth.map(a => ({
+            id: user._id,
+            profiles: user.auth.map(a => ({
               app: a.app,
               username: a.username,
               email: a.email,
               url: a.profileUrl,
               image: a.images.profile
             })),
-            formalName: details.person.formalName,
-            name: details.person.name
+            formalName: user.person.formalName,
+            name: user.person.name
           };
         });
       });
@@ -83,12 +83,12 @@ class GetUser extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      if (!this.req.params.id) {
+      if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
-      Model.User.findById(this.req.params.id).populate('_person').then(user => {
+      Model.User.findById(this.req.params.id).then(user => {
         if (!user) {
           this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
@@ -131,7 +131,7 @@ class FindUser extends Route {
           .then(token => {
             Logging.logSilly(`FindUserToken: ${token !== null}`);
             this._userAuthToken = token ? token.value : false;
-            this._user.updateApps(this.req.authApp)
+            Model.User.updateApps(this._user, this.req.authApp)
               .then(resolve, reject);
           });
         } else {
@@ -176,7 +176,14 @@ class CreateUserAuthToken extends Route {
       this.req.body.auth.type = Model.Token.Constants.Type.USER;
       this.req.body.auth.app = this.req.authApp;
 
-      Model.User.findById(this.req.params.id).select('-metadata').then(user => {
+      if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      Model.User.findById(this.req.params.id)
+      .then(user => {
         Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
         this._user = user;
         if (this._user) {
@@ -218,7 +225,13 @@ class UpdateUserAppToken extends Route {
         return;
       }
 
-      Model.User.findById(this.req.params.id).select('-metadata').then(user => {
+      if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      Model.User.findById(this.req.params.id).then(user => {
         Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
         this._user = user;
         if (this._user) {
@@ -287,7 +300,7 @@ class AddUser extends Route {
               resolve(true);
             });
           } else {
-            this._person = person.details;
+            this._person = person;
             resolve(true);
           }
         }, reject);
@@ -296,10 +309,7 @@ class AddUser extends Route {
 
   _exec() {
     return Model.User
-    .add(this.req.body.user, this._person, this.req.body.auth)
-    .then(res => {
-      console.log(res);
-    });
+    .add(this.req.body.user, this._person, this.req.body.auth);
   }
 }
 routes.push(AddUser);
@@ -326,7 +336,13 @@ class UpdateUserAppInfo extends Route {
         return;
       }
 
-      Model.User.findById(this.req.params.id).select('-metadata').then(user => {
+      if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      Model.User.findById(this.req.params.id).then(user => {
         Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
         this._user = user;
         if (this._user) {
@@ -369,7 +385,13 @@ class AddUserAuth extends Route {
         return;
       }
 
-      Model.User.findById(this.req.params.id).populate('_person').select('-metadata').then(user => {
+      if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      Model.User.findById(this.req.params.id).then(user => {
         Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
         this._user = user;
         if (this._user) {
@@ -485,12 +507,12 @@ class DeleteUser extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      if (!this.req.params.id) {
+      if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
-      Model.User.findById(this.req.params.id).select('-metadata').then(user => {
+      Model.User.findById(this.req.params.id).then(user => {
         if (!user) {
           this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
           reject({statusCode: 400});
@@ -521,8 +543,14 @@ class AttachToPerson extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
+      if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
       Model.User
-        .findById(this.req.params.id).select('-metadata').then(user => {
+        .findById(this.req.params.id).then(user => {
           if (!user) {
             this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
             reject({statusCode: 400});
@@ -574,150 +602,6 @@ class AttachToPerson extends Route {
   }
 }
 routes.push(AttachToPerson);
-
-/**
- * @class AddUserMetadata
- */
-class AddUserMetadata extends Route {
-  constructor() {
-    super('user/:id/metadata/:key', 'ADD USER METADATA');
-    this.verb = Route.Constants.Verbs.POST;
-    this.auth = Route.Constants.Auth.ADMIN;
-    this.permissions = Route.Constants.Permissions.ADD;
-
-    this._user = false;
-  }
-
-  _validate() {
-    return new Promise((resolve, reject) => {
-      Model.User.findById(this.req.params.id).then(user => {
-        if (!user) {
-          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-        try {
-          JSON.parse(this.req.body.value);
-        } catch (e) {
-          this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
-          this.log(this.req.body.value, Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-
-        this._user = user;
-        resolve(true);
-      });
-    });
-  }
-
-  _exec() {
-    return this._user.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
-  }
-}
-routes.push(AddUserMetadata);
-
-/**
- * @class UpdateUserMetadata
- */
-class UpdateUserMetadata extends Route {
-  constructor() {
-    super('user/:id/metadata/:key', 'UPDATE USER METADATA');
-    this.verb = Route.Constants.Verbs.PUT;
-    this.auth = Route.Constants.Auth.ADMIN;
-    this.permissions = Route.Constants.Permissions.ADD;
-
-    this._app = false;
-  }
-
-  _validate() {
-    return new Promise((resolve, reject) => {
-      Model.User.findById(this.req.params.id).then(user => {
-        if (!user) {
-          this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-        if (user.findMetadata(this.req.params.key) === false) {
-          this.log('ERROR: Metadata does not exist', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-        try {
-          JSON.parse(this.req.body.value);
-        } catch (e) {
-          this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-
-        this._user = user;
-        resolve(true);
-      });
-    });
-  }
-
-  _exec() {
-    return this._user.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
-  }
-}
-routes.push(UpdateUserMetadata);
-
-/**
- * @class GetMetadata
- */
-class GetMetadata extends Route {
-  constructor() {
-    super('user/:id/metadata/:key?', 'GET USER METADATA');
-    this.verb = Route.Constants.Verbs.GET;
-    this.auth = Route.Constants.Auth.ADMIN;
-    this.permissions = Route.Constants.Permissions.GET;
-  }
-
-  _validate() {
-    return new Promise((resolve, reject) => {
-      this._metadata = null;
-      this._allMetadata = null;
-
-      Logging.logSilly(`AppID: ${this.req.authApp._id}`);
-      Model.User.findById(this.req.params.id).then(user => {
-        if (!user) {
-          this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-
-        let appIndex = user._apps.findIndex(a => `${a}` === `${this.req.authApp._id}`);
-        if (appIndex === -1) {
-          this.log('ERROR: Not authorised', Route.LogLevel.ERR);
-          reject({statusCode: 401, message: `App:${this.req.authApp._id} is not authorised for this user.`});
-          return;
-        }
-        // Logging.log(this._metadata.value, Route.LogLevel.INFO);
-        if (this.req.params.key) {
-          this._metadata = user.findMetadata(this.req.params.key);
-          if (this._metadata === false) {
-            this.log('WARN: User Metadata Not Found', Route.LogLevel.ERR);
-            reject({statusCode: 404});
-            return;
-          }
-        } else {
-          this._allMetadata = user.metadata.reduce((prev, curr) => {
-            prev[curr.key] = JSON.parse(curr.value);
-            return prev;
-          }, {});
-        }
-
-        resolve(true);
-      });
-    });
-  }
-
-  _exec() {
-    return this._metadata ? this._metadata.value : this._allMetadata;
-  }
-}
-routes.push(GetMetadata);
 
 /**
  * @type {*[]}

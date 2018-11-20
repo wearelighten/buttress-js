@@ -41,6 +41,8 @@ module.exports.Timer = Timer;
 
 module.exports.prepareResult = result => {
   const prepare = chunk => {
+    if (!chunk) return chunk;
+
     if (chunk._id) {
       chunk.id = chunk._id;
       delete chunk._id;

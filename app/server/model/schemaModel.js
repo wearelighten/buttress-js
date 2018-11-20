@@ -89,6 +89,17 @@ class SchemaModel {
     return sharedAddFn(body);
   }
 
+  update(query, id) {
+    return new Promise((resolve, reject) => {
+      this.collection.update({_id: id}, {
+        $set: query
+      }, (err, object) => {
+        if (err) throw new Error(err);
+
+        resolve(object);
+      });
+    });
+  }
   validateUpdate(body) {
     const sharedFn = Shared.validateUpdate({}, this.schema);
     return sharedFn(body);
