@@ -151,11 +151,18 @@ class SchemaModel {
   }
 
   /*
+   * @param {Object} query - mongoDB query
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
-  // NOTE: Convert away from Mongoose
-  rmAll() {
-    // return ModelDef.remove({});
+  rmAll(query) {
+    if (!query) query = {};
+
+    return new Promise(resolve => {
+      this.collection.remove(query, (err, doc) => {
+        if (err) throw err;
+        resolve(doc);
+      });
+    });
   }
 
   /**
