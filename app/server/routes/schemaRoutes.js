@@ -27,7 +27,7 @@ class GetList extends Route {
     this.permissions = Route.Constants.Permissions.LIST;
 
     // Fetch model
-    this.model = Model[schema.name];
+    this.model = Model[schema.collection];
     if (!this.model) {
       // Somthing went wrong!!1?
     }
@@ -54,7 +54,7 @@ class GetOne extends Route {
     this.permissions = Route.Constants.Permissions.READ;
 
     this.schema = schema;
-    this.model = Model[schema.name];
+    this.model = Model[schema.collection];
 
     this._entity = false;
   }
@@ -94,7 +94,7 @@ class AddOne extends Route {
     this.activityBroadcast = true;
 
     this.schema = schema;
-    this.model = Model[schema.name];
+    this.model = Model[schema.collection];
   }
 
   _validate() {
@@ -149,7 +149,7 @@ class UpdateOne extends Route {
     this.activityBroadcast = true;
 
     this.schema = schema;
-    this.model = Model[schema.name];
+    this.model = Model[schema.collection];
 
     this._entity = null;
   }
@@ -215,7 +215,7 @@ class DeleteOne extends Route {
     this.activityBroadcast = true;
 
     this.schema = schema;
-    this.model = Model[schema.name];
+    this.model = Model[schema.collection];
 
     this._entity = false;
   }
@@ -253,7 +253,7 @@ class DeleteAll extends Route {
     this.activityBroadcast = true;
 
     this.schema = schema;
-    this.model = Model[schema.name];
+    this.model = Model[schema.collection];
   }
 
   _validate() {
