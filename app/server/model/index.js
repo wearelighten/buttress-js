@@ -42,7 +42,7 @@ class Model {
     this.initCoreModels();
 
     // Load schema models
-    // this.initSchema();
+    this.initSchema();
   }
 
   initCoreModels(db) {
