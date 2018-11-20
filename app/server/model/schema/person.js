@@ -117,53 +117,24 @@ class PersonSchemaModel extends SchemaModel {
   add(body, owner) {
     var name = humanname.parse(body.name);
 
-    return new Promise((resolve, reject) => {
-      var md = {
-        title: name.salutation,
-        forename: name.firstName,
-        initials: name.initials,
-        surname: name.lastName,
-        suffix: name.suffix,
-        emails: [body.email],
-        telephone: {
-          landline: body.landline,
-          mobile: body.mobile
-        },
-        address: body.address,
-        postcode: body.postcode,
-        _dataOwner: owner
-      };
-
-      md.save().then(res => resolve(res.details), reject);
-    });
-  }
-  /*
-    * @param {Object} body - body passed through from a POST request
-    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-    */
-  __add(body) {
-    return prev => {
-      const entity = {};
-
-      if (body.id) {
-        entity._id = new ObjectId(body.id);
-      }
-
-      let name = humanname.parse(body.name);
-      entity.title = name.salutation;
-      entity.forename = name.firstName;
-      entity.initials = name.initials;
-      entity.surname = name.lastName;
-      entity.suffix = name.suffix;
-
-      if (PersonSchemaModel.Schema.extends.includes('timestamps')) {
-        entity.createdAt = new Date();
-        entity.updatedAt = null;
-      }
-
-      const validated = Shared.applyAppProperties(this.schema, body);
-      return prev.concat([Object.assign(entity, validated)]);
+    const person = {
+      title: name.salutation,
+      forename: name.firstName,
+      initials: name.initials,
+      surname: name.lastName,
+      suffix: name.suffix,
+      emails: [body.email],
+      telephone: {
+        landline: body.landline,
+        mobile: body.mobile
+      },
+      address: body.address,
+      postcode: body.postcode
     };
+
+    return super.add(person, {
+      _dataOwner: owner._id
+    });
   }
 
   /**
@@ -182,6 +153,15 @@ class PersonSchemaModel extends SchemaModel {
     this.emails.push(appAuth.email);
 
     return this.save();
+  }
+
+  findByDetails(details) {
+    if (!details.email) {
+      return Promise.reject(new Error('missing_required_field_email'));
+    }
+    return this.collection.findOne({
+      emails: details.email
+    });
   }
 }
 

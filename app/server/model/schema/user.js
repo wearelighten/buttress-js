@@ -168,40 +168,40 @@ class UserSchemaModel extends SchemaModel {
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
   add(body, personDetails, auth) {
-    var user = {
-      _apps: [Model.authApp],
-      _person: personDetails.id,
+    const user = {
+      auth: [{
+        app: body.app,
+        appId: body.id,
+        username: body.username,
+        profileUrl: body.profileUrl,
+        images: {
+          profile: body.profileImgUrl,
+          banner: body.bannerImgUrl
+        },
+        email: body.email,
+        token: body.token,
+        tokenSecret: body.tokenSecret
+      }],
       orgRole: body.orgRole,
       teamName: body.teamName,
       teamRole: body.teamRole
     };
 
-    // Logging.logDebug(body);
-    // Logging.logDebug(auth);
-
-    user.auth.push(new Model.Appauth({
-      // _id: body.id,
-      app: body.app,
-      appId: body.id,
-      username: body.username,
-      profileUrl: body.profileUrl,
-      images: {
-        profile: body.profileImgUrl,
-        banner: body.bannerImgUrl
-      },
-      email: body.email,
-      token: body.token,
-      tokenSecret: body.tokenSecret
-    }));
-
     Logging.logDebug(personDetails.name);
     Logging.logDebug(user.auth[0].app);
     Logging.logDebug(user.auth[0].appId);
 
-    let saveUser = user.save().then(u => Object.assign(u.details, {person: personDetails}));
-    let getToken = auth ? Model.Token.add(Object.assign(auth, {user: user})) : Promise.resolve(null);
+    return super.add(user, {
+      _apps: [Model.authApp.id],
+      _person: personDetails.id
+    })
+    .then(user => {
+      if (!auth) {
+        return Promise.resolve(null);
+      }
 
-    return Promise.all([saveUser, getToken]);
+      return Model.Token.add(Object.assign(auth, {user: user}));
+    });
   }
 
   addAuth(auth) {
@@ -289,10 +289,10 @@ class UserSchemaModel extends SchemaModel {
     Logging.logSilly(`findAll: ${Model.authApp._id}`);
 
     if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
-      return this.collection.find({}).populate('_person');
+      return super.find({});
     }
 
-    return this.collection.find({_apps: Model.authApp._id}).populate('_person');
+    return super.find({_apps: Model.authApp._id});
   }
 
   /**
@@ -308,7 +308,7 @@ class UserSchemaModel extends SchemaModel {
    * @return {Promise} - resolves to a User object or null
    */
   getByUsername(username) {
-    return this.collection.findOne({username: username}).select('id');
+    return this.collection.findOne({username: username}, {_id: 1});
   }
 
   /**
@@ -322,7 +322,9 @@ class UserSchemaModel extends SchemaModel {
     return this.collection.findOne({
       'auth.app': appName,
       'auth.appId': appUserId
-    }).select('id');
+    }, {
+      _id: 1
+    });
   }
 
   attachToPerson(person, details) {

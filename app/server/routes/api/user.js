@@ -33,7 +33,7 @@ class GetUserList extends Route {
   }
 
   _exec() {
-    return Model.User.getAll()
+    return Model.User.findAll()
       .then(users => {
         if (this.req.token.authLevel >= Route.Constants.Auth.ADMIN) {
           return users.map(u => {
@@ -297,7 +297,9 @@ class AddUser extends Route {
   _exec() {
     return Model.User
     .add(this.req.body.user, this._person, this.req.body.auth)
-    .then(res => Object.assign(res[0], {authToken: res[1] ? res[1].value : false}));
+    .then(res => {
+      console.log(res);
+    });
   }
 }
 routes.push(AddUser);
