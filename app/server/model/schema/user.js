@@ -191,18 +191,29 @@ class UserSchemaModel extends SchemaModel {
     Logging.logDebug(user.auth[0].app);
     Logging.logDebug(user.auth[0].appId);
 
+    let _user = null;
     return super.add(user, {
       _apps: [Model.authApp.id],
       _person: person.id
     })
     .then(user => {
+      _user = user;
       if (!auth) {
-        return Promise.resolve(user);
+        return false;
       }
 
       return Model.Token.add(auth, {
         _app: Model.authApp.id
       });
+    })
+    .then(token => {
+      if (token) {
+        _user.authToken = token.value;
+      } else {
+        _user.authToken = false;
+      }
+
+      return _user;
     });
   }
 

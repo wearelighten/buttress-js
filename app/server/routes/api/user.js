@@ -84,7 +84,7 @@ class GetUser extends Route {
   _validate() {
     return new Promise((resolve, reject) => {
       if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
@@ -169,7 +169,7 @@ class CreateUserAuthToken extends Route {
         !this.req.body.auth.authLevel ||
         !this.req.body.auth.permissions ||
         !this.req.body.auth.domains) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
@@ -177,7 +177,7 @@ class CreateUserAuthToken extends Route {
       this.req.body.auth.app = this.req.authApp;
 
       if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
@@ -220,13 +220,13 @@ class UpdateUserAppToken extends Route {
     return new Promise((resolve, reject) => {
       if (!this.req.body ||
         !this.req.body.token) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
 
       if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
@@ -270,7 +270,7 @@ class AddUser extends Route {
           !this.req.body.user.id ||
           !this.req.body.user.token ||
           !this.req.body.user.profileImgUrl) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
@@ -281,7 +281,7 @@ class AddUser extends Route {
         if (!this.req.body.auth.authLevel ||
             !this.req.body.auth.permissions ||
             !this.req.body.auth.domains) {
-          this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+          this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
           reject({statusCode: 400});
           return;
         }
@@ -309,7 +309,11 @@ class AddUser extends Route {
 
   _exec() {
     return Model.User
-    .add(this.req.body.user, this._person, this.req.body.auth);
+    .add(this.req.body.user, this._person, this.req.body.auth)
+    .then(user => {
+      user.person = this._person;
+      return user;
+    });
   }
 }
 routes.push(AddUser);
@@ -331,13 +335,13 @@ class UpdateUserAppInfo extends Route {
     return new Promise((resolve, reject) => {
       if (!this.req.body ||
         !this.req.body.token) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
 
       if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
@@ -380,13 +384,13 @@ class AddUserAuth extends Route {
       let auth = this.req.body.auth;
 
       if (!auth || !auth.app || !auth.id || !auth.profileImgUrl || !auth.token) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
 
       if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
@@ -508,7 +512,7 @@ class DeleteUser extends Route {
   _validate() {
     return new Promise((resolve, reject) => {
       if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
@@ -544,7 +548,7 @@ class AttachToPerson extends Route {
   _validate() {
     return new Promise((resolve, reject) => {
       if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
-        this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+        this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
       }
@@ -565,7 +569,7 @@ class AttachToPerson extends Route {
           }
 
           if (!this.req.body.name || !this.req.body.email) {
-            this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+            this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }

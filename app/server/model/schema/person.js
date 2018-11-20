@@ -44,6 +44,16 @@ class PersonSchemaModel extends SchemaModel {
           __default: "",
           __allowUpdate: true
         },
+        formalName: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
+        name: {
+          __type: "string",
+          __default: "",
+          __allowUpdate: true
+        },
         forename: {
           __type: "string",
           __default: "",
@@ -119,6 +129,8 @@ class PersonSchemaModel extends SchemaModel {
 
     const person = {
       title: name.salutation,
+      formalName: `${name.salutation ? name.salutation + ' ' : ''}${name.firstName} ${name.initials ? name.initials + ' ' : ''}${name.lastName}`,
+      name: `${name.firstName} ${name.lastName}`,
       forename: name.firstName,
       initials: name.initials,
       surname: name.lastName,
