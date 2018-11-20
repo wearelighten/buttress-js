@@ -21,13 +21,13 @@ let routes = [];
  */
 class GetList extends Route {
   constructor(schema) {
-    super(`${schema.collection}`, `GET ${schema.collection} LIST`);
+    super(`${schema.name}`, `GET ${schema.name} LIST`);
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.LIST;
 
     // Fetch model
-    this.model = Model[schema.collection];
+    this.model = Model[schema.name];
     if (!this.model) {
       // Somthing went wrong!!1?
     }
@@ -48,13 +48,13 @@ routes.push(GetList);
  */
 class GetOne extends Route {
   constructor(schema) {
-    super(`${schema.collection}/:id`, `GET ${schema.collection}`);
+    super(`${schema.name}/:id`, `GET ${schema.name}`);
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.READ;
 
     this.schema = schema;
-    this.model = Model[schema.collection];
+    this.model = Model[schema.name];
 
     this._entity = false;
   }
@@ -64,7 +64,7 @@ class GetOne extends Route {
       this.model.findById(this.req.params.id)
         .then(entity => {
           if (!entity) {
-            this.log(`${this.schema.collection}: Invalid ID: ${this.req.params.id}`, Route.LogLevel.ERR);
+            this.log(`${this.schema.name}: Invalid ID: ${this.req.params.id}`, Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
@@ -85,16 +85,16 @@ routes.push(GetOne);
  */
 class AddOne extends Route {
   constructor(schema) {
-    super(`${schema.collection}`, `ADD ${schema.collection}`);
+    super(`${schema.name}`, `ADD ${schema.name}`);
     this.verb = Route.Constants.Verbs.POST;
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.ADD;
 
-    this.activityDescription = `ADD ${schema.collection}`;
+    this.activityDescription = `ADD ${schema.name}`;
     this.activityBroadcast = true;
 
     this.schema = schema;
-    this.model = Model[schema.collection];
+    this.model = Model[schema.name];
   }
 
   _validate() {
@@ -102,25 +102,25 @@ class AddOne extends Route {
       let validation = this.model.validate(this.req.body);
       if (!validation.isValid) {
         if (validation.missing.length > 0) {
-          this.log(`${this.schema.collection}: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `${this.schema.collection}: Missing field: ${validation.missing[0]}`});
+          this.log(`${this.schema.name}: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `${this.schema.name}: Missing field: ${validation.missing[0]}`});
           return;
         }
         if (validation.invalid.length > 0) {
-          this.log(`${this.schema.collection}: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `${this.schema.collection}: Invalid value: ${validation.invalid[0]}`});
+          this.log(`${this.schema.name}: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `${this.schema.name}: Invalid value: ${validation.invalid[0]}`});
           return;
         }
 
-        this.log(`${this.schema.collection}: Unhandled Error`, Route.LogLevel.ERR);
-        reject({statusCode: 400, message: `${this.schema.collection}: Unhandled error.`});
+        this.log(`${this.schema.name}: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `${this.schema.name}: Unhandled error.`});
         return;
       }
 
       this.model.isDuplicate(this.req.body)
         .then(res => {
           if (res === true) {
-            this.log(`${this.schema.collection}: Duplicate entity`, Route.LogLevel.ERR);
+            this.log(`${this.schema.name}: Duplicate entity`, Route.LogLevel.ERR);
             reject({statusCode: 400});
             return;
           }
@@ -140,16 +140,16 @@ routes.push(AddOne);
  */
 class UpdateOne extends Route {
   constructor(schema) {
-    super(`${schema.collection}/:id`, `UPDATE ${schema.collection}`);
+    super(`${schema.name}/:id`, `UPDATE ${schema.name}`);
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.WRITE;
 
-    this.activityDescription = `ADD ${schema.collection}`;
+    this.activityDescription = `ADD ${schema.name}`;
     this.activityBroadcast = true;
 
     this.schema = schema;
-    this.model = Model[schema.collection];
+    this.model = Model[schema.name];
 
     this._entity = null;
   }
@@ -159,24 +159,24 @@ class UpdateOne extends Route {
       let validation = this.model.validateUpdate(this.req.body);
       if (!validation.isValid) {
         if (validation.isPathValid === false) {
-          this.log(`${this.schema.collection}: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+          this.log(`${this.schema.name}: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
           reject({
             statusCode: 400,
-            message: `${this.schema.collection}: Update path is invalid: ${validation.invalidPath}`
+            message: `${this.schema.name}: Update path is invalid: ${validation.invalidPath}`
           });
           return;
         }
         if (validation.isValueValid === false) {
-          this.log(`${this.schema.collection}: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+          this.log(`${this.schema.name}: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
           if (validation.isMissingRequired) {
             reject({
               statusCode: 400,
-              message: `${this.schema.collection}: Missing required property updating ${this.req.body.path}: ${validation.missingRequired}`
+              message: `${this.schema.name}: Missing required property updating ${this.req.body.path}: ${validation.missingRequired}`
             });
           } else {
             reject({
               statusCode: 400,
-              message: `${this.schema.collection}: Update value is invalid for path ${this.req.body.path}: ${validation.invalidValue}`
+              message: `${this.schema.name}: Update value is invalid for path ${this.req.body.path}: ${validation.invalidValue}`
             });
           }
           return;
@@ -206,16 +206,16 @@ routes.push(UpdateOne);
  */
 class DeleteOne extends Route {
   constructor(schema) {
-    super(`${schema.collection}/:id`, `DELETE ${schema.collection}`);
+    super(`${schema.name}/:id`, `DELETE ${schema.name}`);
     this.verb = Route.Constants.Verbs.DEL;
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.DELETE;
 
-    this.activityDescription = `ADD ${schema.collection}`;
+    this.activityDescription = `ADD ${schema.name}`;
     this.activityBroadcast = true;
 
     this.schema = schema;
-    this.model = Model[schema.collection];
+    this.model = Model[schema.name];
 
     this._entity = false;
   }
@@ -224,7 +224,7 @@ class DeleteOne extends Route {
     return this.model.findById(this.req.params.id)
     .then(entity => {
       if (!entity) {
-        this.log(`${this.schema.collection}: Invalid ID`, Route.LogLevel.ERR);
+        this.log(`${this.schema.name}: Invalid ID`, Route.LogLevel.ERR);
         return {statusCode: 400};
       }
       this._entity = entity;
@@ -238,6 +238,34 @@ class DeleteOne extends Route {
   }
 }
 routes.push(DeleteOne);
+
+/**
+ * @class DeleteAll
+ */
+class DeleteAll extends Route {
+  constructor(schema) {
+    super(`${schema.name}`, `DELETE ${schema.name}`);
+    this.verb = Route.Constants.Verbs.DEL;
+    this.auth = Route.Constants.Auth.SUPER;
+    this.permissions = Route.Constants.Permissions.DELETE;
+
+    this.activityDescription = `DELETE ${schema.name}`;
+    this.activityBroadcast = true;
+
+    this.schema = schema;
+    this.model = Model[schema.name];
+  }
+
+  _validate() {
+    return Promise.resolve();
+  }
+
+  _exec() {
+    return this.model.rmAll()
+    .then(() => true);
+  }
+}
+routes.push(DeleteAll);
 
 /**
  * @type {*[]}
