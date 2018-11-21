@@ -193,7 +193,7 @@ class UserSchemaModel extends SchemaModel {
 
     let _user = null;
     return super.add(user, {
-      _apps: [Model.authApp.id],
+      _apps: [Model.authApp._id],
       _person: person.id
     })
     .then(user => {
@@ -312,19 +312,11 @@ class UserSchemaModel extends SchemaModel {
   }
 
   /**
-   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
-   */
-  getSimplified() {
-    Logging.logSilly(`getSimplified: ${Model.authApp._id}`);
-    return this.collection.find({_apps: Model.authApp._id}, {_id: 1});
-  }
-
-  /**
    * @param {string} username - username to check for
    * @return {Promise} - resolves to a User object or null
    */
   getByUsername(username) {
-    return this.collection.findOne({username: username}, {_id: 1});
+    return super.findOne({username: username}, {_id: 1});
   }
 
   /**
@@ -335,7 +327,7 @@ class UserSchemaModel extends SchemaModel {
   getByAppId(appName, appUserId) {
     Logging.log(`getByAppId: ${appName} - ${appUserId}`, Logging.Constants.LogLevel.VERBOSE);
 
-    return this.collection.findOne({
+    return super.findOne({
       'auth.app': appName,
       'auth.appId': appUserId
     }, {

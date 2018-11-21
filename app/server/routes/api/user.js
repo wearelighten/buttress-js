@@ -123,7 +123,8 @@ class FindUser extends Route {
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.User.getByAppId(this.req.params.app, this.req.params.id).then(user => {
+      Model.User.getByAppId(this.req.params.app, this.req.params.id)
+      .then(user => {
         Logging.logSilly(`FindUser: ${user !== null}`);
         this._user = user;
         if (this._user) {
