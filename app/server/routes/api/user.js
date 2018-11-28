@@ -126,9 +126,9 @@ class FindUser extends Route {
       Model.User.getByAppId(this.req.params.app, this.req.params.id)
       .then(user => {
         Logging.logSilly(`FindUser: ${user !== null}`);
-        this._user = user;
-        if (this._user) {
-          Model.Token.findUserAuthToken(this._user.id, this.req.authApp._id)
+        if (user) {
+          this._user = user;
+          Model.Token.findUserAuthToken(this._user._id, this.req.authApp._id)
           .then(token => {
             Logging.logSilly(`FindUserToken: ${token !== null}`);
             this._userAuthToken = token ? token.value : false;
@@ -136,17 +136,21 @@ class FindUser extends Route {
               .then(resolve, reject);
           });
         } else {
-          resolve(true);
+          resolve(false);
         }
       });
     });
   }
 
   _exec() {
-    return Promise.resolve(this._user ? {
-      id: this._user.id,
+    if (!this._user) {
+      return Promise.resolve(false);
+    }
+
+    return Promise.resolve({
+      id: this._user._id,
       authToken: this._userAuthToken
-    } : false);
+    });
   }
 }
 routes.push(FindUser);
@@ -198,8 +202,11 @@ class CreateUserAuthToken extends Route {
   }
 
   _exec() {
-    return Model.Token.add(Object.assign(this.req.body.auth, {user: this._user}))
-      .then(t => Object.assign(t.details, {value: t.value}));
+    return Model.Token.add(this.req.body.auth, {
+      _app: Model.authApp._id,
+      _user: this._user._id
+    })
+      .then(t => t.value);
   }
 }
 routes.push(CreateUserAuthToken);

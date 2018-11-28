@@ -144,8 +144,8 @@ class ActivitySchemaModel extends SchemaModel {
         // response: response,
         timestamp: new Date(),
         _token: Model.token.id,
-        _user: (Model.authUser) ? Model.authUser.id : null,
-        _app: Model.authApp.id
+        _user: (Model.authUser) ? Model.authUser._id : null,
+        _app: Model.authApp._id
       };
 
       if (body.id) {
