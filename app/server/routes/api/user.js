@@ -102,7 +102,7 @@ class GetUser extends Route {
   }
 
   _exec() {
-    return Promise.resolve(this._user.details);
+    return Model.User.getPopulated(this._user);
   }
 }
 routes.push(GetUser);
@@ -116,24 +116,23 @@ class FindUser extends Route {
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.READ;
-
-    this._user = false;
-    this._userAuthToken = false;
   }
 
-  _validate() {
+  _validate(authToken) {
     return new Promise((resolve, reject) => {
       Model.User.getByAppId(this.req.params.app, this.req.params.id)
-      .then(user => {
-        Logging.logSilly(`FindUser: ${user !== null}`);
-        if (user) {
-          this._user = user;
-          Model.Token.findUserAuthToken(this._user._id, this.req.authApp._id)
+      .then(_user => {
+        Logging.logSilly(`FindUser: ${_user !== null}`);
+        if (_user) {
+          Model.Token.findUserAuthToken(_user._id, this.req.authApp._id)
           .then(token => {
             Logging.logSilly(`FindUserToken: ${token !== null}`);
-            this._userAuthToken = token ? token.value : false;
-            Model.User.updateApps(this._user, this.req.authApp)
-              .then(resolve, reject);
+            const _userAuthToken = token ? token.value : false;
+            Model.User.updateApps(_user, this.req.authApp)
+              .then(() => resolve({
+                user: _user,
+                userAuthToken: _userAuthToken
+              }), reject);
           });
         } else {
           resolve(false);
@@ -142,14 +141,14 @@ class FindUser extends Route {
     });
   }
 
-  _exec() {
-    if (!this._user) {
+  _exec(validate) {
+    if (!validate) {
       return Promise.resolve(false);
     }
 
     return Promise.resolve({
-      id: this._user._id,
-      authToken: this._userAuthToken
+      id: validate.user._id,
+      authToken: validate.userAuthToken
     });
   }
 }
@@ -361,14 +360,14 @@ class UpdateUserAppInfo extends Route {
           resolve(true);
         } else {
           this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-          resolve({statusCode: 400});
+          reject({statusCode: 400});
         }
       });
     });
   }
 
   _exec() {
-    return this._user.updateAppInfo(this.req.params.app, this.req.body);
+    return Model.User.updateAppInfo(this._user, this.req.params.app, this.req.body);
   }
 }
 routes.push(UpdateUserAppInfo);

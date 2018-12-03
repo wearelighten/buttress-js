@@ -113,12 +113,12 @@ class Route {
       this._authenticate()
         .then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
         .then(Logging.Promise.logSilly('authenticated'))
-        .then(_.bind(this._validate, this), reject)
+        .then(token => this._validate(token), reject)
         .then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
         .then(Logging.Promise.logSilly('validated'))
-        .then(_.bind(this._exec, this), reject)
+        .then(validate => this._exec(validate), reject)
         .then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
-        .then(_.bind(this._logActivity, this))
+        .then(res => this._logActivity(res), reject)
         .then(resolve, reject)
         .catch(Logging.Promise.logError());
     });

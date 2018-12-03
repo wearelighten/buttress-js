@@ -418,7 +418,7 @@ class UpdateAppSchema extends Route {
   }
 
   _exec() {
-    return Model.App.updateSchema(this.req.authApp._id, this.req.body);
+    return Model.App.updateSchema(this.req.authApp._id, this.req.body).then(res => true);
   }
 }
 routes.push(UpdateAppSchema);

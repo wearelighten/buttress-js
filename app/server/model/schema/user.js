@@ -14,7 +14,7 @@
 const SchemaModel = require('../schemaModel');
 const Model = require('../');
 const Logging = require('../../logging');
-// const Shared = require('../shared');
+const Shared = require('../shared');
 const ObjectId = require('mongodb').ObjectId;
 
 const collectionName = 'users';
@@ -251,13 +251,14 @@ class UserSchemaModel extends SchemaModel {
    * @param {Object} updated - updated app information passed through from a PUT request
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
-  updateAppInfo(app, updated) {
-    var auth = this.auth.find(a => a.app === app);
-    if (!auth) {
+  updateAppInfo(user, app, updated) {
+    const authIdx = user.auth.findIndex(a => a.app === app);
+    if (authIdx === -1) {
       Logging.log(`Unable to find Appauth for ${app}`, Logging.Constants.LogLevel.DEBUG);
       return Promise.resolve(false);
     }
 
+    const auth = user.auth[authIdx];
     auth.username = updated.username;
     auth.profileUrl = updated.profileUrl;
     auth.images.profile = updated.profileImgUrl;
@@ -267,9 +268,9 @@ class UserSchemaModel extends SchemaModel {
     auth.tokenSecret = updated.tokenSecret;
     auth.refreshToken = updated.refreshToken;
 
-    Logging.logDebug(updated.profileImgUrl);
-
-    return this.save().then(() => true);
+    let update = {};
+    update[`auth.${authIdx}`] = auth;
+    return super.update(update, user._id).then(() => true);
   }
 
   updateApps(user, app) {
@@ -298,6 +299,14 @@ class UserSchemaModel extends SchemaModel {
       .limit(1)
       .count()
       .then(count => count > 0);
+  }
+
+  getPopulated(user) {
+    return Model.Person.findById(user._person)
+    .then(person => {
+      user.person = person;
+      return user;
+    });
   }
 
   /**
@@ -333,9 +342,7 @@ class UserSchemaModel extends SchemaModel {
     return super.findOne({
       'auth.app': appName,
       'auth.appId': appUserId
-    }, {
-      _id: 1
-    });
+    }, {});
   }
 
   attachToPerson(person, details) {
