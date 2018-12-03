@@ -3,7 +3,9 @@ Realtime datastore for business software.
 
 # What's New
 
-### Version: 1.6.6
+### Version: 1.6.7
+- ADDED: Reports schema & Routing
+### 1.6.6
 - FIX: Added instance namespacing to redis scope in config
 - TWEAK: Bumped logging level of socket activity
 ### 1.6.5
