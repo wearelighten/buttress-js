@@ -10,6 +10,7 @@
  *
  */
 
+const Logging = require('../logging');
 const Route = require('./route');
 const Model = require('../model');
 // const Helpers = require('../../helpers');
@@ -81,6 +82,47 @@ class GetOne extends Route {
 routes.push(GetOne);
 
 /**
+ * @class GetMany
+ */
+class GetMany extends Route {
+  constructor(schema) {
+    super(`${schema.name}/bulk/load`, `BULK GET ${schema.name}`);
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.ADMIN;
+    this.permissions = Route.Constants.Permissions.READ;
+
+    this.activityDescription = `BULK GET ${schema.name}`;
+    this.activityBroadcast = true;
+
+    this.schema = schema;
+    this.model = Model[schema.collection];
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      const _ids = this.req.body;
+      if (!_ids) {
+        this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+      if (!_ids.length) {
+        this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
+        reject({statusCode: 400});
+        return;
+      }
+
+      resolve(_ids);
+    });
+  }
+
+  _exec(ids) {
+    return this.model.findAllById(ids);
+  }
+}
+routes.push(GetMany);
+
+/**
  * @class AddOne
  */
 class AddOne extends Route {
@@ -134,6 +176,59 @@ class AddOne extends Route {
   }
 }
 routes.push(AddOne);
+
+/**
+ * @class AddMany
+ */
+class AddMany extends Route {
+  constructor(schema) {
+    super(`${schema.name}/bulk/add`, `BULK ADD ${schema.name}`);
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.SUPER;
+    this.permissions = Route.Constants.Permissions.ADD;
+
+    this.activityDescription = `BULK ADD ${schema.name}`;
+    this.activityBroadcast = true;
+
+    this.schema = schema;
+    this.model = Model[schema.collection];
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      if (this.req.body instanceof Array === false) {
+        this.log(`ERROR: You need to supply an array of companies`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `Invalid data: send an array`});
+        return;
+      }
+
+      let validation = this.model.validate(this.req.body);
+      if (!validation.isValid) {
+        if (validation.missing.length > 0) {
+          this.log(`${this.schema.name}: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `${this.schema.name}: Missing field: ${validation.missing[0]}`});
+          return;
+        }
+        if (validation.invalid.length > 0) {
+          this.log(`${this.schema.name}: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+          reject({statusCode: 400, message: `${this.schema.name}: Invalid value: ${validation.invalid[0]}`});
+          return;
+        }
+
+        this.log(`${this.schema.name}: Unhandled Error`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `${this.schema.name}: Unhandled error.`});
+        return;
+      }
+      resolve(true);
+    });
+  }
+
+  _exec() {
+    return this.model.add(this.req.body)
+      .then(Logging.Promise.logProp(`Added ${this.schema.name}`, 'length', Route.LogLevel.VERBOSE));
+  }
+}
+routes.push(AddMany);
 
 /**
  * @class UpdateOne
@@ -238,6 +333,52 @@ class DeleteOne extends Route {
   }
 }
 routes.push(DeleteOne);
+
+/**
+ * @class DeleteMany
+ */
+class DeleteMany extends Route {
+  constructor(schema) {
+    super(`${schema.name}/bulk/delete`, `BULK DELETE ${schema.name}`);
+    this.verb = Route.Constants.Verbs.POST;
+    this.auth = Route.Constants.Auth.SUPER;
+    this.permissions = Route.Constants.Permissions.DELETE;
+
+    this.activityDescription = `BULK DELETE ${schema.name}`;
+    this.activityBroadcast = true;
+
+    this.schema = schema;
+    this.model = Model[schema.collection];
+  }
+
+  _validate() {
+    return new Promise((resolve, reject) => {
+      const _ids = this.req.body;
+      if (!_ids) {
+        this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `ERROR: No ${this.schema.name} IDs provided`});
+        return;
+      }
+      if (!_ids.length) {
+        this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
+        reject({statusCode: 400, message: `ERROR: No ${this.schema.name} IDs provided`});
+        return;
+      }
+      // if (this._ids.length > 600) {
+      //   this.log('ERROR: No more than 300 company IDs are supported', Route.LogLevel.ERR);
+      //   reject({statusCode: 400, message: 'ERROR: No more than 300 company IDs are supported'});
+      //   return;
+      // }
+      resolve(_ids);
+    });
+  }
+
+  _exec(ids) {
+    return this.model.rmBulk(ids)
+      .then(() => true);
+  }
+}
+routes.push(DeleteMany);
 
 /**
  * @class DeleteAll
