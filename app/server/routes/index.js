@@ -71,7 +71,7 @@ function _initSchemaRoutes(express, app, schema) {
             res.set('Content-Type', 'application/json');
             result.stream().pipe(stringifyStream).pipe(res);
           } else {
-            res.json(result);
+            res.json(Helpers.prepareResult(result));
           }
           Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
           Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
