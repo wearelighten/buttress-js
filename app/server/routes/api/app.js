@@ -365,8 +365,6 @@ class GetAppSchema extends Route {
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.READ;
-
-    this._schema = null;
   }
 
   _validate() {
@@ -382,14 +380,12 @@ class GetAppSchema extends Route {
         return;
       }
 
-      this._schmea = Schema.buildCollections(this.req.authApp.__schema);
-
-      resolve(true);
+      resolve(Schema.buildCollections(this.req.authApp.__schema));
     });
   }
 
-  _exec() {
-    return this._schmea;
+  _exec(schema) {
+    return schema;
   }
 }
 routes.push(GetAppSchema);
