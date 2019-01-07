@@ -13,7 +13,6 @@
 const Logging = require('../logging');
 const Route = require('./route');
 const Model = require('../model');
-const Logging = require('../logging');
 // const Helpers = require('../../helpers');
 
 let routes = [];
