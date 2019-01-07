@@ -278,21 +278,18 @@ const __validate = (schema, values, parentProperty) => {
     const config = schema[property];
 
     if (propVal === undefined) {
+      if (config.__required) {
+        res.isValid = false;
+        Logging.logWarn(`Missing required ${property}`);
+        res.missing.push(property);
+        continue;
+      }
+
       propVal = {
         path: property,
         value: __getPropDefault(config)
       };
       values.push(propVal);
-      // console.log(propVal);
-    }
-
-    if (propVal === undefined) {
-      if (config.__required) {
-        res.isValid = false;
-        Logging.logWarn(`Missing '__require'd ${property}`);
-        res.missing.push(property);
-      }
-      continue;
     }
 
     if (!__validateProp(propVal, config)) {
