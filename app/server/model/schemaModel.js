@@ -158,7 +158,7 @@ class SchemaModel {
   // NOTE: Convert away from Mongoose
   rmBulk(ids) {
     Logging.log(`DELETING: ${ids}`, Logging.Constants.LogLevel.SILLY);
-    // return ModelDef.remove({_id: {$in: ids}}).exec();
+    return this.rmAll({_id: {$in: ids}});
   }
 
   /*
