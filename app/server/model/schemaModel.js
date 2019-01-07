@@ -75,7 +75,7 @@ class SchemaModel {
         entity._id = new ObjectId(body.id);
       }
 
-      if (this.schema.extends.includes('timestamps')) {
+      if (this.schema.extends && this.schema.extends.includes('timestamps')) {
         entity.createdAt = new Date();
         entity.updatedAt = null;
       }
@@ -111,7 +111,7 @@ class SchemaModel {
       body = [body];
     }
 
-    if (this.schema.extends.includes('timestamps')) {
+    if (this.schema.extends && this.schema.extends.includes('timestamps')) {
       body.push({
         path: 'updatedAt',
         value: new Date(),
