@@ -127,7 +127,7 @@ function _authenticateToken(req, res, next) {
     .then(app => {
       Model.authApp = req.authApp = app;
     })
-    .then(token => Model.App.findById(req.token._user))
+    .then(token => Model.User.findById(req.token._user))
     .then(user => {
       Model.authUser = req.authUser = user;
     })
@@ -211,6 +211,7 @@ function _configCrossDomain(req, res, next) {
     next();
     return;
   }
+  console.log(req.authUser);
   if (!req.authUser) {
     res.status(401).json({message: 'Auth user is required'});
     return;
