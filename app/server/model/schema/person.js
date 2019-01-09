@@ -15,6 +15,8 @@ const SchemaModel = require('../schemaModel');
 const humanname = require('humanname');
 const ObjectId = require('mongodb').ObjectId;
 const Shared = require('../shared');
+const Model = require('../');
+const Logging = require('../../logging');
 // const Model = require('../../model');
 // const Logging = require('../../logging');
 
@@ -121,10 +123,10 @@ class PersonSchemaModel extends SchemaModel {
 
   /**
    * @param {Object} body - person details
-   * @param {Object} owner - Owner group Mongoose object
+   * @param {Object} authApp - owner app object
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
-  add(body, owner) {
+  add(body, authApp) {
     var name = humanname.parse(body.name);
 
     const person = {
@@ -145,7 +147,7 @@ class PersonSchemaModel extends SchemaModel {
     };
 
     return super.add(person, {
-      _dataOwner: owner._id
+      _dataOwner: authApp._id
     });
   }
 
@@ -175,6 +177,20 @@ class PersonSchemaModel extends SchemaModel {
       emails: details.email
     });
   }
+
+  /**
+   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+   */
+  findAll() {
+    Logging.logSilly(`findAll: ${Model.authApp._id}`);
+
+    if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
+      return super.find({});
+    }
+
+    return super.find({_apps: Model.authApp._id});
+  }
+
 }
 
 // schema.virtual('details').get(function() {

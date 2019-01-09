@@ -103,11 +103,11 @@ class AddPerson extends Route {
   }
 
   _exec() {
-    return Model.Person.add(this.req.body, this.req.authApp._owner)
+    return Model.Person.add(this.req.body, this.req.authApp._id)
       .then(Logging.Promise.logProp('Added Person', 'forename', Route.LogLevel.VERBOSE));
 
     // return new Promise((resolve, reject) => {
-    //   Model.Person.add(this.req.body, this.req.appAuth._owner)
+    //   Model.Person.add(this.req.body, this.req.appAuth._id)
     //     .then(Logging.Promise.logProp('Added Person', 'forename', Route.LogLevel.VERBOSE))
     //     .then(resolve, reject);
     // });

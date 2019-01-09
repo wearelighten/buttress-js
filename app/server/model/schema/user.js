@@ -353,7 +353,7 @@ class UserSchemaModel extends SchemaModel {
 
     return new Promise((resolve, reject) => {
       Model.Person
-        .add(details, Model.authApp._owner)
+        .add(details, Model.authApp._id)
         .then(person => {
           Logging.log(person, Logging.Constants.LogLevel.DEBUG);
           this._person = person.id;
