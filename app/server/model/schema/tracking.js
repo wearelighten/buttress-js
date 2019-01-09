@@ -186,7 +186,7 @@ class TrackingSchemaModel extends SchemaModel {
   }
 
   /**
-   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+   * @return {Promise} - resolves to an array of Apps
    */
   findAll() {
     Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);

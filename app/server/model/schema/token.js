@@ -177,7 +177,7 @@ class TokenSchemaModel extends SchemaModel {
   /**
    * @param {String} userId - DB id for the user
    * @param {String} appId - DB id for the app
-   * @return {Promise} - resolves to an array of Tokens (native Mongoose objects)
+   * @return {Promise} - resolves to an array of Tokens
    */
   findUserAuthToken(userId, appId) {
     return new Promise(resolve => {

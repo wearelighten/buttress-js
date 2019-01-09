@@ -140,7 +140,6 @@ class SchemaModel {
    * @param {App} company - Company object to be deleted
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
-  // NOTE: Convert away from Mongoose
   rm(entity) {
     Logging.log(`DELETING: ${entity._id}`, Logging.Constants.LogLevel.DEBUG);
     return new Promise(resolve => {
@@ -155,7 +154,6 @@ class SchemaModel {
    * @param {Array} ids - Array of company ids to delete
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
-  // NOTE: Convert away from Mongoose
   rmBulk(ids) {
     Logging.log(`DELETING: ${ids}`, Logging.Constants.LogLevel.SILLY);
     return this.rmAll({_id: {$in: ids}});

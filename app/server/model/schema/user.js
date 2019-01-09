@@ -311,7 +311,7 @@ class UserSchemaModel extends SchemaModel {
 
   /**
    * @param {ObjectId} appId - id of the App that owns the user
-   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+   * @return {Promise} - resolves to an array of Apps
    */
   findAll() {
     Logging.logSilly(`findAll: ${Model.authApp._id}`);
@@ -334,7 +334,7 @@ class UserSchemaModel extends SchemaModel {
   /**
    * @param {string} appName - Name of the authenticating App (facebook|twitter|google) that owns the user
    * @param {string} appUserId - AppId of the user
-   * @return {Promise} - resolves to an array of Apps (native Mongoose objects)
+   * @return {Promise} - resolves to an array of Apps
    */
   getByAppId(appName, appUserId) {
     Logging.log(`getByAppId: ${appName} - ${appUserId}`, Logging.Constants.LogLevel.VERBOSE);
