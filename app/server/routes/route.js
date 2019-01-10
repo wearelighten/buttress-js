@@ -13,7 +13,6 @@
 const Config = require('node-env-obj')('../');
 const Logging = require('../logging');
 const Model = require('../model');
-// const _ = require('underscore');
 const Mongo = require('mongodb');
 const NRP = require('node-redis-pubsub');
 const Helpers = require('../helpers');
