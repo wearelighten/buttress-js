@@ -13,8 +13,8 @@
 
 const Crypto = require('crypto');
 const SchemaModel = require('../schemaModel');
-const ObjectId = require('mongodb').ObjectId;
-const Shared = require('../shared');
+// const ObjectId = require('mongodb').ObjectId;
+// const Shared = require('../shared');
 const Logging = require('../../logging');
 
 /**

@@ -21,9 +21,6 @@ const Config = require('node-env-obj')('../');
 const NRP = require('node-redis-pubsub');
 const nrp = new NRP(Config.redis);
 
-const collectionName = 'apps';
-const collection = Model.mongoDb.collection(collectionName);
-
 /**
  * Constants
 */

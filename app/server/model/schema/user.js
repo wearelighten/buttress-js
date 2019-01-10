@@ -14,7 +14,7 @@
 const SchemaModel = require('../schemaModel');
 const Model = require('../');
 const Logging = require('../../logging');
-const Shared = require('../shared');
+// const Shared = require('../shared');
 const ObjectId = require('mongodb').ObjectId;
 
 const collectionName = 'users';
@@ -163,7 +163,7 @@ class UserSchemaModel extends SchemaModel {
 
   /**
    * @param {Object} body - body passed through from a POST request
-   * @param {Object} personDetails - details of the person to which the user is attached
+   * @param {Object} person - person object to which the user is attached
    * @param {Object} auth - OPTIONAL authentication details for a user token
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
@@ -247,7 +247,8 @@ class UserSchemaModel extends SchemaModel {
   }
 
   /**
-   * @param {string} app - name of the app for which the token is being updated
+   * @param {object} user - user object of which the token is being updated
+   * @param {object} app - app object of which the token is being updated
    * @param {Object} updated - updated app information passed through from a PUT request
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */

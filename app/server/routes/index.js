@@ -211,7 +211,7 @@ function _configCrossDomain(req, res, next) {
     next();
     return;
   }
-  console.log(req.authUser);
+
   if (!req.authUser) {
     res.status(401).json({message: 'Auth user is required'});
     return;

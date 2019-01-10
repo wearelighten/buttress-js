@@ -137,7 +137,7 @@ class SchemaModel {
   }
 
   /**
-   * @param {App} company - Company object to be deleted
+   * @param {App} entity - entity object to be deleted
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
   rm(entity) {
@@ -151,7 +151,7 @@ class SchemaModel {
   }
 
   /**
-   * @param {Array} ids - Array of company ids to delete
+   * @param {Array} ids - Array of entity ids to delete
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
   rmBulk(ids) {
@@ -175,7 +175,7 @@ class SchemaModel {
   }
 
   /**
-   * @param {String} id - company id to get
+   * @param {String} id - entity id to get
    * @return {Promise} - resolves to an array of Companies
    */
   findById(id) {
@@ -229,13 +229,10 @@ class SchemaModel {
   }
 
   /**
-   * @param {Array} ids - Array of company ids to get
+   * @param {Array} ids - Array of entities ids to get
    * @return {Promise} - resolves to an array of Companies
    */
   findAllById(ids) {
-    // Logging.log(`findAllById: ${Model.authApp._id}`, Logging.Constants.LogLevel.INFO);
-
-    // return this.collection.find({_id: {$in: ids.map(id => new ObjectId(id))}, _app: Model.authApp._id}, {metadata: 0});
     return this.collection.find({_id: {$in: ids.map(id => new ObjectId(id))}}, {metadata: 0});
   }
 }
