@@ -34,8 +34,8 @@ Error.stackTraceLimit = Infinity;
  *
  *
  **********************************************************************************/
-// const processes = os.cpus().length;
-const processes = 1;
+const processes = os.cpus().length;
+// const processes = 1;
 const _workers = [];
 
 /* ********************************************************************************
