@@ -26,10 +26,15 @@ class SchemaModel {
 
   constructor(MongoDb, schema, app) {
     this.schema = schema;
-    this.app = app;
+    this.app = app || null;
 
-    this.appShortId = shortId(app._id);
-    this.collectionName = `${this.appShortId}-${schema.collection}`;
+    this.appShortId = (app) ? shortId(app._id) : null;
+    this.collectionName = `${schema.collection}`;
+
+    if (this.appShortId) {
+      this.collectionName = `${this.appShortId}-${this.collectionName}`;
+    }
+
     this.collection = MongoDb.collection(this.collectionName);
   }
 
@@ -62,28 +67,39 @@ class SchemaModel {
   * @param {Object} body - body passed through from a POST request
   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
   */
-  __add(body) {
+  __add(body, internals) {
     return prev => {
-      const entity = {};
+      const entity = Object.assign({}, internals);
 
       if (body.id) {
         entity._id = new ObjectId(body.id);
       }
 
-      if (this.schema.extends.includes('timestamps')) {
+      if (this.schema.extends && this.schema.extends.includes('timestamps')) {
         entity.createdAt = new Date();
         entity.updatedAt = null;
       }
 
       const validated = Shared.applyAppProperties(this.schema, body);
-      return prev.concat([Object.assign(entity, validated)]);
+      return prev.concat([Object.assign(validated, entity)]);
     };
   }
-  add(body) {
-    const sharedFn = Shared.add(this.collection, item => this.__add(item));
-    return sharedFn(body);
+  add(body, internals) {
+    const sharedAddFn = Shared.add(this.collection, item => this.__add(item, internals));
+    return sharedAddFn(body);
   }
 
+  update(query, id) {
+    return new Promise((resolve, reject) => {
+      this.collection.update({_id: id}, {
+        $set: query
+      }, (err, object) => {
+        if (err) throw new Error(err);
+
+        resolve(object);
+      });
+    });
+  }
   validateUpdate(body) {
     const sharedFn = Shared.validateUpdate({}, this.schema);
     return sharedFn(body);
@@ -95,7 +111,7 @@ class SchemaModel {
       body = [body];
     }
 
-    if (this.schema.extends.includes('timestamps')) {
+    if (this.schema.extends && this.schema.extends.includes('timestamps')) {
       body.push({
         path: 'updatedAt',
         value: new Date(),
@@ -124,7 +140,6 @@ class SchemaModel {
    * @param {App} company - Company object to be deleted
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
-  // NOTE: Convert away from Mongoose
   rm(entity) {
     Logging.log(`DELETING: ${entity._id}`, Logging.Constants.LogLevel.DEBUG);
     return new Promise(resolve => {
@@ -139,29 +154,67 @@ class SchemaModel {
    * @param {Array} ids - Array of company ids to delete
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
-  // NOTE: Convert away from Mongoose
   rmBulk(ids) {
     Logging.log(`DELETING: ${ids}`, Logging.Constants.LogLevel.SILLY);
-    // return ModelDef.remove({_id: {$in: ids}}).exec();
+    return this.rmAll({_id: {$in: ids}});
   }
 
   /*
+   * @param {Object} query - mongoDB query
    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
    */
-  // NOTE: Convert away from Mongoose
-  rmAll() {
-    // return ModelDef.remove({});
+  rmAll(query) {
+    if (!query) query = {};
+
+    return new Promise(resolve => {
+      this.collection.remove(query, (err, doc) => {
+        if (err) throw err;
+        resolve(doc);
+      });
+    });
   }
 
   /**
    * @param {String} id - company id to get
    * @return {Promise} - resolves to an array of Companies
    */
-  getById(id) {
+  findById(id) {
     return new Promise(resolve => {
       this.collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
         if (err) throw err;
         resolve(doc);
+      });
+    });
+  }
+
+  /**
+   * @param {Object} query - mongoDB query
+   * @param {Object} excludes - mongoDB query excludes
+   * @return {Promise} - resolves to an array of docs
+   */
+  find(query, excludes = {}) {
+    Logging.logSilly(`find: `);
+
+    return new Promise(resolve => {
+      this.collection.find(query, excludes, (err, doc) => {
+        if (err) throw err;
+        resolve(doc);
+      });
+    });
+  }
+
+  /**
+   * @param {Object} query - mongoDB query
+   * @param {Object} excludes - mongoDB query excludes
+   * @return {Promise} - resolves to an array of docs
+   */
+  findOne(query, excludes = {}) {
+    Logging.logSilly(`findOne: ${query}`);
+
+    return new Promise(resolve => {
+      this.collection.find(query, excludes).toArray((err, doc) => {
+        if (err) throw err;
+        resolve(doc[0]);
       });
     });
   }

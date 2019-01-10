@@ -31,7 +31,6 @@
     "less": "~2.7.x",
     "method-override": "~2.3.x",
     "mongodb": "^2.x.x",
-    "mongoose": "^4.x.x",
     "morgan": "~1.7.x",
     "node-env-obj": "^0.1.0",
     "node-redis-pubsub": "^1.0.2",

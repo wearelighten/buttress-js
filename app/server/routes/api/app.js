@@ -97,7 +97,7 @@ class AddApp extends Route {
         reject({statusCode: 400});
         return;
       }
-      if (this.req.body.type === Model.Constants.App.Type.Browser && !this.req.body.domain) {
+      if (this.req.body.type === Model.App.Constants.Type.Browser && !this.req.body.domain) {
         this.log('ERROR: Missing required field', Route.LogLevel.ERR);
         reject({statusCode: 400});
         return;
@@ -109,14 +109,14 @@ class AddApp extends Route {
             this.req.body.permissions = JSON.stringify([]);
             Logging.logDebug('Creating default permissions');
             break;
-          case Model.Constants.Token.AuthLevel.SUPER: {
+          case Model.Token.Constants.AuthLevel.SUPER: {
             let permissions = [
               {route: '*', permission: '*'}
             ];
             this.req.body.permissions = JSON.stringify(permissions);
             Logging.logDebug('Creating default SUPER permissions');
           } break;
-          case Model.Constants.Token.AuthLevel.ADMIN: {
+          case Model.Token.Constants.AuthLevel.ADMIN: {
             let permissions = [
               {route: 'org/*', permission: '*'},
               {route: 'group/*', permission: '*'},
@@ -365,9 +365,6 @@ class GetAppSchema extends Route {
     this.verb = Route.Constants.Verbs.GET;
     this.auth = Route.Constants.Auth.USER;
     this.permissions = Route.Constants.Permissions.READ;
-
-    this._app = false;
-    this._schema = null;
   }
 
   _validate() {
@@ -377,21 +374,18 @@ class GetAppSchema extends Route {
         reject({statusCode: 400, message: 'No authenticated app'});
         return;
       }
-      // console.log(this.req.authApp.__schema);
       if (!this.req.authApp.__schema) {
         this.log('ERROR: No app schema defined', Route.LogLevel.ERR);
         reject({statusCode: 400, message: 'No authenticated app schema'});
         return;
       }
 
-      this._schmea = Schema.buildCollections(this.req.authApp.__schema);
-
-      resolve(true);
+      resolve(Schema.buildCollections(this.req.authApp.__schema));
     });
   }
 
-  _exec() {
-    return this._schmea;
+  _exec(schema) {
+    return schema;
   }
 }
 routes.push(GetAppSchema);
@@ -405,27 +399,22 @@ class UpdateAppSchema extends Route {
     this.verb = Route.Constants.Verbs.PUT;
     this.auth = Route.Constants.Auth.ADMIN;
     this.permissions = Route.Constants.Permissions.WRITE;
-
-    this._app = false;
   }
 
   _validate() {
     return new Promise((resolve, reject) => {
-      Model.App.findById(this.req.authApp._id).then(app => {
-        if (!app) {
-          this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
+      if (!this.req.authApp) {
+        this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
+        reject({statusCode: 400, message: 'No authenticated app'});
+        return;
+      }
 
-        this._app = app;
-        resolve(true);
-      });
+      resolve(true);
     });
   }
 
   _exec() {
-    return this._app.updateSchema(this.req.body);
+    return Model.App.updateSchema(this.req.authApp._id, this.req.body).then(res => true);
   }
 }
 routes.push(UpdateAppSchema);

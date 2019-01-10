@@ -58,7 +58,7 @@ class Model {
   initSchema(db) {
     if (db) this.mongoDb = db;
 
-    return this.Schema.App.statics.findAll().toArray()
+    return this.models.App.findAll().toArray()
     .then(apps => {
       apps.forEach(app => {
         if (app.__schema) {
@@ -76,13 +76,18 @@ class Model {
 
   /**
    * @param {string} model - demand loads the schema
+   * @return {object} SchemaModel - initiated schema model built from passed schema object
    * @private
    */
   _initModel(model) {
-    this.__defineGetter__(model, () => this._require(model).model);
-    this.Schema.__defineGetter__(model, () => this._require(model).schema);
-    this.Constants.__defineGetter__(model, () => this._require(model).constants);
-    this._require(model);
+    const CoreSchemaModel = require(`./schema/${model.toLowerCase()}`);
+
+    if (!this.models[model]) {
+      this.models[model] = new CoreSchemaModel(this.mongoDb);
+    }
+
+    this.__defineGetter__(model, () => this.models[model]);
+    return this.models[model];
   }
 
   /**
@@ -101,14 +106,6 @@ class Model {
     this.__defineGetter__(name, () => this.models[name]);
     return this.models[name];
   }
-
-  _require(model) {
-    if (!this.models[model]) {
-      this.models[model] = require(`./schema/${model.toLowerCase()}`);
-    }
-    return this.models[model];
-  }
-
 }
 
 /**

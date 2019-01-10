@@ -55,7 +55,9 @@ class DeleteAllTokens extends Route {
   }
 
   _exec() {
-    return Model.Token.rmAll(this.req.params.type).then(() => true);
+    return Model.Token.rmAll({
+      type: this.req.params.type
+    }).then(() => true);
   }
 }
 routes.push(DeleteAllTokens);

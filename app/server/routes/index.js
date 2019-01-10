@@ -71,7 +71,7 @@ function _initSchemaRoutes(express, app, schema) {
             res.set('Content-Type', 'application/json');
             result.stream().pipe(stringifyStream).pipe(res);
           } else {
-            res.json(result);
+            res.json(Helpers.prepareResult(result));
           }
           Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
           Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
@@ -114,25 +114,27 @@ function _authenticateToken(req, res, next) {
           return;
         }
 
-        Model.token = req.token = token.details;
-        Model.authApp = req.authApp = token._app;
-        Model.authUser = req.authUser = token._user;
+        Model.token = req.token = token;
 
-        Model.Token.update({_id: token.id}, {$push: {
+        Model.Token.collection.update({_id: token._id}, {$push: {
           uses: new Date()
         }});
 
-        resolve();
+        resolve(token);
       });
     })
-    .then(() => Model.authApp.getToken())
-    .then(appToken => {
-      Model.authAppToken = req.authAppToken = appToken;
+    .then(token => Model.App.findById(req.token._app))
+    .then(app => {
+      Model.authApp = req.authApp = app;
+    })
+    .then(token => Model.User.findById(req.token._user))
+    .then(user => {
+      Model.authUser = req.authUser = user;
     })
     .then(Helpers.Promise.inject())
     .then(next)
-    .catch(() => {
-      // Logging.logError(err);
+    .catch(err => {
+      Logging.logError(err);
       res.status(503);
       res.end();
       return;
@@ -156,7 +158,7 @@ function _getToken(req) {
   }
 
   return new Promise(resolve => {
-    Model.Token.findAllNative()
+    Model.Token.findAll().toArray()
       .then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
       .then(tokens => {
         Logging.logDebug(`_getToken:Load: ${req.timer.interval.toFixed(3)}`);
@@ -184,7 +186,7 @@ function _lookupToken(tokens, value) {
  * @private
  */
 function _loadTokens() {
-  return Model.Token.findAllNative()
+  return Model.Token.findAll().toArray()
     .then(tokens => {
       _tokens = tokens;
     });
@@ -202,13 +204,14 @@ function _configCrossDomain(req, res, next) {
     res.status(401).json({message: 'Auth token is required'});
     return;
   }
-  if (req.token.type !== Model.Constants.Token.Type.USER) {
+  if (req.token.type !== Model.Token.Constants.Type.USER) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'content-type');
     next();
     return;
   }
+  console.log(req.authUser);
   if (!req.authUser) {
     res.status(401).json({message: 'Auth user is required'});
     return;

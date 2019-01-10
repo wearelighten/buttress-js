@@ -34,7 +34,8 @@ Error.stackTraceLimit = Infinity;
  *
  *
  **********************************************************************************/
-const processes = os.cpus().length;
+// const processes = os.cpus().length;
+const processes = 1;
 const _workers = [];
 
 /* ********************************************************************************
@@ -62,36 +63,39 @@ const __spawnWorkers = () => {
 const __systemInstall = () => {
   let isInstalled = false;
 
-  return Model.App.find({})
+  Logging.log('Checking for existing apps.');
+
+  return Model.App.findAll().toArray()
   .then(apps => {
     if (apps.length > 0) {
       isInstalled = true;
+      Logging.log('Existing apps found - Skipping install.');
       return {app: apps[0], token: null}; // If any apps, assume we've got a Super Admin app
     }
+
+    Logging.log('No apps found - Creating super app.');
     return Model.App.add({
-      name: 'ButrressJS ADMIN',
-      type: Model.Constants.App.Type.SERVER,
-      authLevel: Model.Constants.Token.AuthLevel.SUPER,
+      name: `${Config.app.title} ADMIN`,
+      type: Model.App.Constants.Type.SERVER,
+      authLevel: Model.Token.Constants.AuthLevel.SUPER,
       permissions: [{route: '*', permission: '*'}],
       domain: ''
     });
   })
   .then(res => {
     if (isInstalled) {
-      Logging.logSilly('APP EXISTED');
       return res.app;
     }
-    Logging.logDebug('APP ADDED');
-    Logging.logDebug(res.app.id);
+
+    const pathName = path.join(Config.paths.appData, 'super.json');
+    Logging.log(`Super app created: ${res.app.id}`);
     return new Promise((resolve, reject) => {
-      let pathName = path.join(Config.paths.appData, 'super.json');
-      let app = Object.assign(res.app.details, {token: res.token.value});
+      let app = Object.assign(res.app, {token: res.token.value});
       fs.writeFile(pathName, JSON.stringify(app), err => {
         if (err) {
           return reject(err);
         }
-        Logging.logVerbose(`Written ${pathName}`);
-        Logging.logSilly(app);
+        Logging.log(`Created ${pathName}`);
 
         resolve(res.app);
       });
@@ -211,7 +215,7 @@ const __initMaster = () => {
 
   p.then(__spawnWorkers);
 
-  return Promise.resolve();
+  return p;
 };
 
 /**

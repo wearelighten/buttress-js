@@ -84,7 +84,7 @@ class Route {
     this.auth = Constants.Auth.SUPER;
     this.permissions = Constants.Permissions.READ;
     this.activityBroadcast = false;
-    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+    this.activityVisibility = Model.Activity.Constants.Visibility.PRIVATE;
     this.activityTitle = 'Private Activity';
     this.activityDescription = '';
 
@@ -113,12 +113,12 @@ class Route {
       this._authenticate()
         .then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
         .then(Logging.Promise.logSilly('authenticated'))
-        .then(_.bind(this._validate, this), reject)
+        .then(token => this._validate(token), reject)
         .then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
         .then(Logging.Promise.logSilly('validated'))
-        .then(_.bind(this._exec, this), reject)
+        .then(validate => this._exec(validate), reject)
         .then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
-        .then(_.bind(this._logActivity, this))
+        .then(res => this._logActivity(res), reject)
         .then(resolve, reject)
         .catch(Logging.Promise.logError());
     });
@@ -142,7 +142,7 @@ class Route {
 
     let broadcast = () => {
       if (res) {
-        const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.authAppToken.value);
+        const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.token.value);
         this._activityBroadcastSocket({
           title: this.activityTitle,
           description: this.activityDescription,

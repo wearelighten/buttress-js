@@ -39,25 +39,38 @@ class Timer {
 
 module.exports.Timer = Timer;
 
-module.exports.prepareResult = result => {
+const __prepareResult = result => {
   const prepare = chunk => {
+    if (!chunk) return chunk;
+
     if (chunk._id) {
       chunk.id = chunk._id;
-      delete chunk._id;
     }
     if (chunk._app) {
       chunk.appId = chunk._app;
-      delete chunk._app;
     }
     if (chunk._user) {
       chunk.userId = chunk._user;
-      delete chunk._user;
     }
+
+    // Crappy func to stop private/protected data from escaping to the wild
+    // This needs a review!!
+    if (typeof chunk === 'object') {
+      Object.keys(chunk).forEach(key => {
+        if (key.indexOf('_') !== -1) {
+          return delete chunk[key];
+        }
+
+        chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map(c => prepare(c)) : prepare(chunk[key]);
+      });
+    }
+
     return chunk;
   };
 
   return (Array.isArray(result)) ? result.map(c => prepare(c)) : prepare(result);
 };
+module.exports.prepareResult = __prepareResult;
 
 class JSONStringifyStream extends Transform {
   constructor(options) {
@@ -90,15 +103,7 @@ class JSONStringifyStream extends Transform {
       return value;
     };
 
-    if (chunk._id) {
-      chunk.id = chunk._id;
-    }
-    if (chunk._app) {
-      chunk.appId = chunk._app;
-    }
-    if (chunk._user) {
-      chunk.userId = chunk._user;
-    }
+    chunk = __prepareResult(chunk);
 
     const str = JSON.stringify(chunk, __replacer);
 
@@ -166,4 +171,4 @@ module.exports.ShortId = id => {
   output = output.slice(3);
 
   return output;
-}
+};

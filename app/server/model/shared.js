@@ -15,7 +15,6 @@ const Logging = require('../logging');
 const Model = require('./index');
 const ObjectId = require('mongodb').ObjectId;
 const Sugar = require('sugar');
-const mongoose = require('mongoose');
 
 /* ********************************************************************************
  *
@@ -119,7 +118,7 @@ const __getFlattenedSchema = schema => {
 
 const __getFlattenedBody = body => {
   const __buildFlattenedBody = (property, parent, path, flattened) => {
-    // if (/^__/.test(property)) continue; // ignore internals
+    if (/^_/.test(property)) return; // ignore internals
     path.push(property);
 
     if (typeof parent[property] !== 'object' || parent[property] instanceof Date || Array.isArray(parent[property]) || parent[property] === null) {
@@ -168,7 +167,7 @@ const __getPropDefault = config => {
       res = config.__default === undefined ? [] : config.__default;
       break;
     case 'object':
-      res = config.__default === undefined ? (new ObjectId()).toHexString() : config.__default;
+      res = config.__default === undefined ? {} : config.__default;
       break;
     case 'id':
       res = config.__default === undefined ? null : config.__default;
@@ -224,7 +223,7 @@ const __validateProp = (prop, config) => {
     case 'id':
       if (type === 'string') {
         try {
-          prop.value = mongoose.Types.ObjectId(prop.value); // eslint-disable-line new-cap
+          prop.value = ObjectId(prop.value); // eslint-disable-line new-cap
         } catch (e) {
           valid = false;
           return;
@@ -279,21 +278,18 @@ const __validate = (schema, values, parentProperty) => {
     const config = schema[property];
 
     if (propVal === undefined) {
+      if (config.__required) {
+        res.isValid = false;
+        Logging.logWarn(`Missing required ${property}`);
+        res.missing.push(property);
+        continue;
+      }
+
       propVal = {
         path: property,
         value: __getPropDefault(config)
       };
       values.push(propVal);
-      // console.log(propVal);
-    }
-
-    if (propVal === undefined) {
-      if (config.__required) {
-        res.isValid = false;
-        Logging.logWarn(`Missing '__require'd ${property}`);
-        res.missing.push(property);
-      }
-      continue;
     }
 
     if (!__validateProp(propVal, config)) {
