@@ -23,7 +23,7 @@ const Logging = require('../../logging');
 const type = ['app', 'user'];
 const Type = {
 	APP: type[0],
-	USER: type[1]
+	USER: type[1],
 };
 
 const authLevel = [0, 1, 2, 3];
@@ -31,7 +31,7 @@ const AuthLevel = {
 	NONE: 0,
 	USER: 1,
 	ADMIN: 2,
-	SUPER: 3
+	SUPER: 3,
 };
 
 class TokenSchemaModel extends SchemaModel {
@@ -43,7 +43,7 @@ class TokenSchemaModel extends SchemaModel {
 	static get Constants() {
 		return {
 			Type: Type,
-			AuthLevel: AuthLevel
+			AuthLevel: AuthLevel,
 		};
 	}
 	get Constants() {
@@ -61,24 +61,24 @@ class TokenSchemaModel extends SchemaModel {
 					__type: 'string',
 					__default: 'user',
 					__enum: type,
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				value: {
 					__type: 'string',
 					__default: '',
 					__required: true,
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				domains: {
 					__type: 'array',
 					__required: true,
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				authLevel: {
 					__type: 'number',
 					__default: 1,
 					__enum: authLevel,
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				permissions: {
 					__type: 'array',
@@ -88,37 +88,37 @@ class TokenSchemaModel extends SchemaModel {
 						route: {
 							__type: 'string',
 							__required: true,
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						permission: {
 							__type: 'string',
 							__required: true,
-							__allowUpdate: true
-						}
-					}
+							__allowUpdate: true,
+						},
+					},
 				},
 				uses: {
 					__type: 'array',
 					__required: true,
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				allocated: {
 					__type: Boolean,
 					__default: false,
 					__required: true,
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				_app: {
 					__type: 'id',
 					__required: true,
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				_user: {
 					__type: 'id',
 					__required: true,
-					__allowUpdate: false
-				}
-			}
+					__allowUpdate: false,
+				},
+			},
 		};
 	}
 
@@ -128,14 +128,14 @@ class TokenSchemaModel extends SchemaModel {
 	 */
 	_createTokenString() {
 		const length = 36;
-		var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		var mask = 0x3d;
-		var string = '';
+		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		const mask = 0x3d;
+		let string = '';
 
 		try {
-			var bytes = Crypto.randomBytes(length);
-			for (var x = 0; x < bytes.length; x++) {
-				var byte = bytes[x];
+			const bytes = Crypto.randomBytes(length);
+			for (let x = 0; x < bytes.length; x++) {
+				const byte = bytes[x];
 				string += chars[byte & mask];
 			}
 		} catch (err) {
@@ -165,7 +165,7 @@ class TokenSchemaModel extends SchemaModel {
 		Logging.log(route, Logging.Constants.LogLevel.DEBUG);
 		Logging.log(permission, Logging.Constants.LogLevel.DEBUG);
 
-		var exists = this.permissions.find(p => p.route === route);
+		const exists = this.permissions.find((p) => p.route === route);
 		if (exists) {
 			exists.permission = permission;
 		} else {
@@ -180,11 +180,11 @@ class TokenSchemaModel extends SchemaModel {
 	 * @return {Promise} - resolves to an array of Tokens
 	 */
 	findUserAuthToken(userId, appId) {
-		return new Promise(resolve => {
+		return new Promise((resolve) => {
 			this.collection.findOne({
 				allocated: true,
 				_app: appId,
-				_user: userId
+				_user: userId,
 			}, {}, (err, doc) => {
 				if (err) throw err;
 				resolve(doc);

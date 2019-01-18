@@ -15,7 +15,7 @@ const Route = require('./route');
 const Model = require('../model');
 // const Helpers = require('../../helpers');
 
-let routes = [];
+const routes = [];
 
 /**
  * @class GetList
@@ -61,7 +61,7 @@ class GetOne extends Route {
 	_validate() {
 		return new Promise((resolve, reject) => {
 			this.model.findById(this.req.params.id)
-				.then(entity => {
+				.then((entity) => {
 					if (!entity) {
 						this.log(`${this.schema.name}: Invalid ID: ${this.req.params.id}`, Route.LogLevel.ERR);
 						reject({statusCode: 400});
@@ -137,7 +137,7 @@ class AddOne extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			let validation = this.model.validate(this.req.body);
+			const validation = this.model.validate(this.req.body);
 			if (!validation.isValid) {
 				if (validation.missing.length > 0) {
 					this.log(`${this.schema.name}: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
@@ -156,7 +156,7 @@ class AddOne extends Route {
 			}
 
 			this.model.isDuplicate(this.req.body)
-				.then(res => {
+				.then((res) => {
 					if (res === true) {
 						this.log(`${this.schema.name}: Duplicate entity`, Route.LogLevel.ERR);
 						reject({statusCode: 400});
@@ -204,7 +204,7 @@ class AddMany extends Route {
 			//   return;
 			// }
 
-			let validation = this.model.validate(entities);
+			const validation = this.model.validate(entities);
 			if (!validation.isValid) {
 				if (validation.missing.length > 0) {
 					this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
@@ -253,13 +253,13 @@ class UpdateOne extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			let validation = this.model.validateUpdate(this.req.body);
+			const validation = this.model.validateUpdate(this.req.body);
 			if (!validation.isValid) {
 				if (validation.isPathValid === false) {
 					this.log(`${this.schema.name}: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
 					reject({
 						statusCode: 400,
-						message: `${this.schema.name}: Update path is invalid: ${validation.invalidPath}`
+						message: `${this.schema.name}: Update path is invalid: ${validation.invalidPath}`,
 					});
 					return;
 				}
@@ -268,12 +268,12 @@ class UpdateOne extends Route {
 					if (validation.isMissingRequired) {
 						reject({
 							statusCode: 400,
-							message: `${this.schema.name}: Missing required property updating ${this.req.body.path}: ${validation.missingRequired}`
+							message: `${this.schema.name}: Missing required property updating ${this.req.body.path}: ${validation.missingRequired}`,
 						});
 					} else {
 						reject({
 							statusCode: 400,
-							message: `${this.schema.name}: Update value is invalid for path ${this.req.body.path}: ${validation.invalidValue}`
+							message: `${this.schema.name}: Update value is invalid for path ${this.req.body.path}: ${validation.invalidValue}`,
 						});
 					}
 					return;
@@ -281,7 +281,7 @@ class UpdateOne extends Route {
 			}
 
 			this.model.exists(this.req.params.id)
-				.then(exists => {
+				.then((exists) => {
 					if (!exists) {
 						this.log('ERROR: Invalid ID', Route.LogLevel.ERR);
 						reject({statusCode: 400});
@@ -319,7 +319,7 @@ class DeleteOne extends Route {
 
 	_validate() {
 		return this.model.findById(this.req.params.id)
-			.then(entity => {
+			.then((entity) => {
 				if (!entity) {
 					this.log(`${this.schema.name}: Invalid ID`, Route.LogLevel.ERR);
 					return {statusCode: 400};

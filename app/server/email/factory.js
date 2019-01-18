@@ -30,13 +30,13 @@ class Factory {
 	create(params) {
 		return new Promise((resolve, reject) => {
 			this._getCss(params)
-				.then(css => {
+				.then((css) => {
 					return this._getHtml(params, css);
 				})
-				.then(combined => {
-					var email = {
+				.then((combined) => {
+					const email = {
 						html: juice(combined.html, combined.css),
-						subject: params.subject
+						subject: params.subject,
 					};
 					resolve(email);
 				})
@@ -55,11 +55,11 @@ class Factory {
 	 * @private
 	 */
 	_getHtml(params, css) {
-		var templatePathName = path.join(params.app.templatePath, `${params.template}.pug`);
+		const templatePathName = path.join(params.app.templatePath, `${params.template}.pug`);
 		params.style = css;
 
 		if (this.parsers[templatePathName]) {
-			var html = this.parsers[templatePathName](params);
+			const html = this.parsers[templatePathName](params);
 			return Promise.resolve({html: html, css: css});
 		}
 
@@ -75,11 +75,11 @@ class Factory {
 				}
 
 				Logging.log(input.toString(), Logging.Constants.LogLevel.SILLY);
-				var html = false;
+				let html = false;
 				try {
-					var options = {
+					const options = {
 						filename: templatePathName,
-						basedir: path.join(__dirname, 'templates')
+						basedir: path.join(__dirname, 'templates'),
 					};
 					Logging.log(options, Logging.Constants.LogLevel.SILLY);
 
@@ -107,7 +107,7 @@ class Factory {
 		Logging.log('Compiling LESS', Logging.Constants.LogLevel.DEBUG);
 
 		return new Promise((resolve, reject) => {
-			var pathName = path.join(__dirname, 'styles', 'style.less');
+			const pathName = path.join(__dirname, 'styles', 'style.less');
 			Logging.log(pathName, Logging.Constants.LogLevel.DEBUG);
 			fs.readFile(pathName, (err, input) => {
 				if (err) {
@@ -119,13 +119,13 @@ class Factory {
 				Logging.log(input.toString(), Logging.Constants.LogLevel.SILLY);
 
 				less.render(input.toString(), {filename: 'style.less', paths: [path.join(__dirname, 'styles')]})
-					.then(output => {
+					.then((output) => {
 						Logging.log('Compiled LESS', Logging.Constants.LogLevel.DEBUG);
 						Logging.log(output.css, Logging.Constants.LogLevel.SILLY);
 						this.css = output.css;
 						resolve(this.css);
 					})
-					.catch(err => {
+					.catch((err) => {
 						Logging.log(pathName, Logging.Constants.LogLevel.ERR);
 						Logging.log(err.message, Logging.Constants.LogLevel.ERR);
 						Logging.log(`${err.line}:${err.column} - ${err.extract}`, Logging.Constants.LogLevel.ERR);

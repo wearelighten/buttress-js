@@ -10,12 +10,12 @@
  *
  */
 
-var Route = require('../route');
-var Model = require('../../model');
+const Route = require('../route');
+const Model = require('../../model');
 // var Logging = require('../../logging');
 // var Helpers = require('../../helpers');
 
-var routes = [];
+const routes = [];
 
 /**
  * @class GetTokenList
@@ -34,7 +34,7 @@ class GetTokenList extends Route {
 
 	_exec() {
 		return Model.Token.getAll()
-			.then(tokens => tokens.map(t => t.details));
+			.then((tokens) => tokens.map((t) => t.details));
 	}
 }
 routes.push(GetTokenList);
@@ -56,7 +56,7 @@ class DeleteAllTokens extends Route {
 
 	_exec() {
 		return Model.Token.rmAll({
-			type: this.req.params.type
+			type: this.req.params.type,
 		}).then(() => true);
 	}
 }

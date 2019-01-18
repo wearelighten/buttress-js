@@ -17,7 +17,7 @@ const cluster = require('cluster');
 const proxyquire = require('proxyquire');
 const winston = require('winston');
 proxyquire('winston-logrotate', {
-	winston: winston
+	winston: winston,
 });
 const Config = require('node-env-obj')('../');
 
@@ -32,34 +32,35 @@ const LogLevel = {
 	VERBOSE: 'verbose',
 	DEBUG: 'debug',
 	SILLY: 'silly',
-	DEFAULT: 'info'
+	DEFAULT: 'info',
 };
 
 module.exports.Constants = {
-	LogLevel: LogLevel
+	LogLevel: LogLevel,
 };
 
 let _logApp = 'app';
 let _logLabel = '';
-module.exports.setLogApp = app => {
+const setLogApp = (app) => {
 	_logApp = app;
 	if (cluster.isWorker) {
 		_logLabel = `${cluster.worker.id}`;
 	}
 };
+module.exports.setLogApp = setLogApp;
 
 /**
  * @param {String} logApp - Log applcation label (rest / socket)
  */
-module.exports.init = logApp => {
-	this.setLogApp(logApp);
+module.exports.init = (logApp) => {
+	setLogApp(logApp);
 
 	winston.remove(winston.transports.Console);
 	winston.add(winston.transports.Console, {
 		name: 'console',
 		colorize: 'all',
 		timestamp: true,
-		level: 'info'
+		level: 'info',
 	});
 
 	winston.add(winston.transports.Rotate, {
@@ -70,7 +71,7 @@ module.exports.init = logApp => {
 		size: '1m',
 		keep: 2,
 		colorize: 'all',
-		timestamp: true
+		timestamp: true,
 	});
 	winston.add(winston.transports.Rotate, {
 		name: 'info-file',
@@ -80,7 +81,7 @@ module.exports.init = logApp => {
 		keep: 5,
 		colorize: 'all',
 		level: 'info',
-		timestamp: true
+		timestamp: true,
 	});
 	winston.add(winston.transports.Rotate, {
 		name: 'error-file',
@@ -90,7 +91,7 @@ module.exports.init = logApp => {
 		keep: 10,
 		level: 'error',
 		colorize: 'none',
-		timestamp: true
+		timestamp: true,
 	});
 	winston.add(winston.transports.Rotate, {
 		name: 'silly-file',
@@ -100,14 +101,14 @@ module.exports.init = logApp => {
 		size: '1m',
 		keep: 1,
 		colorize: 'all',
-		timestamp: true
+		timestamp: true,
 	});
 	winston.addColors({
 		info: 'white',
 		error: 'red',
 		warn: 'yellow',
 		verbose: 'white',
-		debug: 'white'
+		debug: 'white',
 	});
 };
 
@@ -130,7 +131,7 @@ function _log(log, level) {
  * STANDARD LOGGING
  */
 
-module.exports.setLogLevel = level => {
+module.exports.setLogLevel = (level) => {
 	winston.level = level;
 	// _logLevel = level;
 };
@@ -147,34 +148,34 @@ module.exports.log = (log, level) => {
 /**
  * @param {string} log - Text to log
  */
-module.exports.logVerbose = log => {
+module.exports.logVerbose = (log) => {
 	module.exports.log(log, LogLevel.VERBOSE);
 };
 
 /**
  * @param {string} log - Text to log
  */
-module.exports.logDebug = log => {
+module.exports.logDebug = (log) => {
 	module.exports.log(log, LogLevel.DEBUG);
 };
 
 /**
  * @param {string} log - Text to log
  */
-module.exports.logSilly = log => {
+module.exports.logSilly = (log) => {
 	module.exports.log(log, LogLevel.SILLY);
 };
 
 /**
  * @param {string} warn - warning to log
  */
-module.exports.logWarn = warn => {
+module.exports.logWarn = (warn) => {
 	_log(warn, LogLevel.WARN);
 };
 /**
  * @param {string} err - error object to log
  */
-module.exports.logError = err => {
+module.exports.logError = (err) => {
 	_log(err.message, LogLevel.ERR);
 	_log(err.stack, LogLevel.ERR);
 };
@@ -195,7 +196,7 @@ module.exports.logTimer = (log, timer, level) => {
  * @param {string} time - time above which to log the exception
  */
 module.exports.logTimerException = (log, timer, time) => {
-	let level = LogLevel.ERR;
+	const level = LogLevel.ERR;
 	if (timer.interval > time) {
 		_log(`${log} ${timer.interval.toFixed(3)}s`, level);
 	}
@@ -214,7 +215,7 @@ module.exports.Promise = {};
  */
 module.exports.Promise.log = (log, level) => {
 	level = level || LogLevel.DEFAULT;
-	return res => {
+	return (res) => {
 		if (res instanceof Object) {
 			_log(`${log}:`, level);
 			_log(res.toObject ? res.toObject() : res, level);
@@ -233,7 +234,7 @@ module.exports.Promise.log = (log, level) => {
  */
 module.exports.Promise.logIf = (log, val, level) => {
 	level = level || LogLevel.DEFAULT;
-	return res => {
+	return (res) => {
 		if (val === res) {
 			_log(`${log}: ${res}`, level);
 		}
@@ -249,7 +250,7 @@ module.exports.Promise.logIf = (log, val, level) => {
  */
 module.exports.Promise.logIfNot = (log, val, level) => {
 	level = level || LogLevel.DEFAULT;
-	return res => {
+	return (res) => {
 		if (val !== res) {
 			_log(`${log}: ${res}`, level);
 		}
@@ -269,7 +270,7 @@ module.exports.Promise.logIfNot = (log, val, level) => {
  */
 module.exports.Promise.logProp = (log, prop, level) => {
 	level = level || LogLevel.DEFAULT;
-	return res => {
+	return (res) => {
 		_log(`${log}: ${res[prop]}`, level);
 		return res;
 	};
@@ -284,7 +285,7 @@ module.exports.Promise.logProp = (log, prop, level) => {
  */
 module.exports.Promise.logPropIf = (log, prop, val, level) => {
 	level = level || LogLevel.DEFAULT;
-	return res => {
+	return (res) => {
 		if (val === res[prop]) {
 			_log(`${log}: ${res[prop]}`, level);
 		}
@@ -301,7 +302,7 @@ module.exports.Promise.logPropIf = (log, prop, val, level) => {
  */
 module.exports.Promise.logPropIfNot = (log, prop, val, level) => {
 	level = level || LogLevel.DEFAULT;
-	return res => {
+	return (res) => {
 		if (val !== res[prop]) {
 			_log(`${log}: ${res[prop]}`, level);
 		}
@@ -320,9 +321,9 @@ module.exports.Promise.logPropIfNot = (log, prop, val, level) => {
  */
 module.exports.Promise.logArray = (log, level) => {
 	level = level || LogLevel.DEFAULT;
-	return res => {
+	return (res) => {
 		_log(`${log}: ${res.length}`, level);
-		res.forEach(r => {
+		res.forEach((r) => {
 			_log(r);
 		});
 		return res;
@@ -337,9 +338,9 @@ module.exports.Promise.logArray = (log, level) => {
  */
 module.exports.Promise.logArrayProp = (log, prop, level) => {
 	level = level || LogLevel.DEFAULT;
-	return res => {
+	return (res) => {
 		_log(`${log}: ${res.length}`, level);
-		res.forEach(r => {
+		res.forEach((r) => {
 			_log(r[prop]);
 		});
 		return res;
@@ -351,7 +352,7 @@ module.exports.Promise.logArrayProp = (log, prop, level) => {
  */
 module.exports.Promise.logError = () => {
 	const level = LogLevel.ERR;
-	return err => {
+	return (err) => {
 		_log(err.message, level);
 		_log(err.stack, level);
 		return err;
@@ -362,7 +363,7 @@ module.exports.Promise.logError = () => {
  * @param {string} log - Text to log
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.Promise.logInfo = log => {
+module.exports.Promise.logInfo = (log) => {
 	const level = LogLevel.INFO;
 	return module.exports.Promise.log(log, level);
 };
@@ -371,7 +372,7 @@ module.exports.Promise.logInfo = log => {
  * @param {string} log - Text to log
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.Promise.logVerbose = log => {
+module.exports.Promise.logVerbose = (log) => {
 	const level = LogLevel.VERBOSE;
 	return module.exports.Promise.log(log, level);
 };
@@ -380,7 +381,7 @@ module.exports.Promise.logVerbose = log => {
  * @param {string} log - Text to log
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.Promise.logDebug = log => {
+module.exports.Promise.logDebug = (log) => {
 	const level = LogLevel.DEBUG;
 	return module.exports.Promise.log(log, level);
 };
@@ -389,7 +390,7 @@ module.exports.Promise.logDebug = log => {
  * @param {string} log - Text to log
  * @return {function(*)} - returns a function for chaining into a promise
  */
-module.exports.Promise.logSilly = log => {
+module.exports.Promise.logSilly = (log) => {
 	const level = LogLevel.SILLY;
 	return module.exports.Promise.log(log, level);
 };
@@ -402,7 +403,7 @@ module.exports.Promise.logSilly = log => {
  */
 module.exports.Promise.logTimer = (log, timer, level) => {
 	level = level || LogLevel.INFO;
-	return res => {
+	return (res) => {
 		_log(`${log} [${timer.lapTime.toFixed(6)}s] [${timer.interval.toFixed(6)}s]`, level);
 		return res;
 	};
@@ -415,8 +416,8 @@ module.exports.Promise.logTimer = (log, timer, level) => {
  * @return {function(*)} - returns a function for chaining into a promise
  */
 module.exports.Promise.logTimerException = (log, timer, time) => {
-	let level = LogLevel.ERR;
-	return res => {
+	const level = LogLevel.ERR;
+	return (res) => {
 		if (timer.interval > time) {
 			_log(`${log} ${timer.interval.toFixed(3)}s`, level);
 		}

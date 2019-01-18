@@ -21,7 +21,7 @@ const Logging = require('./logging');
 Logging.init('rest');
 
 Bootstrap.rest()
-	.then(isMaster => {
+	.then((isMaster) => {
 		if (isMaster) {
 			Logging.log(`${Config.app.title}:${Config.app.code} REST Server Master v${Config.app.version} listening on port ` +
 				`${Config.listenPorts.rest} in ${Config.env} mode.`);

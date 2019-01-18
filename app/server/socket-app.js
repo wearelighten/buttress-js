@@ -22,7 +22,7 @@ Logging.init('socket');
 
 Bootstrap
 	.socket()
-	.then(isMaster => {
+	.then((isMaster) => {
 		if (isMaster) {
 			Logging.log(`${Config.app.title} Socket Master v${Config.app.version} listening on port ` +
 				`${Config.listenPorts.sock} in ${Config.env} mode.`);

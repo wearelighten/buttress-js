@@ -58,7 +58,7 @@ class GetActivity extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.Activity.findById(this.req.params.id).then(activity => {
+			Model.Activity.findById(this.req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -112,7 +112,7 @@ class AddActivityMetadata extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			Model.Activity.findById(this.req.params.id).then(activity => {
+			Model.Activity.findById(this.req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -154,7 +154,7 @@ class UpdateActivityMetadata extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			Model.Activity.findById(this.req.params.id).then(activity => {
+			Model.Activity.findById(this.req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -200,7 +200,7 @@ class GetActivityMetadata extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			Model.Activity.findById(this.req.params.id).then(activity => {
+			Model.Activity.findById(this.req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -241,7 +241,7 @@ class DeleteActivityMetadata extends Route {
 		return new Promise((resolve, reject) => {
 			Model.Activity
 				.findById(this.req.params.id).select('id')
-				.then(activity => {
+				.then((activity) => {
 					if (!activity) {
 						this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
 						reject({statusCode: 400, message: `Invalid Activity ID: ${this.req.params.id}`});
@@ -249,7 +249,7 @@ class DeleteActivityMetadata extends Route {
 					}
 					this._activity = activity;
 					resolve(true);
-				}, err => reject({statusCode: 400, message: err.message}));
+				}, (err) => reject({statusCode: 400, message: err.message}));
 		});
 	}
 

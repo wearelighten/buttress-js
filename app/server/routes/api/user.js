@@ -16,7 +16,7 @@ const Logging = require('../../logging');
 const Helpers = require('../../helpers');
 const ObjectId = require('mongodb').ObjectId;
 
-let routes = [];
+const routes = [];
 
 /**
  * @class GetUserList
@@ -35,32 +35,32 @@ class GetUserList extends Route {
 
 	_exec() {
 		return Model.User.findAll()
-			.then(users => {
+			.then((users) => {
 				if (this.req.token.authLevel >= Route.Constants.Auth.ADMIN) {
-					return users.map(user => {
-						user.profiles = user.auth.map(a => ({
+					return users.map((user) => {
+						user.profiles = user.auth.map((a) => ({
 							app: a.app,
 							username: a.username,
 							email: a.email,
 							url: a.profileUrl,
-							image: a.images.profile
+							image: a.images.profile,
 						}));
 						return user;
 					});
 				}
 
-				return users.map(user => {
+				return users.map((user) => {
 					return {
 						id: user._id,
-						profiles: user.auth.map(a => ({
+						profiles: user.auth.map((a) => ({
 							app: a.app,
 							username: a.username,
 							email: a.email,
 							url: a.profileUrl,
-							image: a.images.profile
+							image: a.images.profile,
 						})),
 						formalName: user.person.formalName,
-						name: user.person.name
+						name: user.person.name,
 					};
 				});
 			});
@@ -88,7 +88,7 @@ class GetUser extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.User.findById(this.req.params.id).then(user => {
+			Model.User.findById(this.req.params.id).then((user) => {
 				if (!user) {
 					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -121,17 +121,17 @@ class FindUser extends Route {
 	_validate(authToken) {
 		return new Promise((resolve, reject) => {
 			Model.User.getByAppId(this.req.params.app, this.req.params.id)
-				.then(_user => {
+				.then((_user) => {
 					Logging.logSilly(`FindUser: ${_user !== null}`);
 					if (_user) {
 						Model.Token.findUserAuthToken(_user._id, this.req.authApp._id)
-							.then(token => {
+							.then((token) => {
 								Logging.logSilly(`FindUserToken: ${token !== null}`);
 								const _userAuthToken = token ? token.value : false;
 								Model.User.updateApps(_user, this.req.authApp)
 									.then(() => resolve({
 										user: _user,
-										userAuthToken: _userAuthToken
+										userAuthToken: _userAuthToken,
 									}), reject);
 							});
 					} else {
@@ -148,7 +148,7 @@ class FindUser extends Route {
 
 		return Promise.resolve({
 			id: validate.user._id,
-			authToken: validate.userAuthToken
+			authToken: validate.userAuthToken,
 		});
 	}
 }
@@ -187,7 +187,7 @@ class CreateUserAuthToken extends Route {
 			}
 
 			Model.User.findById(this.req.params.id)
-				.then(user => {
+				.then((user) => {
 					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 					this._user = user;
 					if (this._user) {
@@ -203,9 +203,9 @@ class CreateUserAuthToken extends Route {
 	_exec() {
 		return Model.Token.add(this.req.body.auth, {
 			_app: Model.authApp._id,
-			_user: this._user._id
+			_user: this._user._id,
 		})
-			.then(t => t.value);
+			.then((t) => t.value);
 	}
 }
 routes.push(CreateUserAuthToken);
@@ -238,7 +238,7 @@ class UpdateUserAppToken extends Route {
 				return;
 			}
 
-			Model.User.findById(this.req.params.id).then(user => {
+			Model.User.findById(this.req.params.id).then((user) => {
 				Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 				this._user = user;
 				if (this._user) {
@@ -271,7 +271,7 @@ class AddUser extends Route {
 	_validate() {
 		return new Promise((resolve, reject) => {
 			Logging.log(this.req.body.user, Logging.Constants.LogLevel.DEBUG);
-			var app = this.req.body.user.app ? this.req.body.user.app : this.req.params.app;
+			const app = this.req.body.user.app ? this.req.body.user.app : this.req.params.app;
 
 			if (!app ||
 					!this.req.body.user.id ||
@@ -297,11 +297,11 @@ class AddUser extends Route {
 			}
 
 			Model.Person.findByDetails(this.req.body.user)
-				.then(person => {
+				.then((person) => {
 					Logging.logDebug(`Found Person: ${person !== null}`);
 					if (person === null) {
 						Model.Person.add(this.req.body.user, this.req.authApp)
-							.then(p => {
+							.then((p) => {
 								Logging.log(p, Logging.Constants.LogLevel.SILLY);
 								this._person = p;
 								resolve(true);
@@ -317,7 +317,7 @@ class AddUser extends Route {
 	_exec() {
 		return Model.User
 			.add(this.req.body.user, this._person, this.req.body.auth)
-			.then(user => {
+			.then((user) => {
 				user.person = this._person;
 				return user;
 			});
@@ -353,7 +353,7 @@ class UpdateUserAppInfo extends Route {
 				return;
 			}
 
-			Model.User.findById(this.req.params.id).then(user => {
+			Model.User.findById(this.req.params.id).then((user) => {
 				Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 				this._user = user;
 				if (this._user) {
@@ -388,7 +388,7 @@ class AddUserAuth extends Route {
 	_validate() {
 		return new Promise((resolve, reject) => {
 			Logging.log(this.req.body.auth, Logging.Constants.LogLevel.DEBUG);
-			let auth = this.req.body.auth;
+			const auth = this.req.body.auth;
 
 			if (!auth || !auth.app || !auth.id || !auth.profileImgUrl || !auth.token) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
@@ -402,7 +402,7 @@ class AddUserAuth extends Route {
 				return;
 			}
 
-			Model.User.findById(this.req.params.id).then(user => {
+			Model.User.findById(this.req.params.id).then((user) => {
 				Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 				this._user = user;
 				if (this._user) {
@@ -418,10 +418,10 @@ class AddUserAuth extends Route {
 	_exec() {
 		return this._user
 			.addAuth(this.req.body.auth)
-			.then(user => {
-				let tasks = [
+			.then((user) => {
+				const tasks = [
 					Promise.resolve(user.details),
-					Model.Token.findUserAuthToken(this._user._id, this.req.authApp._id)
+					Model.Token.findUserAuthToken(this._user._id, this.req.authApp._id),
 				];
 
 				if (this._user._person) {
@@ -430,7 +430,7 @@ class AddUserAuth extends Route {
 
 				return Promise.all(tasks);
 			})
-			.then(res => Object.assign(res[0], {authToken: res[1] ? res[1].value : false}));
+			.then((res) => Object.assign(res[0], {authToken: res[1] ? res[1].value : false}));
 	}
 }
 routes.push(AddUserAuth);
@@ -451,7 +451,7 @@ class UpdateUser extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			let validation = Model.User.validateUpdate(this.req.body);
+			const validation = Model.User.validateUpdate(this.req.body);
 			if (!validation.isValid) {
 				if (validation.isPathValid === false) {
 					this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
@@ -466,7 +466,7 @@ class UpdateUser extends Route {
 			}
 
 			Model.User.exists(this.req.params.id)
-				.then(exists => {
+				.then((exists) => {
 					if (!exists) {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
 						reject({statusCode: 400});
@@ -523,7 +523,7 @@ class DeleteUser extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.User.findById(this.req.params.id).then(user => {
+			Model.User.findById(this.req.params.id).then((user) => {
 				if (!user) {
 					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -561,7 +561,7 @@ class AttachToPerson extends Route {
 			}
 
 			Model.User
-				.findById(this.req.params.id).then(user => {
+				.findById(this.req.params.id).then((user) => {
 					if (!user) {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
 						reject({statusCode: 400});
@@ -583,14 +583,14 @@ class AttachToPerson extends Route {
 
 					Model.Person
 						.findByDetails(this.req.body)
-						.then(person => {
+						.then((person) => {
 							this._person = person;
 							if (person) {
 								return Model.User.findOne({_person: person});
 							}
 							return Promise.resolve(null);
 						})
-						.then(user => {
+						.then((user) => {
 							if (user && user._id !== this._user._id) {
 								this.log('ERROR: Person attached to a different user', Route.LogLevel.ERR);
 								reject({statusCode: 400});
@@ -598,7 +598,7 @@ class AttachToPerson extends Route {
 							}
 							resolve(true);
 						})
-						.catch(err => {
+						.catch((err) => {
 							this.log(`ERROR: ${err.message}`, Route.LogLevel.ERR);
 							reject({statusCode: 400});
 						});

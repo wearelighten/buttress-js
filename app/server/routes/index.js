@@ -28,15 +28,15 @@ const _timer = new Helpers.Timer();
  * @private
  */
 function _initRoute(app, Route) {
-	let route = new Route();
+	const route = new Route();
 	app[route.verb](`/api/v1/${route.path}`, (req, res) => {
 		Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 		route
 			.exec(req, res)
-			.then(result => {
+			.then((result) => {
 				if (result instanceof Mongo.Cursor) {
-					let stringifyStream = new Helpers.JSONStringifyStream();
+					const stringifyStream = new Helpers.JSONStringifyStream();
 					res.set('Content-Type', 'application/json');
 					result.stream().pipe(stringifyStream).pipe(res);
 				} else {
@@ -45,7 +45,7 @@ function _initRoute(app, Route) {
 				Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
 				Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
 			})
-			.catch(err => {
+			.catch((err) => {
 				Logging.logError(err);
 				res.status(err.statusCode ? err.statusCode : 500).json({message: err.message});
 			});
@@ -58,16 +58,16 @@ function _initRoute(app, Route) {
  * @param  {Object} schema - schema object
  */
 function _initSchemaRoutes(express, app, schema) {
-	SchemaRoutes.forEach(Route => {
-		let route = new Route(schema);
+	SchemaRoutes.forEach((Route) => {
+		const route = new Route(schema);
 		express[route.verb](`/api/v1/${route.path}`, (req, res) => {
 			Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 			route
 				.exec(req, res)
-				.then(result => {
+				.then((result) => {
 					if (result instanceof Mongo.Cursor) {
-						let stringifyStream = new Helpers.JSONStringifyStream();
+						const stringifyStream = new Helpers.JSONStringifyStream();
 						res.set('Content-Type', 'application/json');
 						result.stream().pipe(stringifyStream).pipe(res);
 					} else {
@@ -76,7 +76,7 @@ function _initSchemaRoutes(express, app, schema) {
 					Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
 					Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
 				})
-				.catch(err => {
+				.catch((err) => {
 					Logging.logError(err);
 					res.status(err.statusCode ? err.statusCode : 500).json({message: err.message});
 				});
@@ -105,7 +105,7 @@ function _authenticateToken(req, res, next) {
 		return;
 	}
 	_getToken(req)
-		.then(token => {
+		.then((token) => {
 			return new Promise((resolve, reject) => {
 				if (token === null) {
 					Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
@@ -117,23 +117,23 @@ function _authenticateToken(req, res, next) {
 				Model.token = req.token = token;
 
 				Model.Token.collection.update({_id: token._id}, {$push: {
-					uses: new Date()
+					uses: new Date(),
 				}});
 
 				resolve(token);
 			});
 		})
-		.then(token => Model.App.findById(req.token._app))
-		.then(app => {
+		.then((token) => Model.App.findById(req.token._app))
+		.then((app) => {
 			Model.authApp = req.authApp = app;
 		})
-		.then(token => Model.User.findById(req.token._user))
-		.then(user => {
+		.then((token) => Model.User.findById(req.token._user))
+		.then((user) => {
 			Model.authUser = req.authUser = user;
 		})
 		.then(Helpers.Promise.inject())
 		.then(next)
-		.catch(err => {
+		.catch((err) => {
 			Logging.logError(err);
 			res.status(503);
 			res.end();
@@ -157,10 +157,10 @@ function _getToken(req) {
 		}
 	}
 
-	return new Promise(resolve => {
+	return new Promise((resolve) => {
 		Model.Token.findAll().toArray()
 			.then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
-			.then(tokens => {
+			.then((tokens) => {
 				Logging.logDebug(`_getToken:Load: ${req.timer.interval.toFixed(3)}`);
 				_tokens = tokens;
 				Model.appMetadataChanged = false;
@@ -177,7 +177,7 @@ function _getToken(req) {
  * @private
  */
 function _lookupToken(tokens, value) {
-	let token = tokens.filter(t => t.value === value);
+	const token = tokens.filter((t) => t.value === value);
 	return token.length === 0 ? null : token[0];
 }
 
@@ -187,7 +187,7 @@ function _lookupToken(tokens, value) {
  */
 function _loadTokens() {
 	return Model.Token.findAll().toArray()
-		.then(tokens => {
+		.then((tokens) => {
 			_tokens = tokens;
 		});
 }
@@ -229,7 +229,7 @@ function _configCrossDomain(req, res, next) {
 		origin = matches[1];
 	}
 
-	let domains = req.token.domains.map(d => {
+	const domains = req.token.domains.map((d) => {
 		matches = rex.exec(d);
 		return matches ? matches[1] : d;
 	});
@@ -260,7 +260,7 @@ function _configCrossDomain(req, res, next) {
  * @param {Object} io - socket io object
  * @return {Promise} - resolves once the tokens have been pre-cached
  */
-exports.init = app => {
+exports.init = (app) => {
 	Route.app = app;
 
 	app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
@@ -270,11 +270,11 @@ exports.init = app => {
 	app.use(_configCrossDomain);
 
 	return Model.App.findAll().toArray()
-		.then(buttressApps => {
+		.then((buttressApps) => {
 		// Fetch app schemas and init
-			buttressApps.forEach(buttressApp => {
+			buttressApps.forEach((buttressApp) => {
 				if (buttressApp.__schema) {
-					buttressApp.__schema.forEach(schema => {
+					buttressApp.__schema.forEach((schema) => {
 						_initSchemaRoutes(app, buttressApp, schema);
 					});
 				}
@@ -282,11 +282,11 @@ exports.init = app => {
 		})
 		.then(() => {
 		// Fetch core routes and init
-			let providers = _getRouteProviders();
+			const providers = _getRouteProviders();
 			for (let x = 0; x < providers.length; x++) {
-				let routes = providers[x];
+				const routes = providers[x];
 				for (let y = 0; y < routes.length; y++) {
-					let route = routes[y];
+					const route = routes[y];
 					_initRoute(app, route);
 				}
 			}
@@ -299,11 +299,11 @@ exports.init = app => {
  * @private
  */
 function _getRouteProviders() {
-	let filenames = fs.readdirSync(`${__dirname}/api`);
+	const filenames = fs.readdirSync(`${__dirname}/api`);
 
-	let files = [];
+	const files = [];
 	for (let x = 0; x < filenames.length; x++) {
-		let file = filenames[x];
+		const file = filenames[x];
 		if (path.extname(file) === '.js') {
 			files.push(require(`./api/${path.basename(file, '.js')}`));
 		}

@@ -46,7 +46,7 @@ const _workers = [];
 const __spawnWorkers = () => {
 	Logging.logVerbose(`Spawning ${processes} REST Workers`);
 
-	const __spawn = idx => {
+	const __spawn = (idx) => {
 		_workers[idx] = cluster.fork();
 	};
 
@@ -66,7 +66,7 @@ const __systemInstall = () => {
 	Logging.log('Checking for existing apps.');
 
 	return Model.App.findAll().toArray()
-		.then(apps => {
+		.then((apps) => {
 			if (apps.length > 0) {
 				isInstalled = true;
 				Logging.log('Existing apps found - Skipping install.');
@@ -79,10 +79,10 @@ const __systemInstall = () => {
 				type: Model.App.Constants.Type.SERVER,
 				authLevel: Model.Token.Constants.AuthLevel.SUPER,
 				permissions: [{route: '*', permission: '*'}],
-				domain: ''
+				domain: '',
 			});
 		})
-		.then(res => {
+		.then((res) => {
 			if (isInstalled) {
 				return res.app;
 			}
@@ -90,8 +90,8 @@ const __systemInstall = () => {
 			const pathName = path.join(Config.paths.appData, 'super.json');
 			Logging.log(`Super app created: ${res.app.id}`);
 			return new Promise((resolve, reject) => {
-				let app = Object.assign(res.app, {token: res.token.value});
-				fs.writeFile(pathName, JSON.stringify(app), err => {
+				const app = Object.assign(res.app, {token: res.token.value});
+				fs.writeFile(pathName, JSON.stringify(app), (err) => {
 					if (err) {
 						return reject(err);
 					}
@@ -108,11 +108,11 @@ const __systemInstall = () => {
  * MONGODB
  *
  **********************************************************************************/
-const __nativeMongoConnect = app => {
+const __nativeMongoConnect = (app) => {
 	const dbName = `${Config.app.code}-${Config.env}`;
 	const mongoUrl = `mongodb://${Config.mongoDb.url}/?authMechanism=DEFAULT&authSource=${dbName}`;
 	return MongoClient.connect(mongoUrl, Config.mongoDb.options)
-		.then(client => {
+		.then((client) => {
 			return client.db(dbName);
 		})
 		.catch(Logging.Promise.logError());
@@ -124,7 +124,7 @@ const __nativeMongoConnect = app => {
  *
  **********************************************************************************/
 const __initWorker = () => {
-	let app = express();
+	const app = express();
 	app.use(morgan('short'));
 	app.enable('trust proxy', 1);
 	app.use(bodyParser.json({limit: '20mb'}));
@@ -132,21 +132,21 @@ const __initWorker = () => {
 	app.use(methodOverride());
 	app.use(express.static(`${Config.paths.appData}/public`));
 
-	process.on('unhandledRejection', error => {
+	process.on('unhandledRejection', (error) => {
 		Logging.logError(error);
 	});
 
-	process.on('message', payload => {
+	process.on('message', (payload) => {
 		Logging.logDebug(`App Metadata Changed: ${payload.appId}`);
 		Model.appMetadataChanged = true;
 	});
 
 	return __nativeMongoConnect()
-		.then(db => {
+		.then((db) => {
 			Model.init(db);
 
-			let tasks = [
-				Routes.init(app)
+			const tasks = [
+				Routes.init(app),
 			];
 
 			app.listen(Config.listenPorts.rest);
@@ -168,21 +168,21 @@ const __initMaster = () => {
 	if (isPrimary) {
 		Logging.logVerbose(`Primary Master REST`);
 		p = __nativeMongoConnect()
-			.then(db => Model.initCoreModels(db))
+			.then((db) => Model.initCoreModels(db))
 			.then(() => __systemInstall())
 			.then(() => Model.App.findAll().toArray())
-			.then(apps => {
-				let schemaUpdates = [];
+			.then((apps) => {
+				const schemaUpdates = [];
 
 				// Load local defined schemas into super app
 				const coreSchema = _getLocalSchemas();
-				apps.forEach(app => {
+				apps.forEach((app) => {
 					const appSchema = app.__schema;
 					const appShortId = shortId(app._id);
 					Logging.log(`Updating ${coreSchema.length} core schema for ${appShortId}:${app.name}:${appSchema.length}`);
-					coreSchema.forEach(cS => {
-						const appSchemaIdx = appSchema.findIndex(s => s.name === cS.name);
-						let schema = appSchema[appSchemaIdx];
+					coreSchema.forEach((cS) => {
+						const appSchemaIdx = appSchema.findIndex((s) => s.name === cS.name);
+						const schema = appSchema[appSchemaIdx];
 						if (!schema) {
 							return appSchema.push(cS);
 						}
@@ -198,17 +198,17 @@ const __initMaster = () => {
 				}, Promise.resolve());
 			})
 			.then(() => Model.initSchema())
-			.catch(e => Logging.logError(e));
+			.catch((e) => Logging.logError(e));
 	} else {
 		Logging.logVerbose(`Secondary Master REST`);
 	}
 
 	const nrp = new NRP(Config.redis);
-	nrp.on('app-metadata:changed', data => {
+	nrp.on('app-metadata:changed', (data) => {
 		Logging.logDebug(`App Metadata Changed: ${data.appId}, ${_workers.length} Workers`);
-		_workers.forEach(w => {
+		_workers.forEach((w) => {
 			w.send({
-				appId: data.appId
+				appId: data.appId,
 			});
 		});
 	});
@@ -222,11 +222,11 @@ const __initMaster = () => {
  * @return {Array} - content of json files loaded from local system
  */
 function _getLocalSchemas() {
-	let filenames = fs.readdirSync(`${__dirname}/schema`);
+	const filenames = fs.readdirSync(`${__dirname}/schema`);
 
-	let files = [];
+	const files = [];
 	for (let x = 0; x < filenames.length; x++) {
-		let file = filenames[x];
+		const file = filenames[x];
 		if (path.extname(file) === '.json') {
 			files.push(require(`${__dirname}/schema/${path.basename(file, '.js')}`));
 		}
@@ -256,5 +256,5 @@ const _initRestApp = () => {
  *
  **********************************************************************************/
 module.exports = {
-	init: _initRestApp
+	init: _initRestApp,
 };

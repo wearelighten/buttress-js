@@ -52,21 +52,21 @@ const __indexFromIP = (ip, spread) => {
  * MONGODB
  *
  **********************************************************************************/
-const __nativeMongoConnect = app => {
+const __nativeMongoConnect = (app) => {
 	const dbName = `${Config.app.code}-${Config.env}`;
 	const mongoUrl = `mongodb://${Config.mongoDb.url}/?authMechanism=DEFAULT&authSource=${dbName}`;
 	return MongoClient.connect(mongoUrl, Config.mongoDb.options) // eslint-disable-line camelcase
-		.then(client => {
+		.then((client) => {
 			return client.db(dbName);
 		});
 };
 const __initMongoConnect = () => {
 	return __nativeMongoConnect()
-		.then(db => {
+		.then((db) => {
 			Model.init(db);
 			return db;
 		})
-		.catch(e => Logging.logError(e));
+		.catch((e) => Logging.logError(e));
 };
 
 /* ********************************************************************************
@@ -74,10 +74,10 @@ const __initMongoConnect = () => {
  * WORKERS
  *
  **********************************************************************************/
-const __spawnWorkers = appTokens => {
+const __spawnWorkers = (appTokens) => {
 	Logging.log(`Spawning ${processes} Socket Workers`);
 
-	const __spawn = idx => {
+	const __spawn = (idx) => {
 		_workers[idx] = cluster.fork();
 		_workers[idx].send({'buttress:initAppTokens': appTokens});
 	};
@@ -86,7 +86,7 @@ const __spawnWorkers = appTokens => {
 		__spawn(x);
 	}
 
-	net.createServer({pauseOnConnect: true}, connection => {
+	net.createServer({pauseOnConnect: true}, (connection) => {
 		const worker = _workers[__indexFromIP(connection.remoteAddress, processes)];
 		worker.send('buttress:connection', connection);
 	}).listen(Config.listenPorts.sock);
@@ -94,15 +94,15 @@ const __spawnWorkers = appTokens => {
 
 const __initSocketNamespace = (io, publicId, appTokens) => {
 	const namespace = io.of(`/${publicId}`);
-	namespace.on('connect', socket => {
+	namespace.on('connect', (socket) => {
 		const userToken = socket.handshake.query.token;
-		const token = appTokens.tokens.find(t => t.value === userToken);
+		const token = appTokens.tokens.find((t) => t.value === userToken);
 		if (!token) {
 			Logging.logDebug(`Invalid token, closing connection: ${socket.id}`);
 			return socket.disconnect(0);
 		}
 
-		const app = appTokens.apps.find(a => a.publicId === publicId);
+		const app = appTokens.apps.find((a) => a.publicId === publicId);
 		if (!app) {
 			Logging.logDebug(`Invalid app, closing connection: ${socket.id}`);
 			return socket.disconnect(0);
@@ -125,9 +125,9 @@ const __initWorker = () => {
 	io.origins('*:*');
 	io.adapter(sioRedis(Config.redis));
 
-	io.on('connect', socket => {
+	io.on('connect', (socket) => {
 		Logging.logSilly(`${socket.id} Connected on global space`);
-		socket.on('disconnect', socket => {
+		socket.on('disconnect', (socket) => {
 			Logging.logSilly(`${socket.id} Disconnect on global space`);
 		});
 	});
@@ -141,7 +141,7 @@ const __initWorker = () => {
 		}
 		if (message['buttress:initAppTokens']) {
 			const appTokens = message['buttress:initAppTokens'];
-			appTokens.apps.forEach(app => {
+			appTokens.apps.forEach((app) => {
 				namespace.push(__initSocketNamespace(io, app.publicId, appTokens));
 			});
 		}
@@ -153,7 +153,7 @@ const __initWorker = () => {
  * MASTER
  *
  **********************************************************************************/
-const __initMaster = express => {
+const __initMaster = (express) => {
 	const emitter = sioEmitter(Config.redis);
 	const nrp = new NRP(Config.redis);
 
@@ -167,16 +167,16 @@ const __initMaster = express => {
 
 	if (isPrimary) {
 		Logging.logDebug(`Primary Master`);
-		nrp.on('activity', data => {
+		nrp.on('activity', (data) => {
 			const publicId = data.appPId;
 			Logging.logDebug(`[${data.appPId}]: ${data.verb} ${data.path}`);
 
 			// Super apps?
-			superApps.forEach(superPublicId => {
+			superApps.forEach((superPublicId) => {
 				namespace[superPublicId].sequence++;
 				namespace[superPublicId].emitter.emit('db-activity', {
 					data: data,
-					sequence: namespace[superPublicId].sequence
+					sequence: namespace[superPublicId].sequence,
 				});
 			});
 
@@ -193,20 +193,20 @@ const __initMaster = express => {
 			if (!namespace[publicId]) {
 				namespace[publicId] = {
 					emitter: emitter.of(`/${publicId}`),
-					sequence: 0
+					sequence: 0,
 				};
 			}
 
 			namespace[publicId].sequence++;
 			namespace[publicId].emitter.emit('db-activity', {
 				data: data,
-				sequence: namespace[publicId].sequence
+				sequence: namespace[publicId].sequence,
 			});
 		});
 	}
 
 	__initMongoConnect()
-		.then(db => {
+		.then((db) => {
 		// Load Apps
 			return new Promise((resolve, reject) => {
 				Model.App.findAll().toArray((err, _apps) => {
@@ -226,8 +226,8 @@ const __initMaster = express => {
 		})
 		.then(() => {
 		// Spawn worker processes, pass through build app objects
-			apps.map(app => {
-				const token = tokens.find(t => {
+			apps.map((app) => {
+				const token = tokens.find((t) => {
 					return t._id.toString() === app._token.toString();
 				});
 				if (!token) {
@@ -237,23 +237,23 @@ const __initMaster = express => {
 
 				app.token = token;
 				app.publicId = Model.App.genPublicUID(app.name, token.value);
-				let isSuper = token.authLevel > 2;
+				const isSuper = token.authLevel > 2;
 				Logging.log(`App Public ID: ${app.name}, ${app.publicId}, ${(isSuper) ? 'SUPER' : ''}`);
 
 				if (isSuper) {
 					namespace[app.publicId] = {
 						emitter: emitter.of(`/${app.publicId}`),
-						sequence: 0
+						sequence: 0,
 					};
 					superApps.push(app.publicId);
 				}
 
 				return app;
-			}).filter(app => app);
+			}).filter((app) => app);
 
 			__spawnWorkers({
 				apps: apps,
-				tokens: tokens
+				tokens: tokens,
 			});
 		});
 };
@@ -279,5 +279,5 @@ const _initSocketApp = () => {
  *
  **********************************************************************************/
 module.exports = {
-	init: _initSocketApp
+	init: _initSocketApp,
 };

@@ -14,7 +14,7 @@ const Route = require('../route');
 // const Model = require('../../model');
 const os = require('os');
 
-let routes = [];
+const routes = [];
 
 /**
  * @class GetTrackingList
@@ -40,8 +40,8 @@ class GetProcessStatus extends Route {
 			memory: {
 				used: mem,
 				total: memTotal,
-				percent: Number((mem / memTotal) * 100).toFixed(2)
-			}
+				percent: Number((mem / memTotal) * 100).toFixed(2),
+			},
 		};
 	}
 }

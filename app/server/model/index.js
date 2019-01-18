@@ -48,7 +48,7 @@ class Model {
 	initCoreModels(db) {
 		if (db) this.mongoDb = db;
 		// Core Models
-		let models = _getModels();
+		const models = _getModels();
 		Logging.log(models, Logging.Constants.LogLevel.SILLY);
 		for (let x = 0; x < models.length; x++) {
 			this._initModel(models[x]);
@@ -59,10 +59,10 @@ class Model {
 		if (db) this.mongoDb = db;
 
 		return this.models.App.findAll().toArray()
-			.then(apps => {
-				apps.forEach(app => {
+			.then((apps) => {
+				apps.forEach((app) => {
 					if (app.__schema) {
-						Schema.buildCollections(app.__schema).forEach(schema => {
+						Schema.buildCollections(app.__schema).forEach((schema) => {
 							this._initSchemaModel(app, schema);
 						});
 					}
@@ -113,11 +113,11 @@ class Model {
  * @return {array} - list of files containing schemas
  */
 function _getModels() {
-	let filenames = fs.readdirSync(`${__dirname}/schema`);
+	const filenames = fs.readdirSync(`${__dirname}/schema`);
 
-	let files = [];
+	const files = [];
 	for (let x = 0; x < filenames.length; x++) {
-		let file = filenames[x];
+		const file = filenames[x];
 		if (path.extname(file) === '.js') {
 			files.push(Sugar.String.capitalize(path.basename(file, '.js')));
 		}

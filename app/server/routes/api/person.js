@@ -10,11 +10,11 @@
  *
  */
 
-var Route = require('../route');
-var Model = require('../../model');
-var Logging = require('../../logging');
+const Route = require('../route');
+const Model = require('../../model');
+const Logging = require('../../logging');
 
-var routes = [];
+const routes = [];
 
 /**
  * @class GetPersonList
@@ -59,7 +59,7 @@ class GetPerson extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.Person.findById(this.req.params.id).then(person => {
+			Model.Person.findById(this.req.params.id).then((person) => {
 				if (!person) {
 					this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -152,14 +152,14 @@ class DeletePerson extends Route {
 		return new Promise((resolve, reject) => {
 			Model.Person
 				.findById(this.req.params.id)
-				.then(person => {
+				.then((person) => {
 					if (!person) {
 						this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
 						reject({statusCode: 400, message: `ERROR: Invalid Person ID: ${this.req.params.id}`});
 						return;
 					}
 					resolve(person);
-				}, err => reject({statusCode: 400, message: err.message}));
+				}, (err) => reject({statusCode: 400, message: err.message}));
 		});
 	}
 

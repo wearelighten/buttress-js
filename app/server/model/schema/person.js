@@ -22,7 +22,7 @@ const Logging = require('../../logging');
 
 class PersonSchemaModel extends SchemaModel {
 	constructor(MongoDb) {
-		let schema = PersonSchemaModel.Schema;
+		const schema = PersonSchemaModel.Schema;
 		super(MongoDb, schema);
 	}
 
@@ -44,80 +44,80 @@ class PersonSchemaModel extends SchemaModel {
 				title: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				formalName: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				name: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				forename: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				initials: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				surname: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				suffix: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				emails: {
 					__type: 'array',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				address: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				postcode: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				phone: {
 					landline: {
 						__type: 'string',
 						__default: '',
-						__allowUpdate: true
+						__allowUpdate: true,
 					},
 					mobile: {
 						__type: 'string',
 						__default: '',
-						__allowUpdate: true
-					}
+						__allowUpdate: true,
+					},
 				},
 				company: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				role: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				_dataOwner: {
 					__type: 'id',
 					__required: true,
-					__allowUpdate: false
-				}
-			}
+					__allowUpdate: false,
+				},
+			},
 		};
 	}
 
@@ -127,7 +127,7 @@ class PersonSchemaModel extends SchemaModel {
 	 * @return {Promise} - returns a promise that is fulfilled when the database request is completed
 	 */
 	add(body, authApp) {
-		var name = humanname.parse(body.name);
+		const name = humanname.parse(body.name);
 
 		const title = name.salutation ? name.salutation + ' ' : '';
 		const initials = name.initials ? name.initials + ' ' : '';
@@ -143,14 +143,14 @@ class PersonSchemaModel extends SchemaModel {
 			emails: [body.email],
 			telephone: {
 				landline: body.landline,
-				mobile: body.mobile
+				mobile: body.mobile,
 			},
 			address: body.address,
-			postcode: body.postcode
+			postcode: body.postcode,
 		};
 
 		return super.add(person, {
-			_dataOwner: authApp._id
+			_dataOwner: authApp._id,
 		});
 	}
 
@@ -163,7 +163,7 @@ class PersonSchemaModel extends SchemaModel {
 			return Promise.resolve();
 		}
 
-		if (this.emails.findIndex(e => e === appAuth.email) !== -1) {
+		if (this.emails.findIndex((e) => e === appAuth.email) !== -1) {
 			return Promise.resolve();
 		}
 
@@ -177,7 +177,7 @@ class PersonSchemaModel extends SchemaModel {
 			return Promise.reject(new Error('missing_required_field_email'));
 		}
 		return this.collection.findOne({
-			emails: details.email
+			emails: details.email,
 		});
 	}
 

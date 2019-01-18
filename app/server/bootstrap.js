@@ -20,5 +20,5 @@ const Socket = require('./bootstrap-socket');
  **********************************************************************************/
 module.exports = {
 	rest: Rest.init,
-	socket: Socket.init
+	socket: Socket.init,
 };

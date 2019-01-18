@@ -38,13 +38,13 @@ class SchemaModel {
 	}
 
 	__doValidation(body) {
-		let res = {
+		const res = {
 			isValid: true,
 			missing: [],
-			invalid: []
+			invalid: [],
 		};
 
-		let app = Shared.validateAppProperties(this.schema, body);
+		const app = Shared.validateAppProperties(this.schema, body);
 		if (app.isValid === false) {
 			res.isValid = false;
 			res.invalid = res.invalid.concat(app.invalid);
@@ -57,7 +57,7 @@ class SchemaModel {
 		if (body instanceof Array === false) {
 			body = [body];
 		}
-		let validation = body.map(b => this.__doValidation(b)).filter(v => v.isValid === false);
+		const validation = body.map((b) => this.__doValidation(b)).filter((v) => v.isValid === false);
 
 		return validation.length >= 1 ? validation[0] : {isValid: true};
 	}
@@ -67,7 +67,7 @@ class SchemaModel {
 	* @return {Promise} - returns a promise that is fulfilled when the database request is completed
 	*/
 	__add(body, internals) {
-		return prev => {
+		return (prev) => {
 			const entity = Object.assign({}, internals);
 
 			if (body.id) {
@@ -84,14 +84,14 @@ class SchemaModel {
 		};
 	}
 	add(body, internals) {
-		const sharedAddFn = Shared.add(this.collection, item => this.__add(item, internals));
+		const sharedAddFn = Shared.add(this.collection, (item) => this.__add(item, internals));
 		return sharedAddFn(body);
 	}
 
 	update(query, id) {
 		return new Promise((resolve, reject) => {
 			this.collection.update({_id: id}, {
-				$set: query
+				$set: query,
 			}, (err, object) => {
 				if (err) throw new Error(err);
 
@@ -114,7 +114,7 @@ class SchemaModel {
 			body.push({
 				path: 'updatedAt',
 				value: new Date(),
-				contextPath: '^updatedAt$'
+				contextPath: '^updatedAt$',
 			});
 		}
 
@@ -125,7 +125,7 @@ class SchemaModel {
 		return this.collection.find({_id: new ObjectId(id)})
 			.limit(1)
 			.count()
-			.then(count => count > 0);
+			.then((count) => count > 0);
 	}
 
 	/*
@@ -141,7 +141,7 @@ class SchemaModel {
 	 */
 	rm(entity) {
 		Logging.log(`DELETING: ${entity._id}`, Logging.Constants.LogLevel.DEBUG);
-		return new Promise(resolve => {
+		return new Promise((resolve) => {
 			this.collection.remove({_id: new ObjectId(entity._id)}, (err, cursor) => {
 				if (err) throw err;
 				resolve(cursor);
@@ -165,7 +165,7 @@ class SchemaModel {
 	rmAll(query) {
 		if (!query) query = {};
 
-		return new Promise(resolve => {
+		return new Promise((resolve) => {
 			this.collection.remove(query, (err, doc) => {
 				if (err) throw err;
 				resolve(doc);
@@ -178,7 +178,7 @@ class SchemaModel {
 	 * @return {Promise} - resolves to an array of Companies
 	 */
 	findById(id) {
-		return new Promise(resolve => {
+		return new Promise((resolve) => {
 			this.collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
 				if (err) throw err;
 				resolve(doc);
@@ -194,7 +194,7 @@ class SchemaModel {
 	find(query, excludes = {}) {
 		Logging.logSilly(`find: `);
 
-		return new Promise(resolve => {
+		return new Promise((resolve) => {
 			this.collection.find(query, excludes, (err, doc) => {
 				if (err) throw err;
 				resolve(doc);
@@ -210,7 +210,7 @@ class SchemaModel {
 	findOne(query, excludes = {}) {
 		Logging.logSilly(`findOne: ${query}`);
 
-		return new Promise(resolve => {
+		return new Promise((resolve) => {
 			this.collection.find(query, excludes).toArray((err, doc) => {
 				if (err) throw err;
 				resolve(doc[0]);
@@ -232,7 +232,7 @@ class SchemaModel {
 	 * @return {Promise} - resolves to an array of Companies
 	 */
 	findAllById(ids) {
-		return this.collection.find({_id: {$in: ids.map(id => new ObjectId(id))}}, {metadata: 0});
+		return this.collection.find({_id: {$in: ids.map((id) => new ObjectId(id))}}, {metadata: 0});
 	}
 }
 

@@ -58,7 +58,7 @@ const Constants = {
 		NONE: 0,
 		USER: 1,
 		ADMIN: 2,
-		SUPER: 3
+		SUPER: 3,
 	},
 	Permissions: {
 		NONE: '',
@@ -67,14 +67,14 @@ const Constants = {
 		WRITE: 'write',
 		LIST: 'list',
 		DELETE: 'delete',
-		ALL: '*'
+		ALL: '*',
 	},
 	Verbs: {
 		GET: 'get',
 		POST: 'post',
 		PUT: 'put',
-		DEL: 'delete'
-	}
+		DEL: 'delete',
+	},
 };
 
 class Route {
@@ -112,12 +112,12 @@ class Route {
 			this._authenticate()
 				.then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then(Logging.Promise.logSilly('authenticated'))
-				.then(token => this._validate(token), reject)
+				.then((token) => this._validate(token), reject)
 				.then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then(Logging.Promise.logSilly('validated'))
-				.then(validate => this._exec(validate), reject)
+				.then((validate) => this._exec(validate), reject)
 				.then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
-				.then(res => this._logActivity(res), reject)
+				.then((res) => this._logActivity(res), reject)
 				.then(resolve, reject)
 				.catch(Logging.Promise.logError());
 		});
@@ -139,7 +139,7 @@ class Route {
 			addActivty = false;
 		}
 
-		let broadcast = () => {
+		const broadcast = () => {
 			if (res) {
 				const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.token.value);
 				this._activityBroadcastSocket({
@@ -151,7 +151,7 @@ class Route {
 					pathSpec: this.path,
 					params: this.req.params,
 					verb: this.verb,
-					permissions: this.permissions
+					permissions: this.permissions,
 				}, res, appPId);
 			}
 		};
@@ -180,11 +180,11 @@ class Route {
 			req: {
 				query: this.req.query,
 				body: body,
-				params: this.req.params
+				params: this.req.params,
 			},
-			res: {}
+			res: {},
 		})
-			.then(activity => {
+			.then((activity) => {
 			// Activity doesn't get added via the API so we will just broadcast the data manually
 				this._activityBroadcastSocket({
 					title: 'Private Activity',
@@ -195,10 +195,10 @@ class Route {
 					pathSpec: 'activity',
 					verb: 'post',
 					params: activity.params,
-					permissions: 'write'
+					permissions: 'write',
 				}, activity);
 			})
-			.catch(e => {
+			.catch((e) => {
 				Logging.logError(`[${verb.toUpperCase()}] ${path}`);
 				Logging.logError(body);
 				Logging.logError(e);
@@ -219,7 +219,7 @@ class Route {
 			timestamp: new Date(),
 			response: Helpers.prepareResult(res),
 			user: Model.authUser ? Model.authUser._id : '',
-			appPId: appPid ? appPid : ''
+			appPId: appPid ? appPid : '',
 		});
 	}
 
@@ -259,10 +259,10 @@ class Route {
 			 * @TODO Support Regex in specific ie match routes like app/:id/permission
 			 */
 			let authorised = false;
-			let token = this.req.token;
+			const token = this.req.token;
 			Logging.logSilly(token.permissions);
 			for (let x = 0; x < token.permissions.length; x++) {
-				let p = token.permissions[x];
+				const p = token.permissions[x];
 				if (this._matchRoute(p.route) && this._matchPermission(p.permission)) {
 					authorised = true;
 					break;
@@ -294,14 +294,14 @@ class Route {
 			return true;
 		}
 
-		let userWildcard = /^user\/me.+/;
+		const userWildcard = /^user\/me.+/;
 		if (routeSpec.match(userWildcard) && this.req.params.id == this.req.authUser._id) { // eslint-disable-line eqeqeq
 			Logging.logSilly(`Matched user ${this.req.authUser._id} to /user/${this.req.params.id}`);
 			return true;
 		}
 
-		let wildcard = /(.+)(\/\*)/;
-		let matches = routeSpec.match(wildcard);
+		const wildcard = /(.+)(\/\*)/;
+		const matches = routeSpec.match(wildcard);
 		if (matches) {
 			Logging.logSilly(matches);
 			if (this.path.match(new RegExp(`^${matches[1]}`)) &&

@@ -28,18 +28,18 @@ const App = {
 	GOOGLE: apps[0],
 	FACEBOOK: apps[1],
 	TWITTER: apps[2],
-	LINKEDIN: apps[3]
+	LINKEDIN: apps[3],
 };
 
 class UserSchemaModel extends SchemaModel {
 	constructor(MongoDb) {
-		let schema = UserSchemaModel.Schema;
+		const schema = UserSchemaModel.Schema;
 		super(MongoDb, schema);
 	}
 
 	static get Constants() {
 		return {
-			App: App
+			App: App,
 		};
 	}
 	get Constants() {
@@ -56,22 +56,22 @@ class UserSchemaModel extends SchemaModel {
 				username: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				orgRole: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				teamName: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				teamRole: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				auth: {
 					__type: 'array',
@@ -81,83 +81,83 @@ class UserSchemaModel extends SchemaModel {
 						app: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						appId: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						username: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						profileUrl: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						images: {
 							profile: {
 								__type: 'string',
 								__default: '',
-								__allowUpdate: true
+								__allowUpdate: true,
 							},
 							banner: {
 								__type: 'string',
 								__default: '',
-								__allowUpdate: true
-							}
+								__allowUpdate: true,
+							},
 						},
 						email: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						locale: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						token: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						tokenSecret: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						refreshToken: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
+							__allowUpdate: true,
 						},
 						extras: {
 							__type: 'string',
 							__default: '',
-							__allowUpdate: true
-						}
-					}
+							__allowUpdate: true,
+						},
+					},
 				},
 				_apps: {
 					__type: 'array',
 					__required: true,
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				_person: {
 					__type: 'id',
 					__required: true,
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				_tokens: {
 					__type: 'array',
 					__required: true,
-					__allowUpdate: true
-				}
-			}
+					__allowUpdate: true,
+				},
+			},
 		};
 	}
 
@@ -176,15 +176,15 @@ class UserSchemaModel extends SchemaModel {
 				profileUrl: body.profileUrl,
 				images: {
 					profile: body.profileImgUrl,
-					banner: body.bannerImgUrl
+					banner: body.bannerImgUrl,
 				},
 				email: body.email,
 				token: body.token,
-				tokenSecret: body.tokenSecret
+				tokenSecret: body.tokenSecret,
 			}],
 			orgRole: body.orgRole,
 			teamName: body.teamName,
-			teamRole: body.teamRole
+			teamRole: body.teamRole,
 		};
 
 		Logging.logDebug(person.name);
@@ -194,9 +194,9 @@ class UserSchemaModel extends SchemaModel {
 		let _user = null;
 		return super.add(user, {
 			_apps: [Model.authApp._id],
-			_person: person.id
+			_person: person.id,
 		})
-			.then(user => {
+			.then((user) => {
 				_user = user;
 				if (!auth) {
 					return false;
@@ -206,10 +206,10 @@ class UserSchemaModel extends SchemaModel {
 
 				return Model.Token.add(auth, {
 					_app: Model.authApp._id,
-					_user: _user._id
+					_user: _user._id,
 				});
 			})
-			.then(token => {
+			.then((token) => {
 				if (token) {
 					_user.authToken = token.value;
 				} else {
@@ -222,7 +222,7 @@ class UserSchemaModel extends SchemaModel {
 
 	addAuth(auth) {
 		Logging.log(`addAuth: ${auth.app}`, Logging.Constants.LogLevel.INFO);
-		let existing = this.auth.find(a => a.app === auth.app && a.id == auth.id); // eslint-disable-line eqeqeq
+		const existing = this.auth.find((a) => a.app === auth.app && a.id == auth.id); // eslint-disable-line eqeqeq
 		if (existing) {
 			Logging.log(`present: ${auth.app}:${auth.id}`, Logging.Constants.LogLevel.DEBUG);
 			return Promise.resolve(this);
@@ -236,12 +236,12 @@ class UserSchemaModel extends SchemaModel {
 			profileUrl: auth.profileUrl,
 			images: {
 				profile: auth.profileImgUrl,
-				banner: auth.bannerImgUrl
+				banner: auth.bannerImgUrl,
 			},
 			email: auth.email,
 			token: auth.token,
 			tokenSecret: auth.tokenSecret,
-			refreshToken: auth.refreshToken
+			refreshToken: auth.refreshToken,
 		}));
 		return this.save();
 	}
@@ -253,7 +253,7 @@ class UserSchemaModel extends SchemaModel {
 	 * @return {Promise} - returns a promise that is fulfilled when the database request is completed
 	 */
 	updateAppInfo(user, app, updated) {
-		const authIdx = user.auth.findIndex(a => a.app === app);
+		const authIdx = user.auth.findIndex((a) => a.app === app);
 		if (authIdx === -1) {
 			Logging.log(`Unable to find Appauth for ${app}`, Logging.Constants.LogLevel.DEBUG);
 			return Promise.resolve(false);
@@ -269,7 +269,7 @@ class UserSchemaModel extends SchemaModel {
 		auth.tokenSecret = updated.tokenSecret;
 		auth.refreshToken = updated.refreshToken;
 
-		let update = {};
+		const update = {};
 		update[`auth.${authIdx}`] = auth;
 		return super.update(update, user._id).then(() => true);
 	}
@@ -279,7 +279,7 @@ class UserSchemaModel extends SchemaModel {
 		if (!user._apps) {
 			user._apps = [];
 		}
-		let matches = user._apps.filter(function(a) {
+		const matches = user._apps.filter(function(a) {
 			return a._id === app._id;
 		});
 		if (matches.length > 0) {
@@ -291,7 +291,7 @@ class UserSchemaModel extends SchemaModel {
 		user._apps.push(app._id);
 
 		return super.update({
-			_apps: user._apps
+			_apps: user._apps,
 		}, user.id);
 	}
 
@@ -299,12 +299,12 @@ class UserSchemaModel extends SchemaModel {
 		return collection.find({_id: new ObjectId(id)})
 			.limit(1)
 			.count()
-			.then(count => count > 0);
+			.then((count) => count > 0);
 	}
 
 	getPopulated(user) {
 		return Model.Person.findById(user._person)
-			.then(person => {
+			.then((person) => {
 				user.person = person;
 				return user;
 			});
@@ -342,7 +342,7 @@ class UserSchemaModel extends SchemaModel {
 
 		return super.findOne({
 			'auth.app': appName,
-			'auth.appId': appUserId
+			'auth.appId': appUserId,
 		}, {});
 	}
 
@@ -355,7 +355,7 @@ class UserSchemaModel extends SchemaModel {
 		return new Promise((resolve, reject) => {
 			Model.Person
 				.add(details, Model.authApp._id)
-				.then(person => {
+				.then((person) => {
 					Logging.log(person, Logging.Constants.LogLevel.DEBUG);
 					this._person = person.id;
 					return this.save();
@@ -370,7 +370,7 @@ class UserSchemaModel extends SchemaModel {
 	 * @return {Promise} - returns a promise that is fulfilled when the database request is completed
 	 */
 	updateToken(app, body) {
-		var auth = this.auth.find(a => a.app === app);
+		const auth = this.auth.find((a) => a.app === app);
 		if (!auth) {
 			Logging.log(`Unable to find Appauth for ${app}`, Logging.Constants.LogLevel.DEBUG);
 			return Promise.resolve(false);

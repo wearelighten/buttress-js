@@ -10,12 +10,12 @@
  *
  */
 
-var Route = require('../route');
-var Model = require('../../model');
-var Logging = require('../../logging');
+const Route = require('../route');
+const Model = require('../../model');
+const Logging = require('../../logging');
 const Schema = require('../../schema');
 
-var routes = [];
+const routes = [];
 
 /**
  * @class GetAppList
@@ -58,7 +58,7 @@ class GetApp extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.App.findById(this.req.params.id).populate('_token').then(app => {
+			Model.App.findById(this.req.params.id).populate('_token').then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -110,14 +110,14 @@ class AddApp extends Route {
 					Logging.logDebug('Creating default permissions');
 					break;
 				case Model.Token.Constants.AuthLevel.SUPER: {
-					let permissions = [
-						{route: '*', permission: '*'}
+					const permissions = [
+						{route: '*', permission: '*'},
 					];
 					this.req.body.permissions = JSON.stringify(permissions);
 					Logging.logDebug('Creating default SUPER permissions');
 				} break;
 				case Model.Token.Constants.AuthLevel.ADMIN: {
-					let permissions = [
+					const permissions = [
 						{route: 'org/*', permission: '*'},
 						{route: 'group/*', permission: '*'},
 						{route: 'user/*', permission: '*'},
@@ -131,7 +131,7 @@ class AddApp extends Route {
 						{route: 'appointment/*', permission: '*'},
 						{route: 'notification/*', permission: '*'},
 						{route: 'contract/*', permission: '*'},
-						{route: 'document/*', permission: '*'}
+						{route: 'document/*', permission: '*'},
 					];
 
 					this.req.body.permissions = JSON.stringify(permissions);
@@ -150,14 +150,14 @@ class AddApp extends Route {
 			if (this.req.body.ownerGroupId) {
 				Model.Group.findById(this.req.body.ownerGroupId)
 					.then(Logging.Promise.logProp('Group', 'details', Route.LogLevel.SILLY))
-					.then(group => {
+					.then((group) => {
 						if (!group) {
 							Logging.log('Error: Invalid Group ID', Route.LogLevel.WARN);
 							reject({statusCode: 400});
 							return;
 						}
 						resolve(true);
-					}, err => {
+					}, (err) => {
 						Logging.log(`Error: Malformed Group ID: ${err.message}`, Route.LogLevel.ERR);
 						reject({statusCode: 400});
 					});
@@ -170,7 +170,7 @@ class AddApp extends Route {
 	_exec() {
 		return new Promise((resolve, reject) => {
 			Model.App.add(this.req.body)
-				.then(res => {
+				.then((res) => {
 					return Object.assign(res.app.details, {token: res.token.value});
 				})
 				.then(Logging.Promise.logProp('Added App', 'name', Route.LogLevel.INFO))
@@ -199,7 +199,7 @@ class DeleteApp extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.App.findById(this.req.params.id).then(app => {
+			Model.App.findById(this.req.params.id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -241,7 +241,7 @@ class SetAppOwner extends Route {
 				return;
 			}
 
-			Model.Group.findById(this.req.body.groupId).then(group => {
+			Model.Group.findById(this.req.body.groupId).then((group) => {
 				if (!group) {
 					this.log('ERROR: Invalid Group ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -249,7 +249,7 @@ class SetAppOwner extends Route {
 				}
 				this._group = group;
 			}).then(() => {
-				Model.App.findById(this.req.params.id).then(app => {
+				Model.App.findById(this.req.params.id).then((app) => {
 					if (!app) {
 						this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
 						reject({statusCode: 400});
@@ -290,7 +290,7 @@ class GetAppPermissionList extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.App.findById(this.req.params.id).then(app => {
+			Model.App.findById(this.req.params.id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -304,10 +304,10 @@ class GetAppPermissionList extends Route {
 
 	_exec() {
 		return new Promise((resolve, reject) => {
-			resolve(this._app.permissions.map(p => {
+			resolve(this._app.permissions.map((p) => {
 				return {
 					route: p.route,
-					permission: p.permission
+					permission: p.permission,
 				};
 			}));
 		});
@@ -330,7 +330,7 @@ class AddAppPermission extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			Model.App.findById(this.req.params.id).then(app => {
+			Model.App.findById(this.req.params.id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -351,7 +351,7 @@ class AddAppPermission extends Route {
 
 	_exec() {
 		return this._app.addOrUpdatePermission(this.req.body.route, this.req.body.permission)
-			.then(a => a.details);
+			.then((a) => a.details);
 	}
 }
 routes.push(AddAppPermission);
@@ -414,7 +414,7 @@ class UpdateAppSchema extends Route {
 	}
 
 	_exec() {
-		return Model.App.updateSchema(this.req.authApp._id, this.req.body).then(res => true);
+		return Model.App.updateSchema(this.req.authApp._id, this.req.body).then((res) => true);
 	}
 }
 routes.push(UpdateAppSchema);
@@ -434,7 +434,7 @@ class AddAppMetadata extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			Model.App.findById(this.req.appDetails._id).then(app => {
+			Model.App.findById(this.req.appDetails._id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -457,7 +457,7 @@ class AddAppMetadata extends Route {
 
 	_exec() {
 		return this._app.addOrUpdateMetadata(this.req.params.key, this.req.body.value)
-			.then(a => a.details);
+			.then((a) => a.details);
 	}
 }
 routes.push(AddAppMetadata);
@@ -477,7 +477,7 @@ class UpdateAppMetadata extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			Model.App.findById(this.req.appDetails._id).then(app => {
+			Model.App.findById(this.req.appDetails._id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -524,7 +524,7 @@ class GetAppMetadata extends Route {
 	_validate() {
 		return new Promise((resolve, reject) => {
 			Logging.log(`AppID: ${this.req.appDetails._id}`, Route.LogLevel.DEBUG);
-			Model.App.findById(this.req.appDetails._id).then(app => {
+			Model.App.findById(this.req.appDetails._id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});

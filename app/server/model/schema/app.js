@@ -29,19 +29,19 @@ const Type = {
 	SERVER: type[0],
 	IOS: type[1],
 	ANDROID: type[2],
-	BROWSER: type[3]
+	BROWSER: type[3],
 };
 
 class AppSchemaModel extends SchemaModel {
 	constructor(MongoDb) {
-		let schema = AppSchemaModel.Schema;
+		const schema = AppSchemaModel.Schema;
 		super(MongoDb, schema);
 	}
 
 	static get Constants() {
 		return {
 			Type: Type,
-			PUBLIC_DIR: true
+			PUBLIC_DIR: true,
 		};
 	}
 	get Constants() {
@@ -58,35 +58,35 @@ class AppSchemaModel extends SchemaModel {
 				name: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				visibility: {
 					__type: 'string',
 					__default: 'server',
 					__enum: type,
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				domain: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: true
+					__allowUpdate: true,
 				},
 				_owner: {
 					__type: 'id',
 					__required: true,
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				_token: {
 					__type: 'id',
 					__required: true,
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				__schema: {
 					__type: 'array',
 					__required: true,
-					__allowUpdate: true
-				}
-			}
+					__allowUpdate: true,
+				},
+			},
 		};
 	}
 
@@ -102,25 +102,25 @@ class AppSchemaModel extends SchemaModel {
 			authLevel: body.authLevel,
 			permissions: body.permissions,
 			domain: body.domain,
-			_owner: body.ownerGroupId
+			_owner: body.ownerGroupId,
 		};
 		let _token = null;
 
 		return Model.Token.add({
 			type: Model.Token.Constants.Type.APP,
 			authLevel: body.authLevel,
-			permissions: body.permissions
+			permissions: body.permissions,
 		}, {
-			_app: app.id
+			_app: app.id,
 		})
-			.then(token => {
+			.then((token) => {
 				_token = token;
 				Logging.log(token.value);
 				return super.add(app, {
-					_token: token.id
+					_token: token.id,
 				});
 			})
-			.then(app => {
+			.then((app) => {
 				return Promise.resolve({app: app, token: _token});
 			});
 	}
@@ -155,7 +155,7 @@ class AppSchemaModel extends SchemaModel {
 
 		return new Promise((resolve, reject) => {
 			this.getToken()
-				.then(token => {
+				.then((token) => {
 					if (!token) {
 						return reject(new Error('No valid authentication token.'));
 					}
@@ -170,17 +170,17 @@ class AppSchemaModel extends SchemaModel {
 	 * @return {String} - UID
 	 */
 	mkDataDir(name, isPublic) {
-		var uid = this.getPublicUID();
-		var baseName = `${Config.paths.appData}/${isPublic ? 'public' : 'private'}/${uid}`;
+		const uid = this.getPublicUID();
+		const baseName = `${Config.paths.appData}/${isPublic ? 'public' : 'private'}/${uid}`;
 
 		return new Promise((resolve, reject) => {
-			fs.mkdir(baseName, err => {
+			fs.mkdir(baseName, (err) => {
 				if (err && err.code !== 'EEXIST') {
 					reject(err);
 					return;
 				}
-				var dirName = `${baseName}/${name}`;
-				fs.mkdir(dirName, err => {
+				const dirName = `${baseName}/${name}`;
+				fs.mkdir(dirName, (err) => {
 					if (err && err.code !== 'EEXIST') {
 						reject(err);
 						return;
@@ -211,16 +211,16 @@ class AppSchemaModel extends SchemaModel {
 	 * @return {String} - UID
 	 */
 	genPublicUID(name, tokenValue) {
-		var hash = crypto.createHash('sha512');
+		const hash = crypto.createHash('sha512');
 		// Logging.log(`Create UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
 		hash.update(`${name}.${tokenValue}`);
-		var bytes = hash.digest();
+		const bytes = hash.digest();
 
-		var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		var mask = 0x3d;
-		var uid = '';
+		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		const mask = 0x3d;
+		let uid = '';
 
-		for (var byte = 0; byte < 32; byte++) {
+		for (let byte = 0; byte < 32; byte++) {
 			uid += chars[bytes[byte] & mask];
 		}
 

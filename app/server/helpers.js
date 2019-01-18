@@ -19,28 +19,28 @@ class Timer {
 	}
 
 	start() {
-		let hrTime = process.hrtime();
+		const hrTime = process.hrtime();
 		this._last = this._start = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
 	}
 
 	get lapTime() {
-		let hrTime = process.hrtime();
-		let time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
-		let lapTime = time - this._last;
+		const hrTime = process.hrtime();
+		const time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
+		const lapTime = time - this._last;
 		this._last = time;
 		return (lapTime / 1000000);
 	}
 	get interval() {
-		let hrTime = process.hrtime();
-		let time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
+		const hrTime = process.hrtime();
+		const time = (hrTime[0] * 1000000) + (hrTime[1] / 1000);
 		return ((time - this._start) / 1000000);
 	}
 }
 
 module.exports.Timer = Timer;
 
-const __prepareResult = result => {
-	const prepare = chunk => {
+const __prepareResult = (result) => {
+	const prepare = (chunk) => {
 		if (!chunk) return chunk;
 
 		if (chunk._id) {
@@ -56,19 +56,19 @@ const __prepareResult = result => {
 		// Crappy func to stop private/protected data from escaping to the wild
 		// This needs a review!!
 		if (typeof chunk === 'object') {
-			Object.keys(chunk).forEach(key => {
+			Object.keys(chunk).forEach((key) => {
 				if (key.indexOf('_') !== -1) {
 					return delete chunk[key];
 				}
 
-				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map(c => prepare(c)) : prepare(chunk[key]);
+				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => prepare(c)) : prepare(chunk[key]);
 			});
 		}
 
 		return chunk;
 	};
 
-	return (Array.isArray(result)) ? result.map(c => prepare(c)) : prepare(result);
+	return (Array.isArray(result)) ? result.map((c) => prepare(c)) : prepare(result);
 };
 module.exports.prepareResult = __prepareResult;
 
@@ -80,7 +80,7 @@ class JSONStringifyStream extends Transform {
 
 	_transform(chunk, encoding, cb) {
 		const nonReplacerKeys = [
-			'_id', '_app', '__v', '_user', '_token'
+			'_id', '_app', '__v', '_user', '_token',
 		];
 
 		const __replacer = (key, value) => {
@@ -94,7 +94,7 @@ class JSONStringifyStream extends Transform {
 				}, {});
 			}
 			if (Array.isArray(value)) {
-				return value.map(c => {
+				return value.map((c) => {
 					if (c && c._id) c.id = c._id;
 					return c;
 				});
@@ -131,14 +131,14 @@ class JSONStringifyStream extends Transform {
 module.exports.JSONStringifyStream = JSONStringifyStream;
 
 module.exports.Promise = {
-	prop: prop => (val => val[prop]),
-	func: func => (val => val[func]()),
+	prop: (prop) => ((val) => val[prop]),
+	func: (func) => ((val) => val[func]()),
 	nop: () => (() => null),
-	inject: value => (() => value),
-	arrayProp: prop => (arr => arr.map(a => a[prop]))
+	inject: (value) => (() => value),
+	arrayProp: (prop) => ((arr) => arr.map((a) => a[prop])),
 };
 
-module.exports.ShortId = id => {
+module.exports.ShortId = (id) => {
 	const toBase = (num, base) => {
 		const symbols = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-'.split('');
 		let decimal = num;

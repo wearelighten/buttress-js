@@ -29,7 +29,7 @@ const Sugar = require('sugar');
 **********************************************************************************/
 
 module.exports.add = (collection, __add) => {
-	return body => {
+	return (body) => {
 		if (body instanceof Array === false) {
 			body = [body];
 		}
@@ -39,13 +39,13 @@ module.exports.add = (collection, __add) => {
 				.then(__add(item))
 				.catch(Logging.Promise.logError());
 		}, Promise.resolve([]))
-			.then(documents => {
+			.then((documents) => {
 				return new Promise((resolve, reject) => {
-					const ops = documents.map(c => {
+					const ops = documents.map((c) => {
 						return {
 							insertOne: {
-								document: c
-							}
+								document: c,
+							},
 						};
 					});
 					collection.bulkWrite(ops, (err, res) => {
@@ -77,12 +77,12 @@ module.exports.add = (collection, __add) => {
 * SCHEMA HELPERS
 *
 **********************************************************************************/
-const __getFlattenedSchema = schema => {
+const __getFlattenedSchema = (schema) => {
 	const __buildFlattenedSchema = (property, parent, path, flattened) => {
 		path.push(property);
 
 		let isRoot = true;
-		for (let childProp in parent[property]) {
+		for (const childProp in parent[property]) {
 			if (!parent[property].hasOwnProperty(childProp)) continue;
 			if (/^__/.test(childProp)) {
 				if (childProp === '__schema') {
@@ -107,7 +107,7 @@ const __getFlattenedSchema = schema => {
 
 	const flattened = {};
 	const path = [];
-	for (let property in schema.properties) {
+	for (const property in schema.properties) {
 		if (!schema.properties.hasOwnProperty(property)) continue;
 		__buildFlattenedSchema(property, schema.properties, path, flattened);
 	}
@@ -116,7 +116,7 @@ const __getFlattenedSchema = schema => {
 	return flattened;
 };
 
-const __getFlattenedBody = body => {
+const __getFlattenedBody = (body) => {
 	const __buildFlattenedBody = (property, parent, path, flattened) => {
 		if (/^_/.test(property)) return; // ignore internals
 		path.push(property);
@@ -125,13 +125,13 @@ const __getFlattenedBody = body => {
 			Array.isArray(parent[property]) || parent[property] === null) {
 			flattened.push({
 				path: path.join('.'),
-				value: parent[property]
+				value: parent[property],
 			});
 			path.pop();
 			return;
 		}
 
-		for (let childProp in parent[property]) {
+		for (const childProp in parent[property]) {
 			if (!parent[property].hasOwnProperty(childProp)) continue;
 			__buildFlattenedBody(childProp, parent[property], path, flattened);
 		}
@@ -142,7 +142,7 @@ const __getFlattenedBody = body => {
 
 	const flattened = [];
 	const path = [];
-	for (let property in body) {
+	for (const property in body) {
 		if (!body.hasOwnProperty(property)) continue;
 		__buildFlattenedBody(property, body, path, flattened);
 	}
@@ -151,7 +151,7 @@ const __getFlattenedBody = body => {
 	return flattened;
 };
 
-const __getPropDefault = config => {
+const __getPropDefault = (config) => {
 	let res;
 	switch (config.__type) {
 	default:
@@ -254,7 +254,7 @@ const __validateProp = (prop, config) => {
 		if (prop.value === null) {
 			valid = true;
 		} else {
-			let date = new Date(prop.value);
+			const date = new Date(prop.value);
 			valid = Sugar.Date.isValid(date);
 			if (valid) {
 				prop.value = date;
@@ -270,12 +270,12 @@ const __validate = (schema, values, parentProperty) => {
 	const res = {
 		isValid: true,
 		missing: [],
-		invalid: []
+		invalid: [],
 	};
 
-	for (let property in schema) {
+	for (const property in schema) {
 		if (!schema.hasOwnProperty(property)) continue;
-		let propVal = values.find(v => v.path === property);
+		let propVal = values.find((v) => v.path === property);
 		const config = schema[property];
 
 		if (propVal === undefined) {
@@ -288,7 +288,7 @@ const __validate = (schema, values, parentProperty) => {
 
 			propVal = {
 				path: property,
-				value: __getPropDefault(config)
+				value: __getPropDefault(config),
 			};
 			values.push(propVal);
 		}
@@ -341,7 +341,7 @@ const _validateAppProperties = function(schema, body) {
 
 const __inflateObject = (parent, path, value) => {
 	if (path.length > 1) {
-		let parentKey = path.shift();
+		const parentKey = path.shift();
 		if (!parent[parentKey]) {
 			parent[parentKey] = {};
 		}
@@ -357,15 +357,15 @@ const __populateObject = (schema, values) => {
 	const res = {};
 	const objects = {};
 
-	for (let property in schema) {
+	for (const property in schema) {
 		if (!schema.hasOwnProperty(property)) continue;
-		let propVal = values.find(v => v.path === property);
+		let propVal = values.find((v) => v.path === property);
 		const config = schema[property];
 
 		if (propVal === undefined) {
 			propVal = {
 				path: property,
-				value: __getPropDefault(config)
+				value: __getPropDefault(config),
 			};
 			// console.log(propVal);
 		}
@@ -377,7 +377,7 @@ const __populateObject = (schema, values) => {
 		const root = path.shift();
 		let value = propVal.value;
 		if (config.__type === 'array' && config.__schema) {
-			value = value.map(v => __populateObject(config.__schema, __getFlattenedBody(v)));
+			value = value.map((v) => __populateObject(config.__schema, __getFlattenedBody(v)));
 		}
 
 		if (path.length > 0) {
@@ -423,17 +423,17 @@ module.exports.applyAppProperties = _applyAppProperties;
  * @param {Object} flattenedSchema - schema object keyed on path
  * @return {Object} - returns an object with validation context
  */
-let _doValidateUpdate = function(pathContext, flattenedSchema) {
-	return body => {
+const _doValidateUpdate = function(pathContext, flattenedSchema) {
+	return (body) => {
 		Logging.logDebug(`_doValidateUpdate: path: ${body.path}, value: ${body.value}`);
-		let res = {
+		const res = {
 			isValid: false,
 			isMissingRequired: false,
 			missingRequired: '',
 			isPathValid: false,
 			invalidPath: '',
 			isValueValid: false,
-			invalidValid: ''
+			invalidValid: '',
 		};
 
 		if (!body.path) {
@@ -449,13 +449,13 @@ let _doValidateUpdate = function(pathContext, flattenedSchema) {
 
 		let validPath = false;
 		body.contextPath = false;
-		for (let pathSpec in pathContext) {
+		for (const pathSpec in pathContext) {
 			if (!Object.prototype.hasOwnProperty.call(pathContext, pathSpec)) {
 				continue;
 			}
 
 			const rex = new RegExp(pathSpec);
-			let matches = rex.exec(body.path);
+			const matches = rex.exec(body.path);
 			if (matches) {
 				matches.splice(0, 1);
 				validPath = true;
@@ -506,8 +506,8 @@ let _doValidateUpdate = function(pathContext, flattenedSchema) {
 	};
 };
 
-let _doUpdate = (entity, body, pathContext, config, collection, id) => {
-	return prev => {
+const _doUpdate = (entity, body, pathContext, config, collection, id) => {
+	return (prev) => {
 		const context = pathContext[body.contextPath];
 		const updateType = context.type;
 		let response = null;
@@ -534,10 +534,10 @@ let _doUpdate = (entity, body, pathContext, config, collection, id) => {
 					filter: {_id: new ObjectId(id)},
 					update: {
 						$push: {
-							[body.path]: value
-						}
-					}
-				}
+							[body.path]: value,
+						},
+					},
+				},
 			});
 			response = value;
 		} break;
@@ -553,20 +553,20 @@ let _doUpdate = (entity, body, pathContext, config, collection, id) => {
 					filter: {_id: new ObjectId(id)},
 					update: {
 						$unset: {
-							[rmPath]: null
-						}
-					}
-				}
+							[rmPath]: null,
+						},
+					},
+				},
 			});
 			ops.push({
 				updateOne: {
 					filter: {_id: new ObjectId(id)},
 					update: {
 						$pull: {
-							[body.path]: null
-						}
-					}
-				}
+							[body.path]: null,
+						},
+					},
+				},
 			});
 
 			response = {numRemoved: 1, index: index};
@@ -585,10 +585,10 @@ let _doUpdate = (entity, body, pathContext, config, collection, id) => {
 					filter: {_id: new ObjectId(id)},
 					update: {
 						$set: {
-							[body.path]: value
-						}
-					}
-				}
+							[body.path]: value,
+						},
+					},
+				},
 			});
 
 			response = value;
@@ -607,7 +607,7 @@ let _doUpdate = (entity, body, pathContext, config, collection, id) => {
 					prev.push({
 						type: updateType,
 						path: body.path,
-						value: response
+						value: response,
 					});
 					resolve(prev);
 				});
@@ -620,7 +620,7 @@ let _doUpdate = (entity, body, pathContext, config, collection, id) => {
 const __extendPathContext = (pathContext, schema, prefix) => {
 	if (!schema) return pathContext;
 	let extended = {};
-	for (let property in schema) {
+	for (const property in schema) {
 		if (!schema.hasOwnProperty(property)) continue;
 		const config = schema[property];
 		if (config.__allowUpdate === false) continue;
@@ -662,7 +662,7 @@ module.exports.validateUpdate = function(pathContext, schema) {
 		const flattenedSchema = schema ? __getFlattenedSchema(schema) : false;
 		const extendedPathContext = __extendPathContext(pathContext, flattenedSchema, '');
 
-		let validation = body.map(_doValidateUpdate(extendedPathContext, flattenedSchema)).filter(v => v.isValid === false);
+		const validation = body.map(_doValidateUpdate(extendedPathContext, flattenedSchema)).filter((v) => v.isValid === false);
 
 		return validation.length >= 1 ? validation[0] : {isValid: true};
 	};
@@ -701,14 +701,14 @@ module.exports.addOrUpdateMetadata = function(key, value) {
 	Logging.logSilly(key);
 	Logging.logSilly(value);
 
-	let exists = this.metadata.find(m => m.key === key);
+	const exists = this.metadata.find((m) => m.key === key);
 	if (exists) {
 		exists.value = value;
 	} else {
 		this.metadata.push({key: key, value: value});
 	}
 
-	return this.save().then(u => ({key: key, value: JSON.parse(value)}));
+	return this.save().then((u) => ({key: key, value: JSON.parse(value)}));
 };
 
 module.exports.getAllMetadata = function(collection) {
@@ -719,9 +719,9 @@ module.exports.getAllMetadata = function(collection) {
 
 module.exports.findMetadata = function(key) {
 	Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-	Logging.log(this.metadata.map(m => ({key: m.key, value: m.value})),
+	Logging.log(this.metadata.map((m) => ({key: m.key, value: m.value})),
 		Logging.Constants.LogLevel.DEBUG);
-	let md = this.metadata.find(m => m.key === key);
+	const md = this.metadata.find((m) => m.key === key);
 	return md ? {key: md.key, value: JSON.parse(md.value)} : false;
 };
 
@@ -730,5 +730,5 @@ module.exports.rmMetadata = function(key) {
 
 	return this
 		.update({$pull: {metadata: {key: key}}})
-		.then(res => res.nModified !== 0);
+		.then((res) => res.nModified !== 0);
 };

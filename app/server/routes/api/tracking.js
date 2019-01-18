@@ -13,7 +13,7 @@
 const Route = require('../route');
 const Model = require('../../model');
 
-let routes = [];
+const routes = [];
 
 /**
  * @class GetTrackingList
@@ -52,7 +52,7 @@ class AddTracking extends Route {
 
 	_validate() {
 		return new Promise((resolve, reject) => {
-			let validation = Model.Tracking.validate(this.req.body);
+			const validation = Model.Tracking.validate(this.req.body);
 			if (!validation.isValid) {
 				if (validation.missing.length > 0) {
 					this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
@@ -95,7 +95,7 @@ class DeleteTracking extends Route {
 	_validate() {
 		return new Promise((resolve, reject) => {
 			Model.Tracking.findById(this.req.params.id)
-				.then(tracking => {
+				.then((tracking) => {
 					if (!tracking) {
 						this.log('ERROR: Invalid Tracking ID', Route.LogLevel.ERR);
 						reject({statusCode: 400});

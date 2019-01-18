@@ -25,18 +25,18 @@ const Shared = require('../shared');
 const visibility = ['public', 'private'];
 const Visibility = {
 	PUBLIC: visibility[0],
-	PRIVATE: visibility[1]
+	PRIVATE: visibility[1],
 };
 
 class ActivitySchemaModel extends SchemaModel {
 	constructor(MongoDb) {
-		let schema = ActivitySchemaModel.Schema;
+		const schema = ActivitySchemaModel.Schema;
 		super(MongoDb, schema);
 	}
 
 	static get Constants() {
 		return {
-			Visibility: Visibility
+			Visibility: Visibility,
 		};
 	}
 	get Constants() {
@@ -53,43 +53,43 @@ class ActivitySchemaModel extends SchemaModel {
 				timestamp: {
 					__type: 'date',
 					__default: 'now',
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				title: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				description: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				visibility: {
 					__type: 'string',
 					__default: 'private',
 					__enum: visibility,
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				path: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				verb: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				authLevel: {
 					__type: 'number',
 					__default: 0,
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				permissions: {
 					__type: 'string',
 					__default: '',
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				params: { },
 				query: { },
@@ -98,19 +98,19 @@ class ActivitySchemaModel extends SchemaModel {
 				_token: {
 					__type: 'id',
 					__required: true,
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				_app: {
 					__type: 'id',
 					__required: true,
-					__allowUpdate: false
+					__allowUpdate: false,
 				},
 				_user: {
 					__type: 'id',
 					__required: true,
-					__allowUpdate: false
-				}
-			}
+					__allowUpdate: false,
+				},
+			},
 		};
 	}
 
@@ -119,14 +119,14 @@ class ActivitySchemaModel extends SchemaModel {
 	 * @return {Promise} - fulfilled with App Object when the database request is completed
 	 */
 	__add(body) {
-		return prev => {
-			let user = Model.authUser;
-			let userName = user && user._person ? `${user._person.forename} ${user._person.surname}` : 'System';
+		return (prev) => {
+			const user = Model.authUser;
+			const userName = user && user._person ? `${user._person.forename} ${user._person.surname}` : 'System';
 
 			body.activityTitle = body.activityTitle.replace('%USER_NAME%', userName);
 			body.activityDescription = body.activityDescription.replace('%USER_NAME%', userName);
 
-			let q = Object.assign({}, body.req.query);
+			const q = Object.assign({}, body.req.query);
 			delete q.token;
 			delete q.urq;
 
@@ -145,7 +145,7 @@ class ActivitySchemaModel extends SchemaModel {
 				timestamp: new Date(),
 				_token: Model.token.id,
 				_user: (Model.authUser) ? Model.authUser._id : null,
-				_app: Model.authApp._id
+				_app: Model.authApp._id,
 			};
 
 			if (body.id) {
@@ -166,7 +166,7 @@ class ActivitySchemaModel extends SchemaModel {
 
 		return this.collection.find({
 			_app: Model.authApp._id,
-			visibility: ActivitySchemaModel.Constants.Visibility.PUBLIC
+			visibility: ActivitySchemaModel.Constants.Visibility.PUBLIC,
 		});
 	}
 }
