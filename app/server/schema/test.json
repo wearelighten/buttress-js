@@ -1,15 +1,15 @@
 {
-  "name": "test",
-  "type": "collection",
-  "collection": "test",
-  "extends": [
-    "timestamps"
-  ],
-  "properties": {
-    "name": {
-      "__type": "string",
-      "__required": true,
-      "__allowUpdate": true
-    }
-  }
+	"name": "test",
+	"type": "collection",
+	"collection": "test",
+	"extends": [
+		"timestamps"
+	],
+	"properties": {
+		"name": {
+			"__type": "string",
+			"__required": true,
+			"__allowUpdate": true
+		}
+	}
 }

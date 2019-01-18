@@ -5,6 +5,7 @@
   ],
   "rules": {
     "max-len": [ 2, 150, 4 ],
-    "max-lines": ["error", {"max": 500, "skipComments": true, "skipBlankLines": true}]
+    "max-lines": ["error", {"max": 500, "skipComments": true, "skipBlankLines": true}],
+    "indent": [2, "tab"]
   }
 }

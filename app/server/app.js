@@ -21,13 +21,13 @@ const Logging = require('./logging');
 Logging.init('rest');
 
 Bootstrap.rest()
-  .then(isMaster => {
-    if (isMaster) {
-      Logging.log(`${Config.app.title}:${Config.app.code} REST Server Master v${Config.app.version} listening on port ` +
-        `${Config.listenPorts.rest} in ${Config.env} mode.`);
-    } else {
-      Logging.log(`${Config.app.title}:${Config.app.code} REST Server Worker v${Config.app.version} ` +
-        `in ${Config.env} mode.`);
-    }
-  })
-  .catch(Logging.Promise.logError());
+	.then(isMaster => {
+		if (isMaster) {
+			Logging.log(`${Config.app.title}:${Config.app.code} REST Server Master v${Config.app.version} listening on port ` +
+				`${Config.listenPorts.rest} in ${Config.env} mode.`);
+		} else {
+			Logging.log(`${Config.app.title}:${Config.app.code} REST Server Worker v${Config.app.version} ` +
+				`in ${Config.env} mode.`);
+		}
+	})
+	.catch(Logging.Promise.logError());

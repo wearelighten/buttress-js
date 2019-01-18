@@ -21,21 +21,21 @@ var routes = [];
  * @class GetTokenList
  */
 class GetTokenList extends Route {
-  constructor() {
-    super('token', 'GET TOKEN LIST');
-    this.verb = Route.Constants.Verbs.GET;
-    this.auth = Route.Constants.Auth.SUPER;
-    this.permissions = Route.Constants.Permissions.LIST;
-  }
+	constructor() {
+		super('token', 'GET TOKEN LIST');
+		this.verb = Route.Constants.Verbs.GET;
+		this.auth = Route.Constants.Auth.SUPER;
+		this.permissions = Route.Constants.Permissions.LIST;
+	}
 
-  _validate() {
-    return Promise.resolve(true);
-  }
+	_validate() {
+		return Promise.resolve(true);
+	}
 
-  _exec() {
-    return Model.Token.getAll()
-    .then(tokens => tokens.map(t => t.details));
-  }
+	_exec() {
+		return Model.Token.getAll()
+		.then(tokens => tokens.map(t => t.details));
+	}
 }
 routes.push(GetTokenList);
 
@@ -43,22 +43,22 @@ routes.push(GetTokenList);
  * @class DeleteAllTokens
  */
 class DeleteAllTokens extends Route {
-  constructor() {
-    super('token/:type?', 'DELETE ALL TOKENS');
-    this.verb = Route.Constants.Verbs.DEL;
-    this.auth = Route.Constants.Auth.SUPER;
-    this.permissions = Route.Constants.Permissions.DELETE;
-  }
+	constructor() {
+		super('token/:type?', 'DELETE ALL TOKENS');
+		this.verb = Route.Constants.Verbs.DEL;
+		this.auth = Route.Constants.Auth.SUPER;
+		this.permissions = Route.Constants.Permissions.DELETE;
+	}
 
-  _validate() {
-    return Promise.resolve(this.req.params.type === 'user');
-  }
+	_validate() {
+		return Promise.resolve(this.req.params.type === 'user');
+	}
 
-  _exec() {
-    return Model.Token.rmAll({
-      type: this.req.params.type
-    }).then(() => true);
-  }
+	_exec() {
+		return Model.Token.rmAll({
+			type: this.req.params.type
+		}).then(() => true);
+	}
 }
 routes.push(DeleteAllTokens);
 

@@ -21,175 +21,175 @@ const Logging = require('../../logging');
 // const Logging = require('../../logging');
 
 class PersonSchemaModel extends SchemaModel {
-  constructor(MongoDb) {
-    let schema = PersonSchemaModel.Schema;
-    super(MongoDb, schema);
-  }
+	constructor(MongoDb) {
+		let schema = PersonSchemaModel.Schema;
+		super(MongoDb, schema);
+	}
 
-  static get Constants() {
-    return {
-    };
-  }
-  get Constants() {
-    return PersonSchemaModel.Constants;
-  }
+	static get Constants() {
+		return {
+		};
+	}
+	get Constants() {
+		return PersonSchemaModel.Constants;
+	}
 
-  static get Schema() {
-    return {
-      name: "person",
-      type: "collection",
-      collection: "people",
-      extends: [],
-      properties: {
-        title: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        formalName: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        name: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        forename: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        initials: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        surname: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        suffix: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        emails: {
-          __type: "array",
-          __allowUpdate: true
-        },
-        address: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        postcode: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        phone: {
-          landline: {
-            __type: "string",
-            __default: "",
-            __allowUpdate: true
-          },
-          mobile: {
-            __type: "string",
-            __default: "",
-            __allowUpdate: true
-          }
-        },
-        company: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        role: {
-          __type: "string",
-          __default: "",
-          __allowUpdate: true
-        },
-        _dataOwner: {
-          __type: "id",
-          __required: true,
-          __allowUpdate: false
-        }
-      }
-    };
-  }
+	static get Schema() {
+		return {
+			name: "person",
+			type: "collection",
+			collection: "people",
+			extends: [],
+			properties: {
+				title: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				formalName: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				name: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				forename: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				initials: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				surname: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				suffix: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				emails: {
+					__type: "array",
+					__allowUpdate: true
+				},
+				address: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				postcode: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				phone: {
+					landline: {
+						__type: "string",
+						__default: "",
+						__allowUpdate: true
+					},
+					mobile: {
+						__type: "string",
+						__default: "",
+						__allowUpdate: true
+					}
+				},
+				company: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				role: {
+					__type: "string",
+					__default: "",
+					__allowUpdate: true
+				},
+				_dataOwner: {
+					__type: "id",
+					__required: true,
+					__allowUpdate: false
+				}
+			}
+		};
+	}
 
-  /**
-   * @param {Object} body - person details
-   * @param {Object} authApp - owner app object
-   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-   */
-  add(body, authApp) {
-    var name = humanname.parse(body.name);
+	/**
+	 * @param {Object} body - person details
+	 * @param {Object} authApp - owner app object
+	 * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+	 */
+	add(body, authApp) {
+		var name = humanname.parse(body.name);
 
-    const person = {
-      title: name.salutation,
-      formalName: `${name.salutation ? name.salutation + ' ' : ''}${name.firstName} ${name.initials ? name.initials + ' ' : ''}${name.lastName}`,
-      name: `${name.firstName} ${name.lastName}`,
-      forename: name.firstName,
-      initials: name.initials,
-      surname: name.lastName,
-      suffix: name.suffix,
-      emails: [body.email],
-      telephone: {
-        landline: body.landline,
-        mobile: body.mobile
-      },
-      address: body.address,
-      postcode: body.postcode
-    };
+		const person = {
+			title: name.salutation,
+			formalName: `${name.salutation ? name.salutation + ' ' : ''}${name.firstName} ${name.initials ? name.initials + ' ' : ''}${name.lastName}`,
+			name: `${name.firstName} ${name.lastName}`,
+			forename: name.firstName,
+			initials: name.initials,
+			surname: name.lastName,
+			suffix: name.suffix,
+			emails: [body.email],
+			telephone: {
+				landline: body.landline,
+				mobile: body.mobile
+			},
+			address: body.address,
+			postcode: body.postcode
+		};
 
-    return super.add(person, {
-      _dataOwner: authApp._id
-    });
-  }
+		return super.add(person, {
+			_dataOwner: authApp._id
+		});
+	}
 
-  /**
-   * @param {Object} appAuth - app auth details
-   * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-   */
-  updateFromAuth(appAuth) {
-    if (!appAuth.email) {
-      return Promise.resolve();
-    }
+	/**
+	 * @param {Object} appAuth - app auth details
+	 * @return {Promise} - returns a promise that is fulfilled when the database request is completed
+	 */
+	updateFromAuth(appAuth) {
+		if (!appAuth.email) {
+			return Promise.resolve();
+		}
 
-    if (this.emails.findIndex(e => e === appAuth.email) !== -1) {
-      return Promise.resolve();
-    }
+		if (this.emails.findIndex(e => e === appAuth.email) !== -1) {
+			return Promise.resolve();
+		}
 
-    this.emails.push(appAuth.email);
+		this.emails.push(appAuth.email);
 
-    return this.save();
-  }
+		return this.save();
+	}
 
-  findByDetails(details) {
-    if (!details.email) {
-      return Promise.reject(new Error('missing_required_field_email'));
-    }
-    return this.collection.findOne({
-      emails: details.email
-    });
-  }
+	findByDetails(details) {
+		if (!details.email) {
+			return Promise.reject(new Error('missing_required_field_email'));
+		}
+		return this.collection.findOne({
+			emails: details.email
+		});
+	}
 
-  /**
-   * @return {Promise} - resolves to an array of Apps
-   */
-  findAll() {
-    Logging.logSilly(`findAll: ${Model.authApp._id}`);
+	/**
+	 * @return {Promise} - resolves to an array of Apps
+	 */
+	findAll() {
+		Logging.logSilly(`findAll: ${Model.authApp._id}`);
 
-    if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
-      return super.find({});
-    }
+		if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
+			return super.find({});
+		}
 
-    return super.find({_apps: Model.authApp._id});
-  }
+		return super.find({_apps: Model.authApp._id});
+	}
 
 }
 
