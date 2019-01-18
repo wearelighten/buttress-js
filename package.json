@@ -29,7 +29,7 @@
     "juice": "~5.1.0",
     "less": "~3.9.0",
     "method-override": "~3.0.0",
-    "mongodb": "~2.2.36",
+    "mongodb": "~3.1.12",
     "morgan": "~1.9.1",
     "node-env-obj": "~0.1.1",
     "node-redis-pubsub": "~4.0.0",
