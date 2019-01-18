@@ -22,175 +22,175 @@ const Logging = require('../../logging');
 */
 const type = ['app', 'user'];
 const Type = {
-  APP: type[0],
-  USER: type[1]
+	APP: type[0],
+	USER: type[1],
 };
 
 const authLevel = [0, 1, 2, 3];
 const AuthLevel = {
-  NONE: 0,
-  USER: 1,
-  ADMIN: 2,
-  SUPER: 3
+	NONE: 0,
+	USER: 1,
+	ADMIN: 2,
+	SUPER: 3,
 };
 
 class TokenSchemaModel extends SchemaModel {
-  constructor(MongoDb) {
-    const schema = TokenSchemaModel.Schema;
-    super(MongoDb, schema);
-  }
+	constructor(MongoDb) {
+		const schema = TokenSchemaModel.Schema;
+		super(MongoDb, schema);
+	}
 
-  static get Constants() {
-    return {
-      Type: Type,
-      AuthLevel: AuthLevel
-    };
-  }
-  get Constants() {
-    return TokenSchemaModel.Constants;
-  }
+	static get Constants() {
+		return {
+			Type: Type,
+			AuthLevel: AuthLevel,
+		};
+	}
+	get Constants() {
+		return TokenSchemaModel.Constants;
+	}
 
-  static get Schema() {
-    return {
-      name: "tokens",
-      type: "collection",
-      collection: "tokens",
-      extends: [],
-      properties: {
-        type: {
-          __type: "string",
-          __default: "user",
-          __enum: type,
-          __allowUpdate: true
-        },
-        value: {
-          __type: "string",
-          __default: "",
-          __required: true,
-          __allowUpdate: true
-        },
-        domains: {
-          __type: "array",
-          __required: true,
-          __allowUpdate: true
-        },
-        authLevel: {
-          __type: "number",
-          __default: 1,
-          __enum: authLevel,
-          __allowUpdate: true
-        },
-        permissions: {
-          __type: "array",
-          __required: true,
-          __allowUpdate: true,
-          __schema: {
-            route: {
-              __type: "string",
-              __required: true,
-              __allowUpdate: true
-            },
-            permission: {
-              __type: "string",
-              __required: true,
-              __allowUpdate: true
-            }
-          }
-        },
-        uses: {
-          __type: "array",
-          __required: true,
-          __allowUpdate: true
-        },
-        allocated: {
-          __type: Boolean,
-          __default: false,
-          __required: true,
-          __allowUpdate: true
-        },
-        _app: {
-          __type: "id",
-          __required: true,
-          __allowUpdate: false
-        },
-        _user: {
-          __type: "id",
-          __required: true,
-          __allowUpdate: false
-        }
-      }
-    };
-  }
+	static get Schema() {
+		return {
+			name: 'tokens',
+			type: 'collection',
+			collection: 'tokens',
+			extends: [],
+			properties: {
+				type: {
+					__type: 'string',
+					__default: 'user',
+					__enum: type,
+					__allowUpdate: true,
+				},
+				value: {
+					__type: 'string',
+					__default: '',
+					__required: true,
+					__allowUpdate: true,
+				},
+				domains: {
+					__type: 'array',
+					__required: true,
+					__allowUpdate: true,
+				},
+				authLevel: {
+					__type: 'number',
+					__default: 1,
+					__enum: authLevel,
+					__allowUpdate: true,
+				},
+				permissions: {
+					__type: 'array',
+					__required: true,
+					__allowUpdate: true,
+					__schema: {
+						route: {
+							__type: 'string',
+							__required: true,
+							__allowUpdate: true,
+						},
+						permission: {
+							__type: 'string',
+							__required: true,
+							__allowUpdate: true,
+						},
+					},
+				},
+				uses: {
+					__type: 'array',
+					__required: true,
+					__allowUpdate: true,
+				},
+				allocated: {
+					__type: Boolean,
+					__default: false,
+					__required: true,
+					__allowUpdate: true,
+				},
+				_app: {
+					__type: 'id',
+					__required: true,
+					__allowUpdate: false,
+				},
+				_user: {
+					__type: 'id',
+					__required: true,
+					__allowUpdate: false,
+				},
+			},
+		};
+	}
 
-  /**
-   * @return {string} - cryptographically secure token string
-   * @private
-   */
-  _createTokenString() {
-    const length = 36;
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    var mask = 0x3d;
-    var string = '';
+	/**
+	 * @return {string} - cryptographically secure token string
+	 * @private
+	 */
+	_createTokenString() {
+		const length = 36;
+		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		const mask = 0x3d;
+		let string = '';
 
-    try {
-      var bytes = Crypto.randomBytes(length);
-      for (var x = 0; x < bytes.length; x++) {
-        var byte = bytes[x];
-        string += chars[byte & mask];
-      }
-    } catch (err) {
-      throw err;
-    }
+		try {
+			const bytes = Crypto.randomBytes(length);
+			for (let x = 0; x < bytes.length; x++) {
+				const byte = bytes[x];
+				string += chars[byte & mask];
+			}
+		} catch (err) {
+			throw err;
+		}
 
-    Logging.log(`Created Token: ${string}`, Logging.Constants.LogLevel.VERBOSE);
+		Logging.log(`Created Token: ${string}`, Logging.Constants.LogLevel.VERBOSE);
 
-    return string;
-  }
+		return string;
+	}
 
-  /*
-    * @param {Object} body - body passed through from a POST request
-    * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-    */
-  add(body, internals) {
-    body.value = this._createTokenString();
-    return super.add(body, internals);
-  }
+	/*
+		* @param {Object} body - body passed through from a POST request
+		* @return {Promise} - returns a promise that is fulfilled when the database request is completed
+		*/
+	add(body, internals) {
+		body.value = this._createTokenString();
+		return super.add(body, internals);
+	}
 
-  /**
-   * @param {string} route - route for the permission
-   * @param {*} permission - permission to apply to the route
-   * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
-   */
-  addOrUpdatePermission(route, permission) {
-    Logging.log(route, Logging.Constants.LogLevel.DEBUG);
-    Logging.log(permission, Logging.Constants.LogLevel.DEBUG);
+	/**
+	 * @param {string} route - route for the permission
+	 * @param {*} permission - permission to apply to the route
+	 * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
+	 */
+	addOrUpdatePermission(route, permission) {
+		Logging.log(route, Logging.Constants.LogLevel.DEBUG);
+		Logging.log(permission, Logging.Constants.LogLevel.DEBUG);
 
-    var exists = this.permissions.find(p => p.route === route);
-    if (exists) {
-      exists.permission = permission;
-    } else {
-      this.permissions.push({route, permission});
-    }
-    return this.save();
-  }
+		const exists = this.permissions.find((p) => p.route === route);
+		if (exists) {
+			exists.permission = permission;
+		} else {
+			this.permissions.push({route, permission});
+		}
+		return this.save();
+	}
 
-  /**
-   * @param {String} userId - DB id for the user
-   * @param {String} appId - DB id for the app
-   * @return {Promise} - resolves to an array of Tokens
-   */
-  findUserAuthToken(userId, appId) {
-    return new Promise(resolve => {
-      this.collection.findOne({
-        allocated: true,
-        _app: appId,
-        _user: userId
-      }, {}, (err, doc) => {
-        if (err) throw err;
-        resolve(doc);
-      });
-    });
-  }
+	/**
+	 * @param {String} userId - DB id for the user
+	 * @param {String} appId - DB id for the app
+	 * @return {Promise} - resolves to an array of Tokens
+	 */
+	findUserAuthToken(userId, appId) {
+		return new Promise((resolve) => {
+			this.collection.findOne({
+				allocated: true,
+				_app: appId,
+				_user: userId,
+			}, {}, (err, doc) => {
+				if (err) throw err;
+				resolve(doc);
+			});
+		});
+	}
 }
 
 /**
