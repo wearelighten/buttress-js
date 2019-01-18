@@ -133,7 +133,7 @@ class PersonSchemaModel extends SchemaModel {
 		const initials = name.initials ? name.initials + ' ' : '';
 
 		const person = {
-			title: title,
+			title: name.salutation,
 			formalName: `${title}${name.firstName} ${initials}${name.lastName}`,
 			name: `${name.firstName} ${name.lastName}`,
 			forename: name.firstName,
