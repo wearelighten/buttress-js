@@ -56,17 +56,17 @@ const __nativeMongoConnect = app => {
 	const dbName = `${Config.app.code}-${Config.env}`;
 	const mongoUrl = `mongodb://${Config.mongoDb.url}/?authMechanism=DEFAULT&authSource=${dbName}`;
 	return MongoClient.connect(mongoUrl, Config.mongoDb.options) // eslint-disable-line camelcase
-	.then(client => {
-		return client.db(dbName);
-	});
+		.then(client => {
+			return client.db(dbName);
+		});
 };
 const __initMongoConnect = () => {
 	return __nativeMongoConnect()
-	.then(db => {
-		Model.init(db);
-		return db;
-	})
-	.catch(e => Logging.logError(e));
+		.then(db => {
+			Model.init(db);
+			return db;
+		})
+		.catch(e => Logging.logError(e));
 };
 
 /* ********************************************************************************
@@ -206,56 +206,56 @@ const __initMaster = express => {
 	}
 
 	__initMongoConnect()
-	.then(db => {
+		.then(db => {
 		// Load Apps
-		return new Promise((resolve, reject) => {
-			Model.App.findAll().toArray((err, _apps) => {
-				if (err) reject(err);
-				resolve(apps = _apps);
+			return new Promise((resolve, reject) => {
+				Model.App.findAll().toArray((err, _apps) => {
+					if (err) reject(err);
+					resolve(apps = _apps);
+				});
 			});
-		});
-	})
-	.then(() => {
+		})
+		.then(() => {
 		// Load Tokens
-		return new Promise((resolve, reject) => {
-			Model.Token.findAll().toArray((err, _tokens) => {
-				if (err) reject(err);
-				resolve(tokens = _tokens);
+			return new Promise((resolve, reject) => {
+				Model.Token.findAll().toArray((err, _tokens) => {
+					if (err) reject(err);
+					resolve(tokens = _tokens);
+				});
 			});
-		});
-	})
-	.then(() => {
+		})
+		.then(() => {
 		// Spawn worker processes, pass through build app objects
-		apps.map(app => {
-			const token = tokens.find(t => {
-				return t._id.toString() === app._token.toString();
+			apps.map(app => {
+				const token = tokens.find(t => {
+					return t._id.toString() === app._token.toString();
+				});
+				if (!token) {
+					Logging.logWarn(`No Token found for ${app.name}`);
+					return null;
+				}
+
+				app.token = token;
+				app.publicId = Model.App.genPublicUID(app.name, token.value);
+				let isSuper = token.authLevel > 2;
+				Logging.log(`App Public ID: ${app.name}, ${app.publicId}, ${(isSuper) ? 'SUPER' : ''}`);
+
+				if (isSuper) {
+					namespace[app.publicId] = {
+						emitter: emitter.of(`/${app.publicId}`),
+						sequence: 0
+					};
+					superApps.push(app.publicId);
+				}
+
+				return app;
+			}).filter(app => app);
+
+			__spawnWorkers({
+				apps: apps,
+				tokens: tokens
 			});
-			if (!token) {
-				Logging.logWarn(`No Token found for ${app.name}`);
-				return null;
-			}
-
-			app.token = token;
-			app.publicId = Model.App.genPublicUID(app.name, token.value);
-			let isSuper = token.authLevel > 2;
-			Logging.log(`App Public ID: ${app.name}, ${app.publicId}, ${(isSuper) ? 'SUPER' : ''}`);
-
-			if (isSuper) {
-				namespace[app.publicId] = {
-					emitter: emitter.of(`/${app.publicId}`),
-					sequence: 0
-				};
-				superApps.push(app.publicId);
-			}
-
-			return app;
-		}).filter(app => app);
-
-		__spawnWorkers({
-			apps: apps,
-			tokens: tokens
 		});
-	});
 };
 
 /* ********************************************************************************

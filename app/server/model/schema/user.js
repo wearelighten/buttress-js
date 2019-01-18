@@ -48,112 +48,112 @@ class UserSchemaModel extends SchemaModel {
 
 	static get Schema() {
 		return {
-			name: "users",
-			type: "collection",
-			collection: "users",
+			name: 'users',
+			type: 'collection',
+			collection: 'users',
 			extends: [],
 			properties: {
 				username: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				orgRole: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				teamName: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				teamRole: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				auth: {
-					__type: "array",
+					__type: 'array',
 					__required: true,
 					__allowUpdate: true,
 					__schema: {
 						app: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						},
 						appId: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						},
 						username: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						},
 						profileUrl: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						},
 						images: {
 							profile: {
-								__type: "string",
-								__default: "",
+								__type: 'string',
+								__default: '',
 								__allowUpdate: true
 							},
 							banner: {
-								__type: "string",
-								__default: "",
+								__type: 'string',
+								__default: '',
 								__allowUpdate: true
 							}
 						},
 						email: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						},
 						locale: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						},
 						token: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						},
 						tokenSecret: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						},
 						refreshToken: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						},
 						extras: {
-							__type: "string",
-							__default: "",
+							__type: 'string',
+							__default: '',
 							__allowUpdate: true
 						}
 					}
 				},
 				_apps: {
-					__type: "array",
+					__type: 'array',
 					__required: true,
 					__allowUpdate: true
 				},
 				_person: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				},
 				_tokens: {
-					__type: "array",
+					__type: 'array',
 					__required: true,
 					__allowUpdate: true
 				}
@@ -196,28 +196,28 @@ class UserSchemaModel extends SchemaModel {
 			_apps: [Model.authApp._id],
 			_person: person.id
 		})
-		.then(user => {
-			_user = user;
-			if (!auth) {
-				return false;
-			}
+			.then(user => {
+				_user = user;
+				if (!auth) {
+					return false;
+				}
 
-			auth.allocated = true;
+				auth.allocated = true;
 
-			return Model.Token.add(auth, {
-				_app: Model.authApp._id,
-				_user: _user._id
+				return Model.Token.add(auth, {
+					_app: Model.authApp._id,
+					_user: _user._id
+				});
+			})
+			.then(token => {
+				if (token) {
+					_user.authToken = token.value;
+				} else {
+					_user.authToken = false;
+				}
+
+				return _user;
 			});
-		})
-		.then(token => {
-			if (token) {
-				_user.authToken = token.value;
-			} else {
-				_user.authToken = false;
-			}
-
-			return _user;
-		});
 	}
 
 	addAuth(auth) {
@@ -304,10 +304,10 @@ class UserSchemaModel extends SchemaModel {
 
 	getPopulated(user) {
 		return Model.Person.findById(user._person)
-		.then(person => {
-			user.person = person;
-			return user;
-		});
+			.then(person => {
+				user.person = person;
+				return user;
+			});
 	}
 
 	/**

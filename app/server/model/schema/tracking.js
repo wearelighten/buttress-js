@@ -45,107 +45,107 @@ class TrackingSchemaModel extends SchemaModel {
 
 	static get Schema() {
 		return {
-			name: "trackings",
-			type: "collection",
-			collection: "trackings",
+			name: 'trackings',
+			type: 'collection',
+			collection: 'trackings',
 			extends: [],
 			properties: {
 				timestamp: {
-					__type: "date",
-					__default: "now",
+					__type: 'date',
+					__default: 'now',
 					__allowUpdate: false
 				},
 				userId: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				},
 				name: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				type: {
-					__type: "string",
-					__default: "logging",
+					__type: 'string',
+					__default: 'logging',
 					__enum: type,
 					__allowUpdate: true
 				},
 				interaction: {
 					type: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					location: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					context: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					}
 				},
 				error: {
 					message: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					url: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					line: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					col: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					}
 				},
 				logging: {
 					level: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					}
 				},
 				environment: {
 					browser: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					os: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					resolution: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					dpi: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					ram: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					}
 				},
 				_app: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				}

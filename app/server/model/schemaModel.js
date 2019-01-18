@@ -23,7 +23,6 @@ const shortId = require('../helpers').ShortId;
  **********************************************************************************/
 
 class SchemaModel {
-
 	constructor(MongoDb, schema, app) {
 		this.schema = schema;
 		this.app = app || null;

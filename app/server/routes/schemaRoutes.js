@@ -319,19 +319,19 @@ class DeleteOne extends Route {
 
 	_validate() {
 		return this.model.findById(this.req.params.id)
-		.then(entity => {
-			if (!entity) {
-				this.log(`${this.schema.name}: Invalid ID`, Route.LogLevel.ERR);
-				return {statusCode: 400};
-			}
-			this._entity = entity;
-			return true;
-		});
+			.then(entity => {
+				if (!entity) {
+					this.log(`${this.schema.name}: Invalid ID`, Route.LogLevel.ERR);
+					return {statusCode: 400};
+				}
+				this._entity = entity;
+				return true;
+			});
 	}
 
 	_exec() {
 		return this.model.rm(this._entity)
-		.then(() => true);
+			.then(() => true);
 	}
 }
 routes.push(DeleteOne);
@@ -405,7 +405,7 @@ class DeleteAll extends Route {
 
 	_exec() {
 		return this.model.rmAll()
-		.then(() => true);
+			.then(() => true);
 	}
 }
 routes.push(DeleteAll);

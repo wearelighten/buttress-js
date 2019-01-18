@@ -59,15 +59,15 @@ class Model {
 		if (db) this.mongoDb = db;
 
 		return this.models.App.findAll().toArray()
-		.then(apps => {
-			apps.forEach(app => {
-				if (app.__schema) {
-					Schema.buildCollections(app.__schema).forEach(schema => {
-						this._initSchemaModel(app, schema);
-					});
-				}
+			.then(apps => {
+				apps.forEach(app => {
+					if (app.__schema) {
+						Schema.buildCollections(app.__schema).forEach(schema => {
+							this._initSchemaModel(app, schema);
+						});
+					}
+				});
 			});
-		});
 	}
 
 	initModel(modelName) {

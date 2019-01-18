@@ -36,84 +36,84 @@ class PersonSchemaModel extends SchemaModel {
 
 	static get Schema() {
 		return {
-			name: "person",
-			type: "collection",
-			collection: "people",
+			name: 'person',
+			type: 'collection',
+			collection: 'people',
 			extends: [],
 			properties: {
 				title: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				formalName: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				name: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				forename: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				initials: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				surname: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				suffix: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				emails: {
-					__type: "array",
+					__type: 'array',
 					__allowUpdate: true
 				},
 				address: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				postcode: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				phone: {
 					landline: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					},
 					mobile: {
-						__type: "string",
-						__default: "",
+						__type: 'string',
+						__default: '',
 						__allowUpdate: true
 					}
 				},
 				company: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				role: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				_dataOwner: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				}
@@ -129,9 +129,12 @@ class PersonSchemaModel extends SchemaModel {
 	add(body, authApp) {
 		var name = humanname.parse(body.name);
 
+		const title = name.salutation ? name.salutation + ' ' : '';
+		const initials = name.initials ? name.initials + ' ' : '';
+
 		const person = {
-			title: name.salutation,
-			formalName: `${name.salutation ? name.salutation + ' ' : ''}${name.firstName} ${name.initials ? name.initials + ' ' : ''}${name.lastName}`,
+			title: title,
+			formalName: `${title}${name.firstName} ${initials}${name.lastName}`,
 			name: `${name.firstName} ${name.lastName}`,
 			forename: name.firstName,
 			initials: name.initials,
@@ -190,7 +193,6 @@ class PersonSchemaModel extends SchemaModel {
 
 		return super.find({_apps: Model.authApp._id});
 	}
-
 }
 
 // schema.virtual('details').get(function() {

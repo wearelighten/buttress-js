@@ -39,36 +39,36 @@ module.exports.add = (collection, __add) => {
 				.then(__add(item))
 				.catch(Logging.Promise.logError());
 		}, Promise.resolve([]))
-		.then(documents => {
-			return new Promise((resolve, reject) => {
-				const ops = documents.map(c => {
-					return {
-						insertOne: {
-							document: c
+			.then(documents => {
+				return new Promise((resolve, reject) => {
+					const ops = documents.map(c => {
+						return {
+							insertOne: {
+								document: c
+							}
+						};
+					});
+					collection.bulkWrite(ops, (err, res) => {
+						if (err) {
+							reject(err);
+							return;
 						}
-					};
-				});
-				collection.bulkWrite(ops, (err, res) => {
-					if (err) {
-						reject(err);
-						return;
-					}
 
-					const insertedIds = Sugar.Object.values(res.insertedIds);
-					if (insertedIds.length === 0 || insertedIds.length > 1) {
-						resolve(insertedIds);
-						return;
-					}
+						const insertedIds = Sugar.Object.values(res.insertedIds);
+						if (insertedIds.length === 0 || insertedIds.length > 1) {
+							resolve(insertedIds);
+							return;
+						}
 
-					collection.findOne({_id: new ObjectId(insertedIds[0])}, {metadata: 0}, (err, doc) => {
-						if (err) throw err;
-						doc.id = doc._id;
-						delete doc._id;
-						resolve(doc);
+						collection.findOne({_id: new ObjectId(insertedIds[0])}, {metadata: 0}, (err, doc) => {
+							if (err) throw err;
+							doc.id = doc._id;
+							delete doc._id;
+							resolve(doc);
+						});
 					});
 				});
 			});
-		});
 	};
 };
 
@@ -121,7 +121,8 @@ const __getFlattenedBody = body => {
 		if (/^_/.test(property)) return; // ignore internals
 		path.push(property);
 
-		if (typeof parent[property] !== 'object' || parent[property] instanceof Date || Array.isArray(parent[property]) || parent[property] === null) {
+		if (typeof parent[property] !== 'object' || parent[property] instanceof Date ||
+			Array.isArray(parent[property]) || parent[property] === null) {
 			flattened.push({
 				path: path.join('.'),
 				value: parent[property]
@@ -153,33 +154,33 @@ const __getFlattenedBody = body => {
 const __getPropDefault = config => {
 	let res;
 	switch (config.__type) {
-		default:
-		case 'boolean':
-			res = config.__default === undefined ? false : config.__default;
-			break;
-		case 'string':
-			res = config.__default === undefined ? '' : config.__default;
-			break;
-		case 'number':
-			res = config.__default === undefined ? 0 : config.__default;
-			break;
-		case 'array':
-			res = config.__default === undefined ? [] : config.__default;
-			break;
-		case 'object':
-			res = config.__default === undefined ? {} : config.__default;
-			break;
-		case 'id':
-			res = config.__default === undefined ? null : config.__default;
-			break;
-		case 'date':
-			if (config.__default === null) {
-				res = null;
-			} else if (config.__default) {
-				res = Sugar.Date.create(config.__default);
-			} else {
-				res = new Date();
-			}
+	default:
+	case 'boolean':
+		res = config.__default === undefined ? false : config.__default;
+		break;
+	case 'string':
+		res = config.__default === undefined ? '' : config.__default;
+		break;
+	case 'number':
+		res = config.__default === undefined ? 0 : config.__default;
+		break;
+	case 'array':
+		res = config.__default === undefined ? [] : config.__default;
+		break;
+	case 'object':
+		res = config.__default === undefined ? {} : config.__default;
+		break;
+	case 'id':
+		res = config.__default === undefined ? null : config.__default;
+		break;
+	case 'date':
+		if (config.__default === null) {
+			res = null;
+		} else if (config.__default) {
+			res = Sugar.Date.create(config.__default);
+		} else {
+			res = new Date();
+		}
 	}
 	return res;
 };
@@ -193,73 +194,73 @@ const __validateProp = (prop, config) => {
 	}
 
 	switch (config.__type) {
-		default:
-		case 'boolean':
-			if (type === 'string') {
-				const bool = prop.value === 'true' || prop.value === 'yes';
-				prop.value = bool;
+	default:
+	case 'boolean':
+		if (type === 'string') {
+			const bool = prop.value === 'true' || prop.value === 'yes';
+			prop.value = bool;
+			type = typeof prop.value;
+			Logging.logSilly(`${bool} [${type}]`);
+		}
+		if (type === 'number') {
+			const bool = prop.value === 1;
+			prop.value = bool;
+			type = typeof prop.value;
+			Logging.logSilly(`${bool} [${type}]`);
+		}
+		valid = type === config.__type;
+		break;
+	case 'number':
+		if (type === 'string') {
+			const number = Number(prop.value);
+			if (Number.isNaN(number) === false) {
+				prop.value = number;
 				type = typeof prop.value;
-				Logging.logSilly(`${bool} [${type}]`);
 			}
-			if (type === 'number') {
-				const bool = prop.value === 1;
-				prop.value = bool;
-				type = typeof prop.value;
-				Logging.logSilly(`${bool} [${type}]`);
+			Logging.logSilly(`${number} [${type}]`);
+		}
+		valid = type === config.__type;
+		break;
+	case 'id':
+		if (type === 'string') {
+			try {
+				prop.value = ObjectId(prop.value); // eslint-disable-line new-cap
+			} catch (e) {
+				valid = false;
+				return;
 			}
-			valid = type === config.__type;
-			break;
-		case 'number':
-			if (type === 'string') {
-				const number = Number(prop.value);
-				if (Number.isNaN(number) === false) {
-					prop.value = number;
-					type = typeof prop.value;
-				}
-				Logging.logSilly(`${number} [${type}]`);
-			}
-			valid = type === config.__type;
-			break;
-		case 'id':
-			if (type === 'string') {
-				try {
-					prop.value = ObjectId(prop.value); // eslint-disable-line new-cap
-				} catch (e) {
-					valid = false;
-					return;
-				}
-			}
-			valid = type === 'string';
-			break;
-		case 'object':
-			valid = type === config.__type;
-			break;
-		case 'string':
-			if (type === 'number') {
-				prop.value = String(prop.value);
-				type = typeof prop.value;
-				Logging.logSilly(`${prop.value} [${type}]`);
-			}
+		}
+		valid = type === 'string';
+		break;
+	case 'object':
+		valid = type === config.__type;
+		break;
+	case 'string':
+		if (type === 'number') {
+			prop.value = String(prop.value);
+			type = typeof prop.value;
+			Logging.logSilly(`${prop.value} [${type}]`);
+		}
 
-			valid = type === config.__type;
-			if (config.__enum && Array.isArray(config.__enum)) {
-				valid = !prop.value || config.__enum.indexOf(prop.value) !== -1;
+		valid = type === config.__type;
+		if (config.__enum && Array.isArray(config.__enum)) {
+			valid = !prop.value || config.__enum.indexOf(prop.value) !== -1;
+		}
+		break;
+	case 'array':
+		valid = Array.isArray(prop.value);
+		break;
+	case 'date':
+		if (prop.value === null) {
+			valid = true;
+		} else {
+			let date = new Date(prop.value);
+			valid = Sugar.Date.isValid(date);
+			if (valid) {
+				prop.value = date;
 			}
-			break;
-		case 'array':
-			valid = Array.isArray(prop.value);
-			break;
-		case 'date':
-			if (prop.value === null) {
-				valid = true;
-			} else {
-				let date = new Date(prop.value);
-				valid = Sugar.Date.isValid(date);
-				if (valid) {
-					prop.value = date;
-				}
-			}
-			break;
+		}
+		break;
 	}
 
 	return valid;
@@ -516,82 +517,82 @@ let _doUpdate = (entity, body, pathContext, config, collection, id) => {
 		const ops = [];
 
 		switch (updateType) {
-			default: {
-				throw new Error(`Invalid update type: ${updateType}`);
+		default: {
+			throw new Error(`Invalid update type: ${updateType}`);
+		}
+		case 'vector-add': {
+			let value = null;
+			if (config && config.__schema) {
+				const fb = __getFlattenedBody(body.value);
+				value = __populateObject(config.__schema, fb);
+			} else {
+				value = body.value;
 			}
-			case 'vector-add': {
-				let value = null;
-				if (config && config.__schema) {
-					const fb = __getFlattenedBody(body.value);
-					value = __populateObject(config.__schema, fb);
-				} else {
-					value = body.value;
+
+			ops.push({
+				updateOne: {
+					filter: {_id: new ObjectId(id)},
+					update: {
+						$push: {
+							[body.path]: value
+						}
+					}
 				}
+			});
+			response = value;
+		} break;
+		case 'vector-rm': {
+			const params = body.path.split('.');
+			params.splice(-1, 1);
+			const rmPath = params.join('.');
+			const index = params.pop();
+			body.path = params.join('.');
 
-				ops.push({
-					updateOne: {
-						filter: {_id: new ObjectId(id)},
-						update: {
-							$push: {
-								[body.path]: value
-							}
+			ops.push({
+				updateOne: {
+					filter: {_id: new ObjectId(id)},
+					update: {
+						$unset: {
+							[rmPath]: null
 						}
 					}
-				});
-				response = value;
-			} break;
-			case 'vector-rm': {
-				const params = body.path.split('.');
-				params.splice(-1, 1);
-				const rmPath = params.join('.');
-				const index = params.pop();
-				body.path = params.join('.');
-
-				ops.push({
-					updateOne: {
-						filter: {_id: new ObjectId(id)},
-						update: {
-							$unset: {
-								[rmPath]: null
-							}
-						}
-					}
-				});
-				ops.push({
-					updateOne: {
-						filter: {_id: new ObjectId(id)},
-						update: {
-							$pull: {
-								[body.path]: null
-							}
-						}
-					}
-				});
-
-				response = {numRemoved: 1, index: index};
-			} break;
-			case 'scalar': {
-				let value = null;
-				if (config && config.__schema) {
-					const fb = __getFlattenedBody(body.value);
-					value = __populateObject(config.__schema, fb);
-				} else {
-					value = body.value;
 				}
-
-				ops.push({
-					updateOne: {
-						filter: {_id: new ObjectId(id)},
-						update: {
-							$set: {
-								[body.path]: value
-							}
+			});
+			ops.push({
+				updateOne: {
+					filter: {_id: new ObjectId(id)},
+					update: {
+						$pull: {
+							[body.path]: null
 						}
 					}
-				});
+				}
+			});
 
-				response = value;
-			} break;
+			response = {numRemoved: 1, index: index};
+		} break;
+		case 'scalar': {
+			let value = null;
+			if (config && config.__schema) {
+				const fb = __getFlattenedBody(body.value);
+				value = __populateObject(config.__schema, fb);
+			} else {
+				value = body.value;
+			}
+
+			ops.push({
+				updateOne: {
+					filter: {_id: new ObjectId(id)},
+					update: {
+						$set: {
+							[body.path]: value
+						}
+					}
+				}
+			});
+
+			response = value;
+		} break;
 		}
 
 		return new Promise((resolve, reject) => {
@@ -624,27 +625,27 @@ const __extendPathContext = (pathContext, schema, prefix) => {
 		const config = schema[property];
 		if (config.__allowUpdate === false) continue;
 		switch (config.__type) {
-			default:
-			case 'object':
-			case 'number':
-			case 'date':
+		default:
+		case 'object':
+		case 'number':
+		case 'date':
+			extended[`^${prefix}${property}$`] = {type: 'scalar', values: []};
+			break;
+		case 'string':
+			if (config.__enum) {
+				extended[`^${prefix}${property}$`] = {type: 'scalar', values: config.__enum};
+			} else {
 				extended[`^${prefix}${property}$`] = {type: 'scalar', values: []};
-				break;
-			case 'string':
-				if (config.__enum) {
-					extended[`^${prefix}${property}$`] = {type: 'scalar', values: config.__enum};
-				} else {
-					extended[`^${prefix}${property}$`] = {type: 'scalar', values: []};
-				}
-				break;
-			case 'array':
-				extended[`^${prefix}${property}$`] = {type: 'vector-add', values: []};
-				extended[`^${prefix}${property}.([0-9]{1,11}).__remove__$`] = {type: 'vector-rm', values: []};
-				extended[`^${prefix}${property}.([0-9]{1,11})$`] = {type: 'scalar', values: []};
-				if (config.__schema) {
-					extended = __extendPathContext(extended, config.__schema, `${prefix}${property}.([0-9]{1,11}).`);
-				}
-				break;
+			}
+			break;
+		case 'array':
+			extended[`^${prefix}${property}$`] = {type: 'vector-add', values: []};
+			extended[`^${prefix}${property}.([0-9]{1,11}).__remove__$`] = {type: 'vector-rm', values: []};
+			extended[`^${prefix}${property}.([0-9]{1,11})$`] = {type: 'scalar', values: []};
+			if (config.__schema) {
+				extended = __extendPathContext(extended, config.__schema, `${prefix}${property}.([0-9]{1,11}).`);
+			}
+			break;
 		}
 	}
 	return Object.assign(extended, pathContext);

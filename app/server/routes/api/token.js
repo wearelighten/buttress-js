@@ -34,7 +34,7 @@ class GetTokenList extends Route {
 
 	_exec() {
 		return Model.Token.getAll()
-		.then(tokens => tokens.map(t => t.details));
+			.then(tokens => tokens.map(t => t.details));
 	}
 }
 routes.push(GetTokenList);

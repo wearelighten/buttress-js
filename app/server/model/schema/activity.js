@@ -45,50 +45,50 @@ class ActivitySchemaModel extends SchemaModel {
 
 	static get Schema() {
 		return {
-			name: "activities",
-			type: "collection",
-			collection: "activities",
+			name: 'activities',
+			type: 'collection',
+			collection: 'activities',
 			extends: [],
 			properties: {
 				timestamp: {
-					__type: "date",
-					__default: "now",
+					__type: 'date',
+					__default: 'now',
 					__allowUpdate: false
 				},
 				title: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: false
 				},
 				description: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: false
 				},
 				visibility: {
-					__type: "string",
-					__default: "private",
+					__type: 'string',
+					__default: 'private',
 					__enum: visibility,
 					__allowUpdate: false
 				},
 				path: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: false
 				},
 				verb: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: false
 				},
 				authLevel: {
-					__type: "number",
+					__type: 'number',
 					__default: 0,
 					__allowUpdate: false
 				},
 				permissions: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: false
 				},
 				params: { },
@@ -96,17 +96,17 @@ class ActivitySchemaModel extends SchemaModel {
 				body: { },
 				response: { },
 				_token: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				},
 				_app: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				},
 				_user: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				}
@@ -169,7 +169,6 @@ class ActivitySchemaModel extends SchemaModel {
 			visibility: ActivitySchemaModel.Constants.Visibility.PUBLIC
 		});
 	}
-
 }
 
 /**

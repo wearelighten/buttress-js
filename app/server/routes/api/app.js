@@ -105,38 +105,38 @@ class AddApp extends Route {
 
 			if (!this.req.body.permissions || this.req.body.permissions.length === 0) {
 				switch (Number(this.req.body.authLevel)) {
-					default:
-						this.req.body.permissions = JSON.stringify([]);
-						Logging.logDebug('Creating default permissions');
-						break;
-					case Model.Token.Constants.AuthLevel.SUPER: {
-						let permissions = [
-							{route: '*', permission: '*'}
-						];
-						this.req.body.permissions = JSON.stringify(permissions);
-						Logging.logDebug('Creating default SUPER permissions');
-					} break;
-					case Model.Token.Constants.AuthLevel.ADMIN: {
-						let permissions = [
-							{route: 'org/*', permission: '*'},
-							{route: 'group/*', permission: '*'},
-							{route: 'user/*', permission: '*'},
-							{route: 'person/*', permission: '*'},
-							{route: 'campaign/*', permission: '*'},
-							{route: 'activity/*', permission: '*'},
-							{route: 'company/*', permission: '*'},
-							{route: 'contact-list/*', permission: '*'},
-							{route: 'call/*', permission: '*'},
-							{route: 'task/*', permission: '*'},
-							{route: 'appointment/*', permission: '*'},
-							{route: 'notification/*', permission: '*'},
-							{route: 'contract/*', permission: '*'},
-							{route: 'document/*', permission: '*'}
-						];
+				default:
+					this.req.body.permissions = JSON.stringify([]);
+					Logging.logDebug('Creating default permissions');
+					break;
+				case Model.Token.Constants.AuthLevel.SUPER: {
+					let permissions = [
+						{route: '*', permission: '*'}
+					];
+					this.req.body.permissions = JSON.stringify(permissions);
+					Logging.logDebug('Creating default SUPER permissions');
+				} break;
+				case Model.Token.Constants.AuthLevel.ADMIN: {
+					let permissions = [
+						{route: 'org/*', permission: '*'},
+						{route: 'group/*', permission: '*'},
+						{route: 'user/*', permission: '*'},
+						{route: 'person/*', permission: '*'},
+						{route: 'campaign/*', permission: '*'},
+						{route: 'activity/*', permission: '*'},
+						{route: 'company/*', permission: '*'},
+						{route: 'contact-list/*', permission: '*'},
+						{route: 'call/*', permission: '*'},
+						{route: 'task/*', permission: '*'},
+						{route: 'appointment/*', permission: '*'},
+						{route: 'notification/*', permission: '*'},
+						{route: 'contract/*', permission: '*'},
+						{route: 'document/*', permission: '*'}
+					];
 
-						this.req.body.permissions = JSON.stringify(permissions);
-						Logging.logDebug('Creating default ADMIN permissions');
-					} break;
+					this.req.body.permissions = JSON.stringify(permissions);
+					Logging.logDebug('Creating default ADMIN permissions');
+				} break;
 				}
 			}
 

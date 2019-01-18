@@ -66,41 +66,41 @@ const __systemInstall = () => {
 	Logging.log('Checking for existing apps.');
 
 	return Model.App.findAll().toArray()
-	.then(apps => {
-		if (apps.length > 0) {
-			isInstalled = true;
-			Logging.log('Existing apps found - Skipping install.');
-			return {app: apps[0], token: null}; // If any apps, assume we've got a Super Admin app
-		}
+		.then(apps => {
+			if (apps.length > 0) {
+				isInstalled = true;
+				Logging.log('Existing apps found - Skipping install.');
+				return {app: apps[0], token: null}; // If any apps, assume we've got a Super Admin app
+			}
 
-		Logging.log('No apps found - Creating super app.');
-		return Model.App.add({
-			name: `${Config.app.title} ADMIN`,
-			type: Model.App.Constants.Type.SERVER,
-			authLevel: Model.Token.Constants.AuthLevel.SUPER,
-			permissions: [{route: '*', permission: '*'}],
-			domain: ''
-		});
-	})
-	.then(res => {
-		if (isInstalled) {
-			return res.app;
-		}
+			Logging.log('No apps found - Creating super app.');
+			return Model.App.add({
+				name: `${Config.app.title} ADMIN`,
+				type: Model.App.Constants.Type.SERVER,
+				authLevel: Model.Token.Constants.AuthLevel.SUPER,
+				permissions: [{route: '*', permission: '*'}],
+				domain: ''
+			});
+		})
+		.then(res => {
+			if (isInstalled) {
+				return res.app;
+			}
 
-		const pathName = path.join(Config.paths.appData, 'super.json');
-		Logging.log(`Super app created: ${res.app.id}`);
-		return new Promise((resolve, reject) => {
-			let app = Object.assign(res.app, {token: res.token.value});
-			fs.writeFile(pathName, JSON.stringify(app), err => {
-				if (err) {
-					return reject(err);
-				}
-				Logging.log(`Created ${pathName}`);
+			const pathName = path.join(Config.paths.appData, 'super.json');
+			Logging.log(`Super app created: ${res.app.id}`);
+			return new Promise((resolve, reject) => {
+				let app = Object.assign(res.app, {token: res.token.value});
+				fs.writeFile(pathName, JSON.stringify(app), err => {
+					if (err) {
+						return reject(err);
+					}
+					Logging.log(`Created ${pathName}`);
 
-				resolve(res.app);
+					resolve(res.app);
+				});
 			});
 		});
-	});
 };
 
 /* ********************************************************************************
@@ -112,10 +112,10 @@ const __nativeMongoConnect = app => {
 	const dbName = `${Config.app.code}-${Config.env}`;
 	const mongoUrl = `mongodb://${Config.mongoDb.url}/?authMechanism=DEFAULT&authSource=${dbName}`;
 	return MongoClient.connect(mongoUrl, Config.mongoDb.options)
-	.then(client => {
-		return client.db(dbName);
-	})
-	.catch(Logging.Promise.logError());
+		.then(client => {
+			return client.db(dbName);
+		})
+		.catch(Logging.Promise.logError());
 };
 
 /* ********************************************************************************

@@ -50,39 +50,39 @@ class AppSchemaModel extends SchemaModel {
 
 	static get Schema() {
 		return {
-			name: "apps",
-			type: "collection",
-			collection: "apps",
+			name: 'apps',
+			type: 'collection',
+			collection: 'apps',
 			extends: [],
 			properties: {
 				name: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				visibility: {
-					__type: "string",
-					__default: "server",
+					__type: 'string',
+					__default: 'server',
 					__enum: type,
 					__allowUpdate: true
 				},
 				domain: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__allowUpdate: true
 				},
 				_owner: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				},
 				_token: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				},
 				__schema: {
-					__type: "array",
+					__type: 'array',
 					__required: true,
 					__allowUpdate: true
 				}
@@ -155,12 +155,12 @@ class AppSchemaModel extends SchemaModel {
 
 		return new Promise((resolve, reject) => {
 			this.getToken()
-			.then(token => {
-				if (!token) {
-					return reject(new Error('No valid authentication token.'));
-				}
-				token.addOrUpdatePermission().then(resolve, reject);
-			});
+				.then(token => {
+					if (!token) {
+						return reject(new Error('No valid authentication token.'));
+					}
+					token.addOrUpdatePermission().then(resolve, reject);
+				});
 		});
 	}
 
@@ -227,7 +227,6 @@ class AppSchemaModel extends SchemaModel {
 		Logging.log(`Got UID: ${uid}`, Logging.Constants.LogLevel.SILLY);
 		return uid;
 	}
-
 }
 /**
  * Schema Virtual Methods

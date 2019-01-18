@@ -270,28 +270,28 @@ exports.init = app => {
 	app.use(_configCrossDomain);
 
 	return Model.App.findAll().toArray()
-	.then(buttressApps => {
+		.then(buttressApps => {
 		// Fetch app schemas and init
-		buttressApps.forEach(buttressApp => {
-			if (buttressApp.__schema) {
-				buttressApp.__schema.forEach(schema => {
-					_initSchemaRoutes(app, buttressApp, schema);
-				});
-			}
-		});
-	})
-	.then(() => {
+			buttressApps.forEach(buttressApp => {
+				if (buttressApp.__schema) {
+					buttressApp.__schema.forEach(schema => {
+						_initSchemaRoutes(app, buttressApp, schema);
+					});
+				}
+			});
+		})
+		.then(() => {
 		// Fetch core routes and init
-		let providers = _getRouteProviders();
-		for (let x = 0; x < providers.length; x++) {
-			let routes = providers[x];
-			for (let y = 0; y < routes.length; y++) {
-				let route = routes[y];
-				_initRoute(app, route);
+			let providers = _getRouteProviders();
+			for (let x = 0; x < providers.length; x++) {
+				let routes = providers[x];
+				for (let y = 0; y < routes.length; y++) {
+					let route = routes[y];
+					_initRoute(app, route);
+				}
 			}
-		}
-	})
-	.then(() => _loadTokens());
+		})
+		.then(() => _loadTokens());
 };
 
 /**

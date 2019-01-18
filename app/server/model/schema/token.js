@@ -52,53 +52,53 @@ class TokenSchemaModel extends SchemaModel {
 
 	static get Schema() {
 		return {
-			name: "tokens",
-			type: "collection",
-			collection: "tokens",
+			name: 'tokens',
+			type: 'collection',
+			collection: 'tokens',
 			extends: [],
 			properties: {
 				type: {
-					__type: "string",
-					__default: "user",
+					__type: 'string',
+					__default: 'user',
 					__enum: type,
 					__allowUpdate: true
 				},
 				value: {
-					__type: "string",
-					__default: "",
+					__type: 'string',
+					__default: '',
 					__required: true,
 					__allowUpdate: true
 				},
 				domains: {
-					__type: "array",
+					__type: 'array',
 					__required: true,
 					__allowUpdate: true
 				},
 				authLevel: {
-					__type: "number",
+					__type: 'number',
 					__default: 1,
 					__enum: authLevel,
 					__allowUpdate: true
 				},
 				permissions: {
-					__type: "array",
+					__type: 'array',
 					__required: true,
 					__allowUpdate: true,
 					__schema: {
 						route: {
-							__type: "string",
+							__type: 'string',
 							__required: true,
 							__allowUpdate: true
 						},
 						permission: {
-							__type: "string",
+							__type: 'string',
 							__required: true,
 							__allowUpdate: true
 						}
 					}
 				},
 				uses: {
-					__type: "array",
+					__type: 'array',
 					__required: true,
 					__allowUpdate: true
 				},
@@ -109,12 +109,12 @@ class TokenSchemaModel extends SchemaModel {
 					__allowUpdate: true
 				},
 				_app: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				},
 				_user: {
-					__type: "id",
+					__type: 'id',
 					__required: true,
 					__allowUpdate: false
 				}

@@ -140,7 +140,7 @@ module.exports.Promise = {
 
 module.exports.ShortId = id => {
 	const toBase = (num, base) => {
-		const symbols = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-".split("");
+		const symbols = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-'.split('');
 		let decimal = num;
 		let temp;
 		let output = '';

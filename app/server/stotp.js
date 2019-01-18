@@ -48,8 +48,7 @@ class Helpers {
 		hash.update(`${salt}`);
 		var bytes = hash.digest();
 
-		var chars = numeric === false ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' :
-																		'0123456789012345';
+		var chars = numeric === false ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' : '0123456789012345';
 		var mask = numeric === false ? 0x3d : 0x0f;
 		var string = '';
 
@@ -83,8 +82,8 @@ class STOTP {
 	getCode(salt) {
 		salt = salt || this.salt;
 		return Helpers.getRandomString(`${salt}${this._getWindow()}`,
-																	this.length,
-																	this.mode === Constants.Mode.NUMERIC);
+			this.length,
+			this.mode === Constants.Mode.NUMERIC);
 	}
 
 	/**
@@ -103,8 +102,8 @@ class STOTP {
 		var window = this._getWindow() + tolerance;
 		for (var x = tolerance * 2; x >= 0; x--) {
 			if (Helpers.getRandomString(`${salt}${window}`,
-					this.length,
-					this.mode === Constants.Mode.NUMERIC) === code) {
+				this.length,
+				this.mode === Constants.Mode.NUMERIC) === code) {
 				matches = true;
 				break;
 			}

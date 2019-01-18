@@ -184,25 +184,25 @@ class Route {
 			},
 			res: {}
 		})
-		.then(activity => {
+			.then(activity => {
 			// Activity doesn't get added via the API so we will just broadcast the data manually
-			this._activityBroadcastSocket({
-				title: 'Private Activity',
-				description: 'ADD ACTIVITY',
-				visibility: 'private',
-				broadcast: false,
-				path: `activity`,
-				pathSpec: 'activity',
-				verb: 'post',
-				params: activity.params,
-				permissions: 'write'
-			}, activity);
-		})
-		.catch(e => {
-			Logging.logError(`[${verb.toUpperCase()}] ${path}`);
-			Logging.logError(body);
-			Logging.logError(e);
-		});
+				this._activityBroadcastSocket({
+					title: 'Private Activity',
+					description: 'ADD ACTIVITY',
+					visibility: 'private',
+					broadcast: false,
+					path: `activity`,
+					pathSpec: 'activity',
+					verb: 'post',
+					params: activity.params,
+					permissions: 'write'
+				}, activity);
+			})
+			.catch(e => {
+				Logging.logError(`[${verb.toUpperCase()}] ${path}`);
+				Logging.logError(body);
+				Logging.logError(e);
+			});
 	}
 
 	_activityBroadcastSocket(activity, res, appPid) {
