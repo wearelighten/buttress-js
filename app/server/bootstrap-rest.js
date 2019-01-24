@@ -190,7 +190,7 @@ const __initMaster = () => {
 						appSchema[appSchemaIdx] = schema;
 					});
 
-					schemaUpdates.push(() => Model.App.updateSchema(app, appSchema));
+					schemaUpdates.push(() => Model.App.updateSchema(app._id, appSchema));
 				});
 
 				return schemaUpdates.reduce((prev, task) => {
