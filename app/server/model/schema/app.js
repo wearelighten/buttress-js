@@ -36,6 +36,8 @@ class AppSchemaModel extends SchemaModel {
 	constructor(MongoDb) {
 		const schema = AppSchemaModel.Schema;
 		super(MongoDb, schema);
+
+		this._localSchema = null;
 	}
 
 	static get Constants() {
@@ -127,21 +129,37 @@ class AppSchemaModel extends SchemaModel {
 
 	/**
 	 * @param {ObjectId} appId - app id which needs to be updated
-	 * @param {object} schema - schema object for the app
+	 * @param {object} appSchema - schema object for the app
 	 * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
 	 */
-	updateSchema(appId, schema) {
-		this.__schema = schema;
+	updateSchema(appId, appSchema) {
+
+		this._localSchema.forEach((cS) => {
+			const appSchemaIdx = appSchema.findIndex((s) => s.name === cS.name);
+			const schema = appSchema[appSchemaIdx];
+			if (!schema) {
+				return appSchema.push(cS);
+			}
+			schema.properties = Object.assign(schema.properties, cS.properties);
+			appSchema[appSchemaIdx] = schema;
+		});
+
+		// Merge in local schema
+		this.__schema = appSchema;
 
 		nrp.emit('app-metadata:changed', {appId: appId});
 
 		return new Promise((resolve, reject) => {
-			this.collection.update({_id: appId}, {$set: {__schema: schema}}, {}, (err, object) => {
+			this.collection.update({_id: appId}, {$set: {__schema: appSchema}}, {}, (err, object) => {
 				if (err) throw new Error(err);
 
 				resolve(object);
 			});
 		});
+	}
+
+	setLocalSchema(schema) {
+		this._localSchema = schema;
 	}
 
 	/**

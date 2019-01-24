@@ -145,6 +145,12 @@ const __initWorker = () => {
 		.then((db) => {
 			Model.init(db);
 
+			// Load local defined schemas into super app
+			const localSchema = _getLocalSchemas();
+
+			// Add local schema to Model.App
+			Model.App.setLocalSchema(localSchema);
+
 			const tasks = [
 				Routes.init(app),
 			];
@@ -175,12 +181,16 @@ const __initMaster = () => {
 				const schemaUpdates = [];
 
 				// Load local defined schemas into super app
-				const coreSchema = _getLocalSchemas();
+				const localSchema = _getLocalSchemas();
+
+				// Add local schema to Model.App
+				Model.App.setLocalSchema(localSchema);
+
 				apps.forEach((app) => {
 					const appSchema = app.__schema;
 					const appShortId = shortId(app._id);
-					Logging.log(`Updating ${coreSchema.length} core schema for ${appShortId}:${app.name}:${appSchema.length}`);
-					coreSchema.forEach((cS) => {
+					Logging.log(`Adding ${localSchema.length} local schema for ${appShortId}:${app.name}:${appSchema.length}`);
+					localSchema.forEach((cS) => {
 						const appSchemaIdx = appSchema.findIndex((s) => s.name === cS.name);
 						const schema = appSchema[appSchemaIdx];
 						if (!schema) {
