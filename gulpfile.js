@@ -8,7 +8,7 @@ const bump = require('gulp-bump');
 const Paths = {
 	SOURCE: 'app/server',
 	DEST: 'deploy',
-	EMAIL_DEST: 'deploy/email'
+	EMAIL_DEST: 'deploy/email',
 };
 
 const Sources = {
@@ -16,7 +16,7 @@ const Sources = {
 	JSON: [`${Paths.SOURCE}/*.json`, `${Paths.SOURCE}/**/*.json`],
 	PUG: [`${Paths.SOURCE}/*.pug`, `${Paths.SOURCE}/**/*.pug`],
 	EMAIL_LESS: [`${Paths.SOURCE}/email/**/*.less`],
-	EMAIL_PUG: [`${Paths.SOURCE}/email/**/*.pug`]
+	EMAIL_PUG: [`${Paths.SOURCE}/email/**/*.pug`],
 };
 
 // Scripts
@@ -29,12 +29,12 @@ const js = () => {
 const jsSrcFix = () => {
 	return gulp.src(Sources.JS, {base: Paths.SOURCE})
 		.pipe(eslint({
-			fix: true
+			fix: true,
 		}))
 		.pipe(eslint.format())
 		.pipe(gulp.dest(Paths.SOURCE));
 };
-const scripts = done => {
+const scripts = (done) => {
 	return gulp.series('js')(done);
 };
 
@@ -43,7 +43,7 @@ const emailStyles = () => {
 	return gulp.src(Sources.EMAIL_LESS, {base: Paths.SOURCE})
 		.pipe(gulp.dest(Paths.EMAIL_DEST));
 };
-const styles = done => {
+const styles = (done) => {
 	return gulp.series('emailStyles')(done);
 };
 
@@ -51,7 +51,7 @@ const viewsEmail = () => {
 	return gulp.src(Sources.EMAIL_PUG, {base: 'app/server/email'})
 		.pipe(gulp.dest(Paths.EMAIL_DEST));
 };
-const views = done => {
+const views = (done) => {
 	return gulp.series('viewsEmail')(done);
 };
 
@@ -60,7 +60,7 @@ const json = () => {
 	return gulp.src(Sources.JSON, {base: Paths.SOURCE})
 		.pipe(gulp.dest(Paths.DEST));
 };
-const resources = done => {
+const resources = (done) => {
 	return gulp.series(['json'])(done);
 };
 
@@ -69,17 +69,17 @@ const clean = () => {
 	return gulp.src([`${Paths.DEST}/*`], {read: false})
 		.pipe(gulpClean());
 };
-const build = done => {
+const build = (done) => {
 	return gulp.series('clean', gulp.parallel('scripts', 'styles', 'views', 'resources'))(done);
 };
-const watch = done => {
+const watch = (done) => {
 	return gulp.series('build', () => {
-		gulp.watch(Sources.EMAIL_LESS, 'styles');
-		gulp.watch(Sources.EMAIL_PUG, 'views');
+		gulp.watch(Sources.EMAIL_LESS, gulp.series('styles'));
+		gulp.watch(Sources.EMAIL_PUG, gulp.series('views'));
 		// Watch Scripts
-		gulp.watch(Sources.JS, 'js');
+		gulp.watch(Sources.JS, gulp.series('js'));
 		// Watch Resources
-		gulp.watch(Sources.JSON, 'resources');
+		gulp.watch(Sources.JSON, gulp.series('resources'));
 	})(done);
 };
 
@@ -124,5 +124,5 @@ module.exports = {
 	bumpMajor,
 	bumpMinor,
 	bumpPatch,
-	bumpPrerelease
+	bumpPrerelease,
 };
