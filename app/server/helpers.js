@@ -55,15 +55,15 @@ const __prepareResult = (result) => {
 
 		// Crappy func to stop private/protected data from escaping to the wild
 		// This needs a review!!
-		if (typeof chunk === 'object') {
-			Object.keys(chunk).forEach((key) => {
-				if (key.indexOf('_') !== -1) {
-					return delete chunk[key];
-				}
+		// if (typeof chunk === 'object') {
+		// 	Object.keys(chunk).forEach((key) => {
+		// 		if (key.indexOf('_') !== -1) {
+		// 			return delete chunk[key];
+		// 		}
 
-				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => prepare(c)) : prepare(chunk[key]);
-			});
-		}
+		// 		chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => prepare(c)) : prepare(chunk[key]);
+		// 	});
+		// }
 
 		return chunk;
 	};
