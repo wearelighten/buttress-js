@@ -16,6 +16,7 @@
     "max-lines": ["error", {"max": 500, "skipComments": true, "skipBlankLines": true}],
     "no-tabs": 0,
     "indent": [1, "tab"],
-    "no-mixed-spaces-and-tabs": 1
+    "no-mixed-spaces-and-tabs": 1,
+    "require-jsdoc": 0
   }
 }
