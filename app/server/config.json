@@ -50,8 +50,8 @@
 			"options": {
 				"reconnectTries": 17280,
 				"reconnectInterval": 5000,
-				"useMongoClient": true,
 				"native_parser": true,
+				"useNewUrlParser": true,
 				"poolSize": 10,
 				"bufferMaxEntries": 0
 			}

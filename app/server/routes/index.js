@@ -116,7 +116,7 @@ function _authenticateToken(req, res, next) {
 
 				Model.token = req.token = token;
 
-				Model.Token.collection.update({_id: token._id}, {$push: {
+				Model.Token.collection.updateOne({_id: token._id}, {$push: {
 					uses: new Date(),
 				}});
 

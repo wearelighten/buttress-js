@@ -90,7 +90,7 @@ class SchemaModel {
 
 	update(query, id) {
 		return new Promise((resolve, reject) => {
-			this.collection.update({_id: id}, {
+			this.collection.updateOne({_id: id}, {
 				$set: query,
 			}, (err, object) => {
 				if (err) throw new Error(err);

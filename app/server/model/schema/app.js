@@ -150,7 +150,7 @@ class AppSchemaModel extends SchemaModel {
 		nrp.emit('app-metadata:changed', {appId: appId});
 
 		return new Promise((resolve, reject) => {
-			this.collection.update({_id: appId}, {$set: {__schema: appSchema}}, {}, (err, object) => {
+			this.collection.updateOne({_id: appId}, {$set: {__schema: appSchema}}, {}, (err, object) => {
 				if (err) throw new Error(err);
 
 				resolve(object);
