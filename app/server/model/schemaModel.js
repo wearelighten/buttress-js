@@ -142,7 +142,7 @@ class SchemaModel {
 	rm(entity) {
 		Logging.log(`DELETING: ${entity._id}`, Logging.Constants.LogLevel.DEBUG);
 		return new Promise((resolve) => {
-			this.collection.remove({_id: new ObjectId(entity._id)}, (err, cursor) => {
+			this.collection.deleteOne({_id: new ObjectId(entity._id)}, (err, cursor) => {
 				if (err) throw err;
 				resolve(cursor);
 			});
@@ -166,7 +166,7 @@ class SchemaModel {
 		if (!query) query = {};
 
 		return new Promise((resolve) => {
-			this.collection.remove(query, (err, doc) => {
+			this.collection.deleteMany(query, (err, doc) => {
 				if (err) throw err;
 				resolve(doc);
 			});
