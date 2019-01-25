@@ -420,6 +420,35 @@ class UpdateAppSchema extends Route {
 routes.push(UpdateAppSchema);
 
 /**
+ * @class UpdateAppUserRoles
+ */
+class UpdateAppUserRoles extends Route {
+	constructor() {
+		super('app/userRoles', 'UPDATE APP USER ROLES');
+		this.verb = Route.Constants.Verbs.PUT;
+		this.auth = Route.Constants.Auth.ADMIN;
+		this.permissions = Route.Constants.Permissions.WRITE;
+	}
+
+	_validate() {
+		return new Promise((resolve, reject) => {
+			if (!this.req.authApp) {
+				this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
+				reject({statusCode: 400, message: 'No authenticated app'});
+				return;
+			}
+
+			resolve(true);
+		});
+	}
+
+	_exec() {
+		return Model.App.updateUserRoles(this.req.authApp._id, this.req.body).then((res) => true);
+	}
+}
+routes.push(UpdateAppUserRoles);
+
+/**
  * @class AddAppMetadata
  */
 class AddAppMetadata extends Route {
