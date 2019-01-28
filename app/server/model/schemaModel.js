@@ -195,7 +195,7 @@ class SchemaModel {
 		Logging.logSilly(`find: `);
 
 		return new Promise((resolve) => {
-			this.collection.find(query, excludes, (err, doc) => {
+			this.collection.find(query, excludes).toArray((err, doc) => {
 				if (err) throw err;
 				resolve(doc);
 			});
