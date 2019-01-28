@@ -317,11 +317,32 @@ class UserSchemaModel extends SchemaModel {
 	findAll() {
 		Logging.logSilly(`findAll: ${Model.authApp._id}`);
 
-		if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
-			return super.find({});
-		}
+		return new Promise((resolve) => {
+			let findTask = () => super.find({_apps: Model.authApp._id});
+			if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
+				findTask = () => super.find({});
+			}
 
-		return super.find({_apps: Model.authApp._id});
+			let users = null;
+			findTask()
+				.then((res) => {
+					users = res;
+					const personIds = users.map((user) => user._person);
+					return Model.Person.find({
+						_id: {
+							$in: personIds,
+						},
+					});
+				})
+				.then((persons) => {
+					const usersPersons = users.map((user) => {
+						user.person = persons.find((p) => user._person.equals(p._id));
+						return user;
+					});
+
+					resolve(usersPersons);
+				});
+		});
 	}
 
 	/**
