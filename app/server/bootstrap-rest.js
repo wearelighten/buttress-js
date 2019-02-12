@@ -186,6 +186,7 @@ const __initMaster = () => {
 				// Add local schema to Model.App
 				Model.App.setLocalSchema(localSchema);
 
+				// Build a update queue for merging local schema with each app schema
 				apps.forEach((app) => {
 					const appSchema = app.__schema;
 					const appShortId = shortId(app._id);
@@ -203,6 +204,7 @@ const __initMaster = () => {
 					schemaUpdates.push(() => Model.App.updateSchema(app._id, appSchema));
 				});
 
+				// Run update queue
 				return schemaUpdates.reduce((prev, task) => {
 					return prev.then(() => task());
 				}, Promise.resolve());

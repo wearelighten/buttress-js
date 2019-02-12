@@ -88,7 +88,7 @@ class AppSchemaModel extends SchemaModel {
 					__required: true,
 					__allowUpdate: true,
 				},
-				__userRoles: {
+				__roles: {
 					__type: 'array',
 					__required: true,
 					__allowUpdate: true,
@@ -138,7 +138,6 @@ class AppSchemaModel extends SchemaModel {
 	 * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
 	 */
 	updateSchema(appId, appSchema) {
-
 		this._localSchema.forEach((cS) => {
 			const appSchemaIdx = appSchema.findIndex((s) => s.name === cS.name);
 			const schema = appSchema[appSchemaIdx];
@@ -169,14 +168,14 @@ class AppSchemaModel extends SchemaModel {
 
 	/**
 	 * @param {ObjectId} appId - app id which needs to be updated
-	 * @param {object} userRoles - user roles object
+	 * @param {object} roles - roles object
 	 * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
 	 */
-	updateUserRoles(appId, userRoles) {
+	updateRoles(appId, roles) {
 		// nrp.emit('app-metadata:changed', {appId: appId});
 
 		return new Promise((resolve, reject) => {
-			this.collection.updateOne({_id: appId}, {$set: {__userRoles: userRoles}}, {}, (err, object) => {
+			this.collection.updateOne({_id: appId}, {$set: {__roles: roles}}, {}, (err, object) => {
 				if (err) throw new Error(err);
 
 				resolve(object);

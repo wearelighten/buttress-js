@@ -69,6 +69,12 @@ class TokenSchemaModel extends SchemaModel {
 					__required: true,
 					__allowUpdate: true,
 				},
+				role: {
+					__type: 'string',
+					__default: null,
+					__required: true,
+					__allowUpdate: true,
+				},
 				domains: {
 					__type: 'array',
 					__required: true,

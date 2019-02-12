@@ -420,11 +420,11 @@ class UpdateAppSchema extends Route {
 routes.push(UpdateAppSchema);
 
 /**
- * @class UpdateAppUserRoles
+ * @class UpdateAppRoles
  */
-class UpdateAppUserRoles extends Route {
+class UpdateAppRoles extends Route {
 	constructor() {
-		super('app/userRoles', 'UPDATE APP USER ROLES');
+		super('app/roles', 'UPDATE APP ROLES');
 		this.verb = Route.Constants.Verbs.PUT;
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.WRITE;
@@ -443,10 +443,10 @@ class UpdateAppUserRoles extends Route {
 	}
 
 	_exec() {
-		return Model.App.updateUserRoles(this.req.authApp._id, this.req.body).then((res) => true);
+		return Model.App.updateRoles(this.req.authApp._id, this.req.body).then((res) => true);
 	}
 }
-routes.push(UpdateAppUserRoles);
+routes.push(UpdateAppRoles);
 
 /**
  * @class AddAppMetadata
