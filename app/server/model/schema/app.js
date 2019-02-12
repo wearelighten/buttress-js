@@ -88,6 +88,11 @@ class AppSchemaModel extends SchemaModel {
 					__required: true,
 					__allowUpdate: true,
 				},
+				__userRoles: {
+					__type: 'array',
+					__required: true,
+					__allowUpdate: true,
+				},
 			},
 		};
 	}
@@ -168,31 +173,15 @@ class AppSchemaModel extends SchemaModel {
 	 * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
 	 */
 	updateUserRoles(appId, userRoles) {
-
-		return Promise.resolve(true);
-
-		// this._localSchema.forEach((cS) => {
-		// 	const appSchemaIdx = appSchema.findIndex((s) => s.name === cS.name);
-		// 	const schema = appSchema[appSchemaIdx];
-		// 	if (!schema) {
-		// 		return appSchema.push(cS);
-		// 	}
-		// 	schema.properties = Object.assign(schema.properties, cS.properties);
-		// 	appSchema[appSchemaIdx] = schema;
-		// });
-
-		// // Merge in local schema
-		// this.__schema = appSchema;
-
 		// nrp.emit('app-metadata:changed', {appId: appId});
 
-		// return new Promise((resolve, reject) => {
-		// 	this.collection.updateOne({_id: appId}, {$set: {__schema: appSchema}}, {}, (err, object) => {
-		// 		if (err) throw new Error(err);
+		return new Promise((resolve, reject) => {
+			this.collection.updateOne({_id: appId}, {$set: {__userRoles: userRoles}}, {}, (err, object) => {
+				if (err) throw new Error(err);
 
-		// 		resolve(object);
-		// 	});
-		// });
+				resolve(object);
+			});
+		});
 	}
 
 	/**
