@@ -12,6 +12,7 @@
  */
 
 const SchemaModel = require('../schemaModel');
+const humanname = require('humanname');
 const Model = require('../');
 const Logging = require('../../logging');
 // const Shared = require('../shared');
@@ -53,26 +54,6 @@ class UserSchemaModel extends SchemaModel {
 			collection: 'users',
 			extends: [],
 			properties: {
-				username: {
-					__type: 'string',
-					__default: '',
-					__allowUpdate: true,
-				},
-				orgRole: {
-					__type: 'string',
-					__default: '',
-					__allowUpdate: true,
-				},
-				teamName: {
-					__type: 'string',
-					__default: '',
-					__allowUpdate: true,
-				},
-				teamRole: {
-					__type: 'string',
-					__default: '',
-					__allowUpdate: true,
-				},
 				auth: {
 					__type: 'array',
 					__required: true,
@@ -142,15 +123,88 @@ class UserSchemaModel extends SchemaModel {
 						},
 					},
 				},
+				person: {
+					title: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					formalName: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					name: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					forename: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					initials: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					surname: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					suffix: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					emails: {
+						__type: 'array',
+						__allowUpdate: true,
+					},
+					address: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					postcode: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					phone: {
+						landline: {
+							__type: 'string',
+							__default: '',
+							__allowUpdate: true,
+						},
+						mobile: {
+							__type: 'string',
+							__default: '',
+							__allowUpdate: true,
+						},
+					},
+					company: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					role: {
+						__type: 'string',
+						__default: '',
+						__allowUpdate: true,
+					},
+					_dataOwner: {
+						__type: 'id',
+						__required: true,
+						__allowUpdate: false,
+					},
+				},
 				_apps: {
 					__type: 'array',
 					__required: true,
 					__allowUpdate: true,
-				},
-				_person: {
-					__type: 'id',
-					__required: true,
-					__allowUpdate: false,
 				},
 				_tokens: {
 					__type: 'array',
@@ -163,11 +217,15 @@ class UserSchemaModel extends SchemaModel {
 
 	/**
 	 * @param {Object} body - body passed through from a POST request
-	 * @param {Object} person - person object to which the user is attached
 	 * @param {Object} auth - OPTIONAL authentication details for a user token
 	 * @return {Promise} - returns a promise that is fulfilled when the database request is completed
 	 */
-	add(body, person, auth) {
+	add(body, auth) {
+		const name = humanname.parse(body.name);
+
+		const title = name.salutation ? name.salutation + ' ' : '';
+		const initials = name.initials ? name.initials + ' ' : '';
+
 		const user = {
 			auth: [{
 				app: body.app,
@@ -182,19 +240,27 @@ class UserSchemaModel extends SchemaModel {
 				token: body.token,
 				tokenSecret: body.tokenSecret,
 			}],
-			orgRole: body.orgRole,
-			teamName: body.teamName,
-			teamRole: body.teamRole,
+			person: {
+				title: name.salutation,
+				formalName: `${title}${name.firstName} ${initials}${name.lastName}`.trim(),
+				name: `${name.firstName} ${name.lastName}`.trim(),
+				forename: name.firstName,
+				initials: name.initials,
+				surname: name.lastName,
+				suffix: name.suffix,
+				emails: [body.email],
+				telephone: {
+					landline: body.landline,
+					mobile: body.mobile,
+				},
+				address: body.address,
+				postcode: body.postcode,
+			}
 		};
-
-		Logging.logDebug(person.name);
-		Logging.logDebug(user.auth[0].app);
-		Logging.logDebug(user.auth[0].appId);
 
 		let _user = null;
 		return super.add(user, {
-			_apps: [Model.authApp._id],
-			_person: person.id,
+			_apps: [Model.authApp._id]
 		})
 			.then((user) => {
 				_user = user;
@@ -210,10 +276,10 @@ class UserSchemaModel extends SchemaModel {
 				});
 			})
 			.then((token) => {
+				_user.authToken = false;
+
 				if (token) {
 					_user.authToken = token.value;
-				} else {
-					_user.authToken = false;
 				}
 
 				return _user;
@@ -302,14 +368,6 @@ class UserSchemaModel extends SchemaModel {
 			.then((count) => count > 0);
 	}
 
-	getPopulated(user) {
-		return Model.Person.findById(user._person)
-			.then((person) => {
-				user.person = person;
-				return user;
-			});
-	}
-
 	/**
 	 * @param {ObjectId} appId - id of the App that owns the user
 	 * @return {Promise} - resolves to an array of Apps
@@ -323,25 +381,8 @@ class UserSchemaModel extends SchemaModel {
 				findTask = () => super.find({});
 			}
 
-			let users = null;
 			findTask()
-				.then((res) => {
-					users = res;
-					const personIds = users.map((user) => user._person);
-					return Model.Person.find({
-						_id: {
-							$in: personIds,
-						},
-					});
-				})
-				.then((persons) => {
-					const usersPersons = users.map((user) => {
-						user.person = persons.find((p) => user._person.equals(p._id));
-						return user;
-					});
-
-					resolve(usersPersons);
-				});
+				.then((users) => resolve(users));
 		});
 	}
 
@@ -367,23 +408,23 @@ class UserSchemaModel extends SchemaModel {
 		}, {});
 	}
 
-	attachToPerson(person, details) {
-		if (person !== null) {
-			this._person = person;
-			return this.save();
-		}
+	// attachToPerson(person, details) {
+	// 	if (person !== null) {
+	// 		this._person = person;
+	// 		return this.save();
+	// 	}
 
-		return new Promise((resolve, reject) => {
-			Model.Person
-				.add(details, Model.authApp._id)
-				.then((person) => {
-					Logging.log(person, Logging.Constants.LogLevel.DEBUG);
-					this._person = person.id;
-					return this.save();
-				})
-				.then(resolve, reject);
-		});
-	}
+	// 	return new Promise((resolve, reject) => {
+	// 		Model.Person
+	// 			.add(details, Model.authApp._id)
+	// 			.then((person) => {
+	// 				Logging.log(person, Logging.Constants.LogLevel.DEBUG);
+	// 				this._person = person.id;
+	// 				return this.save();
+	// 			})
+	// 			.then(resolve, reject);
+	// 	});
+	// }
 
 	/**
 	 * @param {string} app - name of the app for which the token is being updated

@@ -121,7 +121,7 @@ class ActivitySchemaModel extends SchemaModel {
 	__add(body) {
 		return (prev) => {
 			const user = Model.authUser;
-			const userName = user && user._person ? `${user._person.forename} ${user._person.surname}` : 'System';
+			const userName = user && user.person ? `${user.person.forename} ${user.person.surname}` : 'System';
 
 			body.activityTitle = body.activityTitle.replace('%USER_NAME%', userName);
 			body.activityDescription = body.activityDescription.replace('%USER_NAME%', userName);

@@ -36,19 +36,6 @@ class GetUserList extends Route {
 	_exec() {
 		return Model.User.findAll()
 			.then((users) => {
-				if (this.req.token.authLevel >= Route.Constants.Auth.ADMIN) {
-					return users.map((user) => {
-						user.profiles = user.auth.map((a) => ({
-							app: a.app,
-							username: a.username,
-							email: a.email,
-							url: a.profileUrl,
-							image: a.images.profile,
-						}));
-						return user;
-					});
-				}
-
 				return users.map((user) => {
 					return {
 						id: user._id,
@@ -95,14 +82,13 @@ class GetUser extends Route {
 					return;
 				}
 
-				this._user = user;
-				resolve(true);
+				resolve(user);
 			});
 		});
 	}
 
-	_exec() {
-		return Model.User.getPopulated(this._user);
+	_exec(user) {
+		return user;
 	}
 }
 routes.push(GetUser);
@@ -163,8 +149,6 @@ class CreateUserAuthToken extends Route {
 		this.verb = Route.Constants.Verbs.PUT;
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.WRITE;
-
-		this._user = false;
 	}
 
 	_validate() {
@@ -189,9 +173,8 @@ class CreateUserAuthToken extends Route {
 			Model.User.findById(this.req.params.id)
 				.then((user) => {
 					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
-					this._user = user;
-					if (this._user) {
-						resolve(true);
+					if (user) {
+						resolve(user);
 					} else {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
 						resolve({statusCode: 400});
@@ -200,10 +183,10 @@ class CreateUserAuthToken extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(user) {
 		return Model.Token.add(this.req.body.auth, {
 			_app: Model.authApp._id,
-			_user: this._user._id,
+			_user: user._id,
 		})
 			.then((t) => t.value);
 	}
@@ -296,29 +279,30 @@ class AddUser extends Route {
 				this.req.body.auth.app = this.req.authApp.id;
 			}
 
-			Model.Person.findByDetails(this.req.body.user)
-				.then((person) => {
-					Logging.logDebug(`Found Person: ${person !== null}`);
-					if (person === null) {
-						Model.Person.add(this.req.body.user, this.req.authApp)
-							.then((p) => {
-								Logging.log(p, Logging.Constants.LogLevel.SILLY);
-								this._person = p;
-								resolve(true);
-							});
-					} else {
-						this._person = person;
-						resolve(true);
-					}
-				}, reject);
+			resolve(true);
+
+			// Model.Person.findByDetails(this.req.body.user)
+			// 	.then((person) => {
+			// 		Logging.logDebug(`Found Person: ${person !== null}`);
+			// 		if (person === null) {
+			// 			Model.Person.add(this.req.body.user, this.req.authApp)
+			// 				.then((p) => {
+			// 					Logging.log(p, Logging.Constants.LogLevel.SILLY);
+			// 					this._person = p;
+			// 					resolve(true);
+			// 				});
+			// 		} else {
+			// 			this._person = person;
+			// 			resolve(true);
+			// 		}
+			// 	}, reject);
 		});
 	}
 
 	_exec() {
 		return Model.User
-			.add(this.req.body.user, this._person, this.req.body.auth)
+			.add(this.req.body.user, this.req.body.auth)
 			.then((user) => {
-				user.person = this._person;
 				return user;
 			});
 	}
@@ -423,10 +407,6 @@ class AddUserAuth extends Route {
 					Promise.resolve(user.details),
 					Model.Token.findUserAuthToken(this._user._id, this.req.authApp._id),
 				];
-
-				if (this._user._person) {
-					tasks.push(this._user._person.updateFromAuth(this.req.body.auth));
-				}
 
 				return Promise.all(tasks);
 			})
@@ -549,7 +529,6 @@ class AttachToPerson extends Route {
 		this.permissions = Route.Constants.Permissions.ADD;
 
 		this._user = false;
-		this._person = false;
 	}
 
 	_validate() {
@@ -569,7 +548,7 @@ class AttachToPerson extends Route {
 					}
 					this._user = user;
 
-					if (this._user._person) {
+					if (this._user.person) {
 						this.log('ERROR: Already attached to a person', Route.LogLevel.ERR);
 						reject({statusCode: 400});
 						return;
