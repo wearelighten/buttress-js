@@ -21,6 +21,8 @@ const Config = require('node-env-obj')('../');
 const NRP = require('node-redis-pubsub');
 const nrp = new NRP(Config.redis);
 
+Logging.setLogLevel(Logging.Constants.LogLevel.SILLY);
+
 /**
  * Constants
 */
