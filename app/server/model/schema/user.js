@@ -358,7 +358,7 @@ class UserSchemaModel extends SchemaModel {
 
 		return super.update({
 			_apps: user._apps,
-		}, user.id);
+		}, user._id);
 	}
 
 	exists(id) {
