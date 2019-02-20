@@ -89,6 +89,8 @@ class SchemaModel {
 	}
 
 	update(query, id) {
+		Logging.logSilly(`update: ${this.collectionName} ${id} ${query}`);
+
 		return new Promise((resolve, reject) => {
 			this.collection.updateOne({_id: id}, {
 				$set: query,
@@ -122,6 +124,8 @@ class SchemaModel {
 	}
 
 	exists(id) {
+		Logging.logSilly(`exists: ${this.collectionName} ${id}`);
+
 		return this.collection.find({_id: new ObjectId(id)})
 			.limit(1)
 			.count()
@@ -154,7 +158,7 @@ class SchemaModel {
 	 * @return {Promise} - returns a promise that is fulfilled when the database request is completed
 	 */
 	rmBulk(ids) {
-		Logging.log(`DELETING: ${ids}`, Logging.Constants.LogLevel.SILLY);
+		Logging.log(`rmBulk: ${this.collectionName} ${ids}`, Logging.Constants.LogLevel.SILLY);
 		return this.rmAll({_id: {$in: ids}});
 	}
 
@@ -164,6 +168,7 @@ class SchemaModel {
 	 */
 	rmAll(query) {
 		if (!query) query = {};
+		Logging.logSilly(`rmAll: ${this.collectionName} ${query}`);
 
 		return new Promise((resolve) => {
 			this.collection.deleteMany(query, (err, doc) => {
@@ -178,6 +183,8 @@ class SchemaModel {
 	 * @return {Promise} - resolves to an array of Companies
 	 */
 	findById(id) {
+		Logging.logSilly(`findById: ${this.collectionName} ${id}`);
+
 		return new Promise((resolve) => {
 			this.collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
 				if (err) throw err;
@@ -192,7 +199,7 @@ class SchemaModel {
 	 * @return {Promise} - resolves to an array of docs
 	 */
 	find(query, excludes = {}) {
-		Logging.logSilly(`find: `);
+		Logging.logSilly(`find: ${this.collectionName} ${query}`);
 
 		return new Promise((resolve) => {
 			this.collection.find(query, excludes).toArray((err, doc) => {
@@ -208,7 +215,7 @@ class SchemaModel {
 	 * @return {Promise} - resolves to an array of docs
 	 */
 	findOne(query, excludes = {}) {
-		Logging.logSilly(`findOne: ${query}`);
+		Logging.logSilly(`findOne: ${this.collectionName} ${query}`);
 
 		return new Promise((resolve) => {
 			this.collection.find(query, excludes).toArray((err, doc) => {
@@ -222,7 +229,7 @@ class SchemaModel {
 	 * @return {Promise} - resolves to an array of Companies
 	 */
 	findAll() {
-		Logging.logSilly(`findAll: `);
+		Logging.logSilly(`findAll: ${this.collectionName}`);
 
 		return this.collection.find({});
 	}
@@ -232,6 +239,8 @@ class SchemaModel {
 	 * @return {Promise} - resolves to an array of Companies
 	 */
 	findAllById(ids) {
+		Logging.logSilly(`update: ${this.collectionName} ${ids}`);
+
 		return this.collection.find({_id: {$in: ids.map((id) => new ObjectId(id))}}, {metadata: 0});
 	}
 }
