@@ -87,6 +87,9 @@ class Route {
 		this.activityTitle = 'Private Activity';
 		this.activityDescription = '';
 
+		this.schema = null;
+		this.model = null;
+
 		this.path = path;
 		this.name = name;
 	}
@@ -97,6 +100,7 @@ class Route {
 	 * @return {Promise} - Promise is fulfilled once execution has completed
 	 */
 	exec(req, res) {
+		// TODO: Pass through req, res to validate / exec rather than setting data as a property
 		this.req = req;
 		this.res = res;
 
@@ -228,6 +232,9 @@ class Route {
 	 * @private
 	 */
 	_authenticate() {
+		const req = this.req;
+		const res = this.req;
+
 		return new Promise((resolve, reject) => {
 			if (this.auth === Constants.Auth.NONE) {
 				this.log(`WARN: OPEN API CALL`, Logging.Constants.LogLevel.WARN);
@@ -269,13 +276,58 @@ class Route {
 				}
 			}
 
-			if (authorised === true) {
-				resolve(this.req.token);
-			} else {
+			if (authorised === false) {
 				this.log(token.permissions, Logging.Constants.LogLevel.ERR);
 				this.log(`EAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
 				reject({statusCode: 401});
 			}
+
+			/*
+			 * Start of Route schema permissions
+			 */
+			if (this.schema) {
+				authorised = false;
+
+				// HACK - BYPASS Permissions for company / service
+				if (['company', 'service'].includes(this.schema.name)) {
+					return resolve(this.req.token);
+				}
+
+				Logging.logSilly(`SAUTH: TOKEN ROLE - ${req.token.role}`);
+
+				// Default endpoint disposition this
+				const disposition = {
+					GET: 'deny',
+					PUT: 'deny',
+					POST: 'deny',
+					DELETE: 'deny',
+				};
+
+				// If schema has endpointDisposition roles set for the role then
+				// user the defined settings instead.
+				if (this.schema.roles) {
+					const role = this.schema.roles.find((r) => r.name === req.token.role);
+					if (role && role.endpointDisposition) {
+						if (role.endpointDisposition.GET) disposition.GET = role.endpointDisposition.GET;
+						if (role.endpointDisposition.PUT) disposition.PUT = role.endpointDisposition.PUT;
+						if (role.endpointDisposition.POST) disposition.POST = role.endpointDisposition.POST;
+						if (role.endpointDisposition.DELETE) disposition.DELETE = role.endpointDisposition.DELETE;
+					}
+				}
+
+				// Check the role has permission on this endpoint
+				if (disposition[this.verb.toUpperCase()] && disposition[this.verb.toUpperCase()] === 'allow') {
+					authorised = true;
+				}
+
+				if (authorised === false) {
+					this.log(token.permissions, Logging.Constants.LogLevel.ERR);
+					this.log(`SAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
+					reject({statusCode: 403});
+				}
+			}
+
+			resolve(this.req.token);
 		});
 	}
 
