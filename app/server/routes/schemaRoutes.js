@@ -28,6 +28,7 @@ class GetList extends Route {
 		this.permissions = Route.Constants.Permissions.LIST;
 
 		// Fetch model
+		this.schema = schema;
 		this.model = Model[schema.collection];
 		if (!this.model) {
 			// Somthing went wrong!!1?

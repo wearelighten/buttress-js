@@ -40,30 +40,32 @@ class Timer {
 module.exports.Timer = Timer;
 
 const __prepareResult = (result) => {
+
 	const prepare = (chunk) => {
 		if (!chunk) return chunk;
 
 		if (chunk._id) {
 			chunk.id = chunk._id;
+			delete chunk._id;
 		}
 		if (chunk._app) {
 			chunk.appId = chunk._app;
+			delete chunk._app;
 		}
 		if (chunk._user) {
 			chunk.userId = chunk._user;
+			delete chunk._user;
 		}
 
-		// Crappy func to stop private/protected data from escaping to the wild
-		// This needs a review!!
-		// if (typeof chunk === 'object') {
-		// 	Object.keys(chunk).forEach((key) => {
-		// 		if (key.indexOf('_') !== -1) {
-		// 			return delete chunk[key];
-		// 		}
+		if (typeof chunk === 'object') {
+			Object.keys(chunk).forEach((key) => {
+				if (key.indexOf('_') !== -1) {
+					// return delete chunk[key];
+				}
 
-		// 		chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => prepare(c)) : prepare(chunk[key]);
-		// 	});
-		// }
+				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => prepare(c)) : prepare(chunk[key]);
+			});
+		}
 
 		return chunk;
 	};
@@ -71,11 +73,12 @@ const __prepareResult = (result) => {
 	return (Array.isArray(result)) ? result.map((c) => prepare(c)) : prepare(result);
 };
 module.exports.prepareResult = __prepareResult;
-
 class JSONStringifyStream extends Transform {
-	constructor(options) {
+	constructor(options, prepare) {
 		super(Object.assign(options || {}, {objectMode: true}));
+
 		this._first = true;
+		this.prepare = prepare;
 	}
 
 	_transform(chunk, encoding, cb) {
@@ -103,7 +106,11 @@ class JSONStringifyStream extends Transform {
 			return value;
 		};
 
-		chunk = __prepareResult(chunk);
+		if (this.prepare) {
+			chunk = this.prepare(chunk);
+		} else {
+			chunk = __prepareResult(chunk, this.schema, this.token);
+		}
 
 		const str = JSON.stringify(chunk, __replacer);
 

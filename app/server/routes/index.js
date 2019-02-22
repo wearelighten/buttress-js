@@ -16,6 +16,7 @@ const Route = require('./route');
 const Logging = require('../logging');
 const Helpers = require('../helpers');
 const Model = require('../model');
+const Shared = require('../model/shared');
 const Mongo = require('mongodb');
 
 const SchemaRoutes = require('./schemaRoutes');
@@ -67,11 +68,13 @@ function _initSchemaRoutes(express, app, schema) {
 				.exec(req, res)
 				.then((result) => {
 					if (result instanceof Mongo.Cursor) {
-						const stringifyStream = new Helpers.JSONStringifyStream();
+						const stringifyStream = new Helpers.JSONStringifyStream((chunk) => {
+							return Shared.prepareResult(chunk, route.schema, req.token);
+						});
 						res.set('Content-Type', 'application/json');
 						result.stream().pipe(stringifyStream).pipe(res);
 					} else {
-						res.json(Helpers.prepareResult(result));
+						res.json(Shared.prepareResult(result, route.schema, req.token));
 					}
 					Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
 					Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);

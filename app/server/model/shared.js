@@ -324,6 +324,71 @@ const __validate = (schema, values, parentProperty) => {
 	return res;
 };
 
+const __prepareResult = (result, schema, token) => {
+	if (schema && token && token.role) {
+		const role = token.role;
+		const dataDisposition = {
+			READ: 'deny',
+			UPDATE: 'deny',
+		};
+
+		if (role && schema.roles) {
+			const schemaRole = schema.roles.find((r) => r.name === token.role);
+			if (schemaRole & schemaRole.dataDisposition) {
+				if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
+				if (schemaRole.dataDisposition.UPDATE) dataDisposition.UPDATE = schemaRole.dataDisposition.UPDATE;
+			}
+		}
+
+		const properties = __getFlattenedSchema(schema);
+
+		// Remove properties without permission
+		for (const property in properties) {
+			if (properties.hasOwnProperty(property)) {
+				if (properties[property].__permissions) continue;
+
+				delete properties[property];
+			}
+		}
+	}
+
+	const prepare = (chunk) => {
+		if (!chunk) return chunk;
+
+		if (chunk._id) {
+			chunk.id = chunk._id;
+			delete chunk._id;
+		}
+		if (chunk._app) {
+			chunk.appId = chunk._app;
+			delete chunk._app;
+		}
+		if (chunk._user) {
+			chunk.userId = chunk._user;
+			delete chunk._user;
+		}
+
+		if (!schema || !token || !token.role) {
+			return chunk;
+		}
+
+		if (typeof chunk === 'object') {
+			Object.keys(chunk).forEach((key) => {
+				if (key.indexOf('_') !== -1) {
+					// return delete chunk[key];
+				}
+
+				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => prepare(c)) : prepare(chunk[key]);
+			});
+		}
+
+		return chunk;
+	};
+
+	return (Array.isArray(result)) ? result.map((c) => prepare(c)) : prepare(result);
+};
+module.exports.prepareResult = __prepareResult;
+
 /* ********************************************************************************
 *
 * APP-SPECIFIC SCHEMA
