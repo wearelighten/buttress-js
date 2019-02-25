@@ -122,7 +122,8 @@ const __getFlattenedBody = (body) => {
 		path.push(property);
 
 		if (typeof parent[property] !== 'object' || parent[property] instanceof Date ||
-			Array.isArray(parent[property]) || parent[property] === null) {
+			Array.isArray(parent[property]) || parent[property] === null ||
+			ObjectId.isValid(body[property])) {
 			flattened.push({
 				path: path.join('.'),
 				value: parent[property],
@@ -147,7 +148,7 @@ const __getFlattenedBody = (body) => {
 		__buildFlattenedBody(property, body, path, flattened);
 	}
 
-	Logging.logSilly(flattened);
+	Logging.log(`__getFlattenedBody: ${flattened.length} properties`, Logging.Constants.LogLevel.SILLY);
 	return flattened;
 };
 
@@ -324,35 +325,44 @@ const __validate = (schema, values, parentProperty) => {
 	return res;
 };
 
-const __prepareResult = (result, schema, token) => {
-	if (schema && token && token.role) {
-		const role = token.role;
-		const dataDisposition = {
-			READ: 'deny',
-			UPDATE: 'deny',
-		};
+const __prepareSchemaResult = (result, schema, token) => {
+	if (!schema) {
+		throw new Error('Can\'t validate result without a data schema');
+	}
+	if (!token) {
+		throw new Error('Can\'t validate result without a token');
+	}
 
-		if (role && schema.roles) {
-			const schemaRole = schema.roles.find((r) => r.name === token.role);
-			if (schemaRole & schemaRole.dataDisposition) {
-				if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
-				if (schemaRole.dataDisposition.UPDATE) dataDisposition.UPDATE = schemaRole.dataDisposition.UPDATE;
-			}
-		}
+	const role = token.role || '';
+	const dataDisposition = {
+		READ: 'deny',
+	};
 
-		const properties = __getFlattenedSchema(schema);
-
-		// Remove properties without permission
-		for (const property in properties) {
-			if (properties.hasOwnProperty(property)) {
-				if (properties[property].__permissions) continue;
-
-				delete properties[property];
-			}
+	if (role && schema.roles) {
+		const schemaRole = schema.roles.find((r) => r.name === token.role);
+		if (schemaRole && schemaRole.dataDisposition) {
+			if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
 		}
 	}
 
-	const prepare = (chunk) => {
+	const properties = __getFlattenedSchema(schema);
+
+	// Remove properties without permission and reduce property to permission
+	for (const property in properties) {
+		if (properties.hasOwnProperty(property)) {
+			if (properties[property].__permissions) {
+				const propertyRole = properties[property].__permissions.find((r) => r.role === role);
+				if (propertyRole) {
+					properties[property] = propertyRole;
+					continue;
+				}
+			}
+
+			delete properties[property];
+		}
+	}
+
+	const _prepare = (chunk, path) => {
 		if (!chunk) return chunk;
 
 		if (chunk._id) {
@@ -373,21 +383,38 @@ const __prepareResult = (result, schema, token) => {
 		}
 
 		if (typeof chunk === 'object') {
+			if (ObjectId.isValid(chunk)) {
+				return chunk;
+			}
 			Object.keys(chunk).forEach((key) => {
-				if (key.indexOf('_') !== -1) {
-					// return delete chunk[key];
+				path.push(key);
+				let readDisposition = false;
+
+				const property = path.join('.');
+				if (properties[property]) {
+					readDisposition = properties[property].READ === 'allow';
+				} else {
+					readDisposition = dataDisposition.READ === 'allow';
 				}
 
-				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => prepare(c)) : prepare(chunk[key]);
+				if (!readDisposition) {
+					Logging.logSilly(`${key} removed from result for ${role}`);
+					delete chunk[key];
+					path.pop();
+					return;
+				}
+
+				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => _prepare(c, path)) : _prepare(chunk[key], path);
+				path.pop();
 			});
 		}
 
 		return chunk;
 	};
 
-	return (Array.isArray(result)) ? result.map((c) => prepare(c)) : prepare(result);
+	return (Array.isArray(result)) ? result.map((c) => _prepare(c, [])) : _prepare(result, []);
 };
-module.exports.prepareResult = __prepareResult;
+module.exports.prepareSchemaResult = __prepareSchemaResult;
 
 /* ********************************************************************************
 *

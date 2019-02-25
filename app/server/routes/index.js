@@ -69,12 +69,12 @@ function _initSchemaRoutes(express, app, schema) {
 				.then((result) => {
 					if (result instanceof Mongo.Cursor) {
 						const stringifyStream = new Helpers.JSONStringifyStream((chunk) => {
-							return Shared.prepareResult(chunk, route.schema, req.token);
+							return Shared.prepareSchemaResult(chunk, route.schema, req.token);
 						});
 						res.set('Content-Type', 'application/json');
 						result.stream().pipe(stringifyStream).pipe(res);
 					} else {
-						res.json(Shared.prepareResult(result, route.schema, req.token));
+						res.json(Shared.prepareSchemaResult(result, route.schema, req.token));
 					}
 					Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
 					Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
