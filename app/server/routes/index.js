@@ -68,7 +68,7 @@ function _initSchemaRoutes(express, app, schema) {
 				.exec(req, res)
 				.then((result) => {
 					if (result instanceof Mongo.Cursor) {
-						const stringifyStream = new Helpers.JSONStringifyStream((chunk) => {
+						const stringifyStream = new Helpers.JSONStringifyStream({}, (chunk) => {
 							return Shared.prepareSchemaResult(chunk, route.schema, req.token);
 						});
 						res.set('Content-Type', 'application/json');
