@@ -282,6 +282,12 @@ class Route {
 				reject({statusCode: 401});
 			}
 
+			// BYPASS schema checks for app tokens
+			if (req.token.type === 'app') {
+				resolve(this.req.token);
+				return;
+			}
+
 			/*
 			 * Start of Route schema permissions
 			 */
