@@ -28,11 +28,11 @@ class GetAppList extends Route {
 		this.permissions = Route.Constants.Permissions.LIST;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.App.findAll();
 	}
 }
@@ -51,7 +51,7 @@ class GetApp extends Route {
 		this._app = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
@@ -71,7 +71,7 @@ class GetApp extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return new Promise((resolve, reject) => {
 			resolve(this._app.details);
 		});
@@ -90,7 +90,7 @@ class AddApp extends Route {
 		this.permissions = Route.Constants.Permissions.ADD;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.body.name || !this.req.body.type || !this.req.body.authLevel) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
@@ -167,7 +167,7 @@ class AddApp extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return new Promise((resolve, reject) => {
 			Model.App.add(this.req.body)
 				.then((res) => {
@@ -192,7 +192,7 @@ class DeleteApp extends Route {
 		this._app = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
@@ -211,7 +211,7 @@ class DeleteApp extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return new Promise((resolve, reject) => {
 			Model.App.rm(this._app).then(() => true).then(resolve, reject);
 		});
@@ -233,7 +233,7 @@ class SetAppOwner extends Route {
 		this._group = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.body.groupId) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
@@ -262,7 +262,7 @@ class SetAppOwner extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return new Promise((resolve, reject) => {
 			this._app.setOwner(this._group).then(() => true).then(resolve, reject);
 		});
@@ -283,7 +283,7 @@ class GetAppPermissionList extends Route {
 		this._app = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
@@ -302,7 +302,7 @@ class GetAppPermissionList extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return new Promise((resolve, reject) => {
 			resolve(this._app.permissions.map((p) => {
 				return {
@@ -328,7 +328,7 @@ class AddAppPermission extends Route {
 		this._app = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.App.findById(this.req.params.id).then((app) => {
 				if (!app) {
@@ -349,7 +349,7 @@ class AddAppPermission extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._app.addOrUpdatePermission(this.req.body.route, this.req.body.permission)
 			.then((a) => a.details);
 	}
@@ -367,7 +367,7 @@ class GetAppSchema extends Route {
 		this.permissions = Route.Constants.Permissions.READ;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.authApp) {
 				this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
@@ -401,7 +401,7 @@ class UpdateAppSchema extends Route {
 		this.permissions = Route.Constants.Permissions.WRITE;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.authApp) {
 				this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
@@ -413,7 +413,7 @@ class UpdateAppSchema extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.App.updateSchema(this.req.authApp._id, this.req.body).then((res) => true);
 	}
 }
@@ -430,7 +430,7 @@ class UpdateAppRoles extends Route {
 		this.permissions = Route.Constants.Permissions.WRITE;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.authApp) {
 				this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
@@ -442,7 +442,7 @@ class UpdateAppRoles extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.App.updateRoles(this.req.authApp._id, this.req.body).then((res) => true);
 	}
 }
@@ -461,7 +461,7 @@ class AddAppMetadata extends Route {
 		this._app = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.App.findById(this.req.appDetails._id).then((app) => {
 				if (!app) {
@@ -484,7 +484,7 @@ class AddAppMetadata extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._app.addOrUpdateMetadata(this.req.params.key, this.req.body.value)
 			.then((a) => a.details);
 	}
@@ -504,7 +504,7 @@ class UpdateAppMetadata extends Route {
 		this._app = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.App.findById(this.req.appDetails._id).then((app) => {
 				if (!app) {
@@ -531,7 +531,7 @@ class UpdateAppMetadata extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._app.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
 	}
 }
@@ -550,7 +550,7 @@ class GetAppMetadata extends Route {
 		this._metadata = null;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Logging.log(`AppID: ${this.req.appDetails._id}`, Route.LogLevel.DEBUG);
 			Model.App.findById(this.req.appDetails._id).then((app) => {
@@ -571,7 +571,7 @@ class GetAppMetadata extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._metadata.value;
 	}
 }

@@ -27,13 +27,13 @@ class GetPersonList extends Route {
 		this.permissions = Route.Constants.Permissions.LIST;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			resolve(true);
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return new Promise((resolve, reject) => {
 			Model.Person.findAll().then(resolve, reject);
 		});
@@ -52,7 +52,7 @@ class GetPerson extends Route {
 		this.permissions = Route.Constants.Permissions.READ;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
@@ -70,7 +70,7 @@ class GetPerson extends Route {
 		});
 	}
 
-	_exec(person) {
+	_exec(req, res, person) {
 		return new Promise((resolve, reject) => {
 			resolve(person.details);
 		});
@@ -89,7 +89,7 @@ class AddPerson extends Route {
 		this.permissions = Route.Constants.Permissions.ADD;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.body.name ||
 					!this.req.body.email) {
@@ -102,7 +102,7 @@ class AddPerson extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.Person.add(this.req.body, this.req.authApp._id)
 			.then(Logging.Promise.logProp('Added Person', 'forename', Route.LogLevel.VERBOSE));
 
@@ -126,11 +126,11 @@ class DeleteAllPeople extends Route {
 		this.permissions = Route.Constants.Permissions.DELETE;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.Person.rmAll()
 			.then(() => true);
 	}
@@ -148,7 +148,7 @@ class DeletePerson extends Route {
 		this.permissions = Route.Constants.Permissions.DELETE;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.Person
 				.findById(this.req.params.id)
@@ -163,7 +163,7 @@ class DeletePerson extends Route {
 		});
 	}
 
-	_exec(person) {
+	_exec(req, res, person) {
 		return Model.Person.rm(person)
 			.then(() => true);
 	}

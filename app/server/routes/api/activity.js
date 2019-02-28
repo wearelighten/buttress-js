@@ -28,11 +28,11 @@ class GetActivityList extends Route {
 		this.permissions = Route.Constants.Permissions.LIST;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.Activity.findAll();
 	}
 }
@@ -51,7 +51,7 @@ class GetActivity extends Route {
 		this._activity = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
@@ -70,7 +70,7 @@ class GetActivity extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Promise.resolve(this._activity.details);
 	}
 }
@@ -87,11 +87,11 @@ class DeleteAllActivity extends Route {
 		this.permissions = Route.Constants.Permissions.DELETE;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.Activity.rmAll().then(() => true);
 	}
 }
@@ -110,7 +110,7 @@ class AddActivityMetadata extends Route {
 		this._activity = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.Activity.findById(this.req.params.id).then((activity) => {
 				if (!activity) {
@@ -133,7 +133,7 @@ class AddActivityMetadata extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._activity.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
 	}
 }
@@ -152,7 +152,7 @@ class UpdateActivityMetadata extends Route {
 		this._activity = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.Activity.findById(this.req.params.id).then((activity) => {
 				if (!activity) {
@@ -179,7 +179,7 @@ class UpdateActivityMetadata extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._activity.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
 	}
 }
@@ -198,7 +198,7 @@ class GetActivityMetadata extends Route {
 		this._metadata = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.Activity.findById(this.req.params.id).then((activity) => {
 				if (!activity) {
@@ -219,7 +219,7 @@ class GetActivityMetadata extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._metadata.value;
 	}
 }
@@ -237,7 +237,7 @@ class DeleteActivityMetadata extends Route {
 		this._activity = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.Activity
 				.findById(this.req.params.id).select('id')
@@ -253,7 +253,7 @@ class DeleteActivityMetadata extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._activity.rmMetadata(this.req.params.key);
 	}
 }

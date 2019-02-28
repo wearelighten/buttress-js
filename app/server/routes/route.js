@@ -102,7 +102,6 @@ class Route {
 	exec(req, res) {
 		// TODO: Pass through req, res to validate / exec rather than setting data as a property
 		this.req = req;
-		this.res = res;
 
 		this._timer = this.req.timer;
 
@@ -113,13 +112,13 @@ class Route {
 				return;
 			}
 
-			this._authenticate()
+			this._authenticate(req, res)
 				.then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then(Logging.Promise.logSilly('authenticated'))
-				.then((token) => this._validate(token), reject)
+				.then((token) => this._validate(req, res, token), reject)
 				.then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then(Logging.Promise.logSilly('validated'))
-				.then((validate) => this._exec(validate), reject)
+				.then((validate) => this._exec(req, res, validate), reject)
 				.then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then((res) => this._logActivity(res), reject)
 				.then(resolve, reject)
@@ -228,13 +227,12 @@ class Route {
 	}
 
 	/**
+	 * @param {Object} req - ExpressJS request object
+	 * @param {Object} res - ExpresJS response object
 	 * @return {Promise} - Promise is fulfilled once the authentication is completed
 	 * @private
 	 */
-	_authenticate() {
-		const req = this.req;
-		const res = this.req;
-
+	_authenticate(req, res) {
 		return new Promise((resolve, reject) => {
 			if (this.auth === Constants.Auth.NONE) {
 				this.log(`WARN: OPEN API CALL`, Logging.Constants.LogLevel.WARN);

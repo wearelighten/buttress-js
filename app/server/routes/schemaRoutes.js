@@ -35,11 +35,11 @@ class GetList extends Route {
 		}
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this.model.findAll();
 	}
 }
@@ -59,7 +59,7 @@ class GetOne extends Route {
 		this.model = Model[schema.collection];
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			this.model.findById(this.req.params.id)
 				.then((entity) => {
@@ -73,7 +73,7 @@ class GetOne extends Route {
 		});
 	}
 
-	_exec(entity) {
+	_exec(req, res, entity) {
 		return Promise.resolve(entity);
 	}
 }
@@ -96,7 +96,7 @@ class GetMany extends Route {
 		this.model = Model[schema.collection];
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			const _ids = this.req.body;
 			if (!_ids) {
@@ -113,7 +113,7 @@ class GetMany extends Route {
 		});
 	}
 
-	_exec(ids) {
+	_exec(req, res, ids) {
 		return this.model.findAllById(ids);
 	}
 }
@@ -136,7 +136,7 @@ class AddOne extends Route {
 		this.model = Model[schema.collection];
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			const validation = this.model.validate(this.req.body);
 			if (!validation.isValid) {
@@ -168,7 +168,7 @@ class AddOne extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this.model.add(this.req.body);
 	}
 }
@@ -191,7 +191,7 @@ class AddMany extends Route {
 		this.model = Model[schema.collection];
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			const entities = this.req.body;
 			if (entities instanceof Array === false) {
@@ -226,7 +226,7 @@ class AddMany extends Route {
 		});
 	}
 
-	_exec(entities) {
+	_exec(req, res, entities) {
 		return this.model.add(entities)
 			.then(Logging.Promise.logProp(`Added ${this.schema.name}`, 'length', Route.LogLevel.VERBOSE));
 	}
@@ -252,7 +252,7 @@ class UpdateOne extends Route {
 		this._entity = null;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			const validation = this.model.validateUpdate(this.req.body);
 			if (!validation.isValid) {
@@ -293,7 +293,7 @@ class UpdateOne extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this.model.updateByPath(this.req.body, this.req.params.id);
 	}
 }
@@ -318,7 +318,7 @@ class DeleteOne extends Route {
 		this._entity = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return this.model.findById(this.req.params.id)
 			.then((entity) => {
 				if (!entity) {
@@ -330,7 +330,7 @@ class DeleteOne extends Route {
 			});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this.model.rm(this._entity)
 			.then(() => true);
 	}
@@ -354,7 +354,7 @@ class DeleteMany extends Route {
 		this.model = Model[schema.collection];
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			const ids = this.req.body;
 			if (!ids) {
@@ -376,7 +376,7 @@ class DeleteMany extends Route {
 		});
 	}
 
-	_exec(ids) {
+	_exec(req, res, ids) {
 		return this.model.rmBulk(ids)
 			.then(() => true);
 	}
@@ -400,11 +400,11 @@ class DeleteAll extends Route {
 		this.model = Model[schema.collection];
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve();
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this.model.rmAll()
 			.then(() => true);
 	}

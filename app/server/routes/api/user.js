@@ -29,11 +29,11 @@ class GetUserList extends Route {
 		this.permissions = Route.Constants.Permissions.LIST;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.User.findAll()
 			.then((users) => {
 				return users.map((user) => {
@@ -68,7 +68,7 @@ class GetUser extends Route {
 		this._user = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
@@ -87,7 +87,7 @@ class GetUser extends Route {
 		});
 	}
 
-	_exec(user) {
+	_exec(req, res, user) {
 		return user;
 	}
 }
@@ -104,7 +104,7 @@ class FindUser extends Route {
 		this.permissions = Route.Constants.Permissions.READ;
 	}
 
-	_validate(authToken) {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.User.getByAppId(this.req.params.app, this.req.params.id)
 				.then((_user) => {
@@ -127,7 +127,7 @@ class FindUser extends Route {
 		});
 	}
 
-	_exec(validate) {
+	_exec(req, res, validate) {
 		if (!validate) {
 			return Promise.resolve(false);
 		}
@@ -151,7 +151,7 @@ class CreateUserAuthToken extends Route {
 		this.permissions = Route.Constants.Permissions.WRITE;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.body.auth ||
 				!this.req.body.auth.authLevel ||
@@ -183,7 +183,7 @@ class CreateUserAuthToken extends Route {
 		});
 	}
 
-	_exec(user) {
+	_exec(req, res, user) {
 		return Model.Token.add(this.req.body.auth, {
 			_app: Model.authApp._id,
 			_user: user._id,
@@ -206,7 +206,7 @@ class UpdateUserAppToken extends Route {
 		this._user = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.body ||
 				!this.req.body.token) {
@@ -234,7 +234,7 @@ class UpdateUserAppToken extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._user.updateToken(this.req.params.app, this.req.body);
 	}
 }
@@ -251,7 +251,7 @@ class AddUser extends Route {
 		this.permissions = Route.Constants.Permissions.ADD;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Logging.log(this.req.body.user, Logging.Constants.LogLevel.DEBUG);
 			const app = this.req.body.user.app ? this.req.body.user.app : this.req.params.app;
@@ -299,7 +299,7 @@ class AddUser extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.User
 			.add(this.req.body.user, this.req.body.auth)
 			.then((user) => {
@@ -322,7 +322,7 @@ class UpdateUserAppInfo extends Route {
 		this._user = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.body ||
 				!this.req.body.token) {
@@ -350,7 +350,7 @@ class UpdateUserAppInfo extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.User.updateAppInfo(this._user, this.req.params.app, this.req.body);
 	}
 }
@@ -369,7 +369,7 @@ class AddUserAuth extends Route {
 		this._user = null;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Logging.log(this.req.body.auth, Logging.Constants.LogLevel.DEBUG);
 			const auth = this.req.body.auth;
@@ -399,7 +399,7 @@ class AddUserAuth extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._user
 			.addAuth(this.req.body.auth)
 			.then((user) => {
@@ -429,7 +429,7 @@ class UpdateUser extends Route {
 		this.activityBroadcast = true;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			const validation = Model.User.validateUpdate(this.req.body);
 			if (!validation.isValid) {
@@ -457,7 +457,7 @@ class UpdateUser extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.User.updateByPath(this.req.body, this.req.params.id);
 	}
 }
@@ -474,11 +474,11 @@ class DeleteAllUsers extends Route {
 		this.permissions = Route.Constants.Permissions.DELETE;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.User.rmAll().then(() => true);
 	}
 }
@@ -496,7 +496,7 @@ class DeleteUser extends Route {
 		this._user = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
@@ -515,7 +515,7 @@ class DeleteUser extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.User.rm(this._user).then(() => true);
 	}
 }
@@ -531,7 +531,7 @@ class AttachToPerson extends Route {
 		this._user = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
@@ -586,7 +586,7 @@ class AttachToPerson extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._user.attachToPerson(this._person, this.req.body)
 			.then(Helpers.Promise.prop('details'));
 	}

@@ -28,11 +28,11 @@ class GetTokenList extends Route {
 		this.permissions = Route.Constants.Permissions.LIST;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.Token.getAll()
 			.then((tokens) => tokens.map((t) => t.details));
 	}
@@ -50,11 +50,11 @@ class DeleteAllTokens extends Route {
 		this.permissions = Route.Constants.Permissions.DELETE;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(this.req.params.type === 'user');
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.Token.rmAll({
 			type: this.req.params.type,
 		}).then(() => true);

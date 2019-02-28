@@ -26,11 +26,11 @@ class GetTrackingList extends Route {
 		this.permissions = Route.Constants.Permissions.LIST;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.Tracking.getAll();
 	}
 }
@@ -50,7 +50,7 @@ class AddTracking extends Route {
 		this.activityBroadcast = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			const validation = Model.Tracking.validate(this.req.body);
 			if (!validation.isValid) {
@@ -74,7 +74,7 @@ class AddTracking extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.Tracking.add(this.req.body);
 	}
 }
@@ -92,7 +92,7 @@ class DeleteTracking extends Route {
 		this._tracking = false;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.Tracking.findById(this.req.params.id)
 				.then((tracking) => {
@@ -107,7 +107,7 @@ class DeleteTracking extends Route {
 		});
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return this._tracking.rm().then(() => true);
 	}
 }
@@ -124,11 +124,11 @@ class DeleteAllTrackings extends Route {
 		this.permissions = Route.Constants.Permissions.DELETE;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		return Model.Tracking.rmAll().then(() => true);
 	}
 }

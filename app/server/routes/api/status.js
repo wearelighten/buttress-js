@@ -27,11 +27,11 @@ class GetProcessStatus extends Route {
 		this.permissions = Route.Constants.Permissions.LIST;
 	}
 
-	_validate() {
+	_validate(req, res, token) {
 		return Promise.resolve(true);
 	}
 
-	_exec() {
+	_exec(req, res, validate) {
 		const mem = process.memoryUsage().rss;
 		const memTotal = os.totalmem();
 
