@@ -6,7 +6,7 @@ const gulpClean = require('gulp-clean');
 const bump = require('gulp-bump');
 
 const Paths = {
-	SOURCE: 'app/server',
+	SOURCE: 'src',
 	DEST: 'deploy',
 	EMAIL_DEST: 'deploy/email',
 };
