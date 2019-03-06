@@ -70,12 +70,12 @@ class GetUser extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
-			Model.User.findById(this.req.params.id).then((user) => {
+			Model.User.findById(req.params.id).then((user) => {
 				if (!user) {
 					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -106,15 +106,15 @@ class FindUser extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			Model.User.getByAppId(this.req.params.app, this.req.params.id)
+			Model.User.getByAppId(req.params.app, req.params.id)
 				.then((_user) => {
 					Logging.logSilly(`FindUser: ${_user !== null}`);
 					if (_user) {
-						Model.Token.findUserAuthToken(_user._id, this.req.authApp._id)
+						Model.Token.findUserAuthToken(_user._id, req.authApp._id)
 							.then((token) => {
 								Logging.logSilly(`FindUserToken: ${token !== null}`);
 								const _userAuthToken = token ? token.value : false;
-								Model.User.updateApps(_user, this.req.authApp)
+								Model.User.updateApps(_user, req.authApp)
 									.then(() => resolve({
 										user: _user,
 										userAuthToken: _userAuthToken,
@@ -153,24 +153,24 @@ class CreateUserAuthToken extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!this.req.body.auth ||
-				!this.req.body.auth.authLevel ||
-				!this.req.body.auth.permissions ||
-				!this.req.body.auth.domains) {
+			if (!req.body.auth ||
+				!req.body.auth.authLevel ||
+				!req.body.auth.permissions ||
+				!req.body.auth.domains) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
-			this.req.body.auth.type = Model.Token.Constants.Type.USER;
-			this.req.body.auth.app = this.req.authApp;
+			req.body.auth.type = Model.Token.Constants.Type.USER;
+			req.body.auth.app = req.authApp;
 
-			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
 
-			Model.User.findById(this.req.params.id)
+			Model.User.findById(req.params.id)
 				.then((user) => {
 					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 					if (user) {
@@ -184,7 +184,7 @@ class CreateUserAuthToken extends Route {
 	}
 
 	_exec(req, res, user) {
-		return Model.Token.add(this.req.body.auth, {
+		return Model.Token.add(req.body.auth, {
 			_app: Model.authApp._id,
 			_user: user._id,
 		})
@@ -208,20 +208,20 @@ class UpdateUserAppToken extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!this.req.body ||
-				!this.req.body.token) {
+			if (!req.body ||
+				!req.body.token) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
 
-			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
 
-			Model.User.findById(this.req.params.id).then((user) => {
+			Model.User.findById(req.params.id).then((user) => {
 				Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 				this._user = user;
 				if (this._user) {
@@ -235,7 +235,7 @@ class UpdateUserAppToken extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return this._user.updateToken(this.req.params.app, this.req.body);
+		return this._user.updateToken(req.params.app, req.body);
 	}
 }
 routes.push(UpdateUserAppToken);
@@ -253,39 +253,39 @@ class AddUser extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			Logging.log(this.req.body.user, Logging.Constants.LogLevel.DEBUG);
-			const app = this.req.body.user.app ? this.req.body.user.app : this.req.params.app;
+			Logging.log(req.body.user, Logging.Constants.LogLevel.DEBUG);
+			const app = req.body.user.app ? req.body.user.app : req.params.app;
 
 			if (!app ||
-					!this.req.body.user.id ||
-					!this.req.body.user.token ||
-					!this.req.body.user.profileImgUrl) {
+					!req.body.user.id ||
+					!req.body.user.token ||
+					!req.body.user.profileImgUrl) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
 
-			if (this.req.body.auth) {
-				this.log(this.req.body.auth);
+			if (req.body.auth) {
+				this.log(req.body.auth);
 				this.log('User Auth Token Reqested');
-				if (!this.req.body.auth.authLevel ||
-						!this.req.body.auth.permissions ||
-						!this.req.body.auth.domains) {
+				if (!req.body.auth.authLevel ||
+						!req.body.auth.permissions ||
+						!req.body.auth.domains) {
 					this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 					reject({statusCode: 400});
 					return;
 				}
-				this.req.body.auth.type = Model.Token.Constants.Type.USER;
-				this.req.body.auth.app = this.req.authApp.id;
+				req.body.auth.type = Model.Token.Constants.Type.USER;
+				req.body.auth.app = req.authApp.id;
 			}
 
 			resolve(true);
 
-			// Model.Person.findByDetails(this.req.body.user)
+			// Model.Person.findByDetails(req.body.user)
 			// 	.then((person) => {
 			// 		Logging.logDebug(`Found Person: ${person !== null}`);
 			// 		if (person === null) {
-			// 			Model.Person.add(this.req.body.user, this.req.authApp)
+			// 			Model.Person.add(req.body.user, req.authApp)
 			// 				.then((p) => {
 			// 					Logging.log(p, Logging.Constants.LogLevel.SILLY);
 			// 					this._person = p;
@@ -301,7 +301,7 @@ class AddUser extends Route {
 
 	_exec(req, res, validate) {
 		return Model.User
-			.add(this.req.body.user, this.req.body.auth)
+			.add(req.body.user, req.body.auth)
 			.then((user) => {
 				return user;
 			});
@@ -324,20 +324,20 @@ class UpdateUserAppInfo extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!this.req.body ||
-				!this.req.body.token) {
+			if (!req.body ||
+				!req.body.token) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
 
-			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
 
-			Model.User.findById(this.req.params.id).then((user) => {
+			Model.User.findById(req.params.id).then((user) => {
 				Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 				this._user = user;
 				if (this._user) {
@@ -351,7 +351,7 @@ class UpdateUserAppInfo extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.User.updateAppInfo(this._user, this.req.params.app, this.req.body);
+		return Model.User.updateAppInfo(this._user, req.params.app, req.body);
 	}
 }
 routes.push(UpdateUserAppInfo);
@@ -371,8 +371,8 @@ class AddUserAuth extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			Logging.log(this.req.body.auth, Logging.Constants.LogLevel.DEBUG);
-			const auth = this.req.body.auth;
+			Logging.log(req.body.auth, Logging.Constants.LogLevel.DEBUG);
+			const auth = req.body.auth;
 
 			if (!auth || !auth.app || !auth.id || !auth.profileImgUrl || !auth.token) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
@@ -380,13 +380,13 @@ class AddUserAuth extends Route {
 				return;
 			}
 
-			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
 
-			Model.User.findById(this.req.params.id).then((user) => {
+			Model.User.findById(req.params.id).then((user) => {
 				Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 				this._user = user;
 				if (this._user) {
@@ -401,11 +401,11 @@ class AddUserAuth extends Route {
 
 	_exec(req, res, validate) {
 		return this._user
-			.addAuth(this.req.body.auth)
+			.addAuth(req.body.auth)
 			.then((user) => {
 				const tasks = [
 					Promise.resolve(user.details),
-					Model.Token.findUserAuthToken(this._user._id, this.req.authApp._id),
+					Model.Token.findUserAuthToken(this._user._id, req.authApp._id),
 				];
 
 				return Promise.all(tasks);
@@ -431,7 +431,7 @@ class UpdateUser extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			const validation = Model.User.validateUpdate(this.req.body);
+			const validation = Model.User.validateUpdate(req.body);
 			if (!validation.isValid) {
 				if (validation.isPathValid === false) {
 					this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
@@ -445,7 +445,7 @@ class UpdateUser extends Route {
 				}
 			}
 
-			Model.User.exists(this.req.params.id)
+			Model.User.exists(req.params.id)
 				.then((exists) => {
 					if (!exists) {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
@@ -458,7 +458,7 @@ class UpdateUser extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.User.updateByPath(this.req.body, this.req.params.id);
+		return Model.User.updateByPath(req.body, req.params.id);
 	}
 }
 routes.push(UpdateUser);
@@ -498,12 +498,12 @@ class DeleteUser extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
-			Model.User.findById(this.req.params.id).then((user) => {
+			Model.User.findById(req.params.id).then((user) => {
 				if (!user) {
 					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -533,14 +533,14 @@ class AttachToPerson extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!this.req.params.id || !ObjectId.isValid(this.req.params.id)) {
+			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
 
 			Model.User
-				.findById(this.req.params.id).then((user) => {
+				.findById(req.params.id).then((user) => {
 					if (!user) {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
 						reject({statusCode: 400});
@@ -554,14 +554,14 @@ class AttachToPerson extends Route {
 						return;
 					}
 
-					if (!this.req.body.name || !this.req.body.email) {
+					if (!req.body.name || !req.body.email) {
 						this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 						reject({statusCode: 400});
 						return;
 					}
 
 					Model.Person
-						.findByDetails(this.req.body)
+						.findByDetails(req.body)
 						.then((person) => {
 							this._person = person;
 							if (person) {
@@ -587,7 +587,7 @@ class AttachToPerson extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return this._user.attachToPerson(this._person, this.req.body)
+		return this._user.attachToPerson(this._person, req.body)
 			.then(Helpers.Promise.prop('details'));
 	}
 }
