@@ -100,9 +100,6 @@ class Route {
 	 * @return {Promise} - Promise is fulfilled once execution has completed
 	 */
 	exec(req, res) {
-		// TODO: Pass through req, res to validate / exec rather than setting data as a property
-		this.req = req;
-
 		this._timer = req.timer;
 
 		return new Promise((resolve, reject) => {
