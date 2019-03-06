@@ -13,7 +13,7 @@
 
 const program = require('commander');
 const MongoClient = require('mongodb').MongoClient;
-const ObjectId = require('mongodb').ObjectId;
+// const ObjectId = require('mongodb').ObjectId;
 
 const Config = require('node-env-obj')('../');
 const Logging = require('../logging');
@@ -78,7 +78,7 @@ class BJ2Upgrade {
 
 		// Queue up selected programs
 		Logging.log(`Queuing up the following upgrades: ${Object.keys(selectedPrograms).join(', ')}`);
-		for (let p in selectedPrograms) {
+		for (const p in selectedPrograms) {
 			if (!selectedPrograms.hasOwnProperty(p)) continue;
 			tasks.push(selectedPrograms[p]);
 		}
@@ -156,7 +156,6 @@ class BJ2Upgrade {
 			})
 			.then((updates) => updates.reduce((prev, next) => prev.then(() => next()), Promise.resolve()));
 	}
-
 }
 
 module.exports = new BJ2Upgrade();

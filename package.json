@@ -34,7 +34,6 @@
     "node-env-obj": "~0.1.1",
     "node-redis-pubsub": "~4.0.0",
     "proxyquire": "~2.1.0",
-    "pug": "~2.0.3",
     "redis": "~2.8.0",
     "socket.io": "~2.2.0",
     "socket.io-emitter": "~3.1.1",
@@ -51,6 +50,7 @@
     "gulp-cached": "^1.1.1",
     "gulp-clean": "^0.4.0",
     "gulp-eslint": "^5.0.0",
+    "gulp-pug": "^4.0.1",
     "jshint": "^2.9.7"
   }
 }

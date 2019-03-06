@@ -266,8 +266,8 @@ function _configCrossDomain(req, res, next) {
 exports.init = (app) => {
 	Route.app = app;
 
-	app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
-	app.get('/index.html', (req, res, next) => res.send('<html><head><title>ButtressJS</title></head></html>'));
+	app.get('/favicon.ico', (req, res, next) => res.send(404));
+	app.get('/index.html', (req, res, next) => res.sendFile(path.join(__dirname, '../static/index.html')));
 
 	app.use(_authenticateToken);
 	app.use(_configCrossDomain);

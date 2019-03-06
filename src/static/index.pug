@@ -1,0 +1,47 @@
+include constants
+
+doctype html
+html(lang='en')
+  head
+    title ButtressJS
+
+    link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=Fira+Sans")
+    style.
+      html {
+        width: 100%;
+        height: 100%;
+        font-family: 'Fira Sans', sans-serif;
+        text-align: center;
+
+        font-size: 18px;
+
+        margin: 0;
+        padding: 0;
+
+        background: #{colorBackground};
+        color: #{colorSecondary};
+      }
+      body {
+        padding-top: 1em;
+      }
+
+      a,
+      a:hover,
+      a:visited {
+        color: #{colorAccent};
+      }
+
+      .title {
+        font-size: 4em;
+        margin: .3em 0;
+        color: #{colorPrimary};
+      }
+
+  body
+    header
+      h1.title Buttress JS
+    section
+      p Realtime datastore for business software
+    footer
+      p Proudly open source ❤️ Hosted on 
+        a(href="https://github.com/wearelighten/buttress-js" target="_BLANK") Github

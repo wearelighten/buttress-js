@@ -3,6 +3,7 @@
 const gulp = require('gulp');
 const eslint = require('gulp-eslint');
 const gulpClean = require('gulp-clean');
+const pug = require('gulp-pug');
 const bump = require('gulp-bump');
 
 const Paths = {
@@ -47,12 +48,18 @@ const styles = (done) => {
 	return gulp.series('emailStyles')(done);
 };
 
+const viewsStatic = () => {
+	return gulp.src(Sources.PUG, {base: Paths.SOURCE})
+		.pipe(pug())
+		.pipe(gulp.dest(Paths.DEST));
+};
 const viewsEmail = () => {
 	return gulp.src(Sources.EMAIL_PUG, {base: 'app/server/email'})
+		.pipe(pug())
 		.pipe(gulp.dest(Paths.EMAIL_DEST));
 };
 const views = (done) => {
-	return gulp.series('viewsEmail')(done);
+	return gulp.series(['viewsStatic', 'viewsEmail'])(done);
 };
 
 // Statics
@@ -75,6 +82,7 @@ const build = (done) => {
 const watch = (done) => {
 	return gulp.series('build', () => {
 		gulp.watch(Sources.EMAIL_LESS, gulp.series('styles'));
+		gulp.watch(Sources.PUG, gulp.series('views'));
 		gulp.watch(Sources.EMAIL_PUG, gulp.series('views'));
 		// Watch Scripts
 		gulp.watch(Sources.JS, gulp.series('js'));
@@ -111,6 +119,7 @@ module.exports = {
 
 	emailStyles,
 	styles,
+	viewsStatic,
 	viewsEmail,
 	views,
 

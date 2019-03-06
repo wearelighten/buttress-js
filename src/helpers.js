@@ -40,7 +40,6 @@ class Timer {
 module.exports.Timer = Timer;
 
 const __prepareResult = (result) => {
-
 	const prepare = (chunk) => {
 		if (!chunk) return chunk;
 

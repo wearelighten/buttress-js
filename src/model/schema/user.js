@@ -255,12 +255,12 @@ class UserSchemaModel extends SchemaModel {
 				},
 				address: body.address,
 				postcode: body.postcode,
-			}
+			},
 		};
 
 		let _user = null;
 		return super.add(user, {
-			_apps: [Model.authApp._id]
+			_apps: [Model.authApp._id],
 		})
 			.then((user) => {
 				_user = user;
