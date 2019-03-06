@@ -121,7 +121,6 @@ class AddApp extends Route {
 						{route: 'org/*', permission: '*'},
 						{route: 'group/*', permission: '*'},
 						{route: 'user/*', permission: '*'},
-						{route: 'person/*', permission: '*'},
 						{route: 'campaign/*', permission: '*'},
 						{route: 'activity/*', permission: '*'},
 						{route: 'company/*', permission: '*'},

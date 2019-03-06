@@ -280,22 +280,6 @@ class AddUser extends Route {
 			}
 
 			resolve(true);
-
-			// Model.Person.findByDetails(req.body.user)
-			// 	.then((person) => {
-			// 		Logging.logDebug(`Found Person: ${person !== null}`);
-			// 		if (person === null) {
-			// 			Model.Person.add(req.body.user, req.authApp)
-			// 				.then((p) => {
-			// 					Logging.log(p, Logging.Constants.LogLevel.SILLY);
-			// 					this._person = p;
-			// 					resolve(true);
-			// 				});
-			// 		} else {
-			// 			this._person = person;
-			// 			resolve(true);
-			// 		}
-			// 	}, reject);
 		});
 	}
 
@@ -520,78 +504,6 @@ class DeleteUser extends Route {
 	}
 }
 routes.push(DeleteUser);
-
-class AttachToPerson extends Route {
-	constructor() {
-		super('user/:id/person', 'ATTACH USER TO PERSON');
-		this.verb = Route.Constants.Verbs.PUT;
-		this.auth = Route.Constants.Auth.ADMIN;
-		this.permissions = Route.Constants.Permissions.ADD;
-
-		this._user = false;
-	}
-
-	_validate(req, res, token) {
-		return new Promise((resolve, reject) => {
-			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
-				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
-			}
-
-			Model.User
-				.findById(req.params.id).then((user) => {
-					if (!user) {
-						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
-					}
-					this._user = user;
-
-					if (this._user.person) {
-						this.log('ERROR: Already attached to a person', Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
-					}
-
-					if (!req.body.name || !req.body.email) {
-						this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
-					}
-
-					Model.Person
-						.findByDetails(req.body)
-						.then((person) => {
-							this._person = person;
-							if (person) {
-								return Model.User.findOne({_person: person});
-							}
-							return Promise.resolve(null);
-						})
-						.then((user) => {
-							if (user && user._id !== this._user._id) {
-								this.log('ERROR: Person attached to a different user', Route.LogLevel.ERR);
-								reject({statusCode: 400});
-								return;
-							}
-							resolve(true);
-						})
-						.catch((err) => {
-							this.log(`ERROR: ${err.message}`, Route.LogLevel.ERR);
-							reject({statusCode: 400});
-						});
-				})
-				.catch(Logging.Promise.logError());
-		});
-	}
-
-	_exec(req, res, validate) {
-		return this._user.attachToPerson(this._person, req.body)
-			.then(Helpers.Promise.prop('details'));
-	}
-}
-routes.push(AttachToPerson);
 
 /**
  * @type {*[]}

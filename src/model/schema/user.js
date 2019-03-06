@@ -408,24 +408,6 @@ class UserSchemaModel extends SchemaModel {
 		}, {});
 	}
 
-	// attachToPerson(person, details) {
-	// 	if (person !== null) {
-	// 		this._person = person;
-	// 		return this.save();
-	// 	}
-
-	// 	return new Promise((resolve, reject) => {
-	// 		Model.Person
-	// 			.add(details, Model.authApp._id)
-	// 			.then((person) => {
-	// 				Logging.log(person, Logging.Constants.LogLevel.DEBUG);
-	// 				this._person = person.id;
-	// 				return this.save();
-	// 			})
-	// 			.then(resolve, reject);
-	// 	});
-	// }
-
 	/**
 	 * @param {string} app - name of the app for which the token is being updated
 	 * @param {Object} body - body passed through from a PUT request
