@@ -52,7 +52,7 @@ class AddTracking extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			const validation = Model.Tracking.validate(this.req.body);
+			const validation = Model.Tracking.validate(req.body);
 			if (!validation.isValid) {
 				if (validation.missing.length > 0) {
 					this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
@@ -75,7 +75,7 @@ class AddTracking extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.Tracking.add(this.req.body);
+		return Model.Tracking.add(req.body);
 	}
 }
 routes.push(AddTracking);
@@ -94,7 +94,7 @@ class DeleteTracking extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			Model.Tracking.findById(this.req.params.id)
+			Model.Tracking.findById(req.params.id)
 				.then((tracking) => {
 					if (!tracking) {
 						this.log('ERROR: Invalid Tracking ID', Route.LogLevel.ERR);

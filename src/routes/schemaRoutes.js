@@ -61,10 +61,10 @@ class GetOne extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			this.model.findById(this.req.params.id)
+			this.model.findById(req.params.id)
 				.then((entity) => {
 					if (!entity) {
-						this.log(`${this.schema.name}: Invalid ID: ${this.req.params.id}`, Route.LogLevel.ERR);
+						this.log(`${this.schema.name}: Invalid ID: ${req.params.id}`, Route.LogLevel.ERR);
 						reject({statusCode: 400});
 						return;
 					}
@@ -98,7 +98,7 @@ class GetMany extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			const _ids = this.req.body;
+			const _ids = req.body;
 			if (!_ids) {
 				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
@@ -138,7 +138,7 @@ class AddOne extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			const validation = this.model.validate(this.req.body);
+			const validation = this.model.validate(req.body);
 			if (!validation.isValid) {
 				if (validation.missing.length > 0) {
 					this.log(`${this.schema.name}: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
@@ -156,7 +156,7 @@ class AddOne extends Route {
 				return;
 			}
 
-			this.model.isDuplicate(this.req.body)
+			this.model.isDuplicate(req.body)
 				.then((res) => {
 					if (res === true) {
 						this.log(`${this.schema.name}: Duplicate entity`, Route.LogLevel.ERR);
@@ -169,7 +169,7 @@ class AddOne extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return this.model.add(this.req.body);
+		return this.model.add(req.body);
 	}
 }
 routes.push(AddOne);
@@ -193,7 +193,7 @@ class AddMany extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			const entities = this.req.body;
+			const entities = req.body;
 			if (entities instanceof Array === false) {
 				this.log(`ERROR: You need to supply an array of ${this.schema.name}`, Route.LogLevel.ERR);
 				reject({statusCode: 400, message: `Invalid data: send an array`});
@@ -254,7 +254,7 @@ class UpdateOne extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			const validation = this.model.validateUpdate(this.req.body);
+			const validation = this.model.validateUpdate(req.body);
 			if (!validation.isValid) {
 				if (validation.isPathValid === false) {
 					this.log(`${this.schema.name}: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
@@ -269,19 +269,19 @@ class UpdateOne extends Route {
 					if (validation.isMissingRequired) {
 						reject({
 							statusCode: 400,
-							message: `${this.schema.name}: Missing required property updating ${this.req.body.path}: ${validation.missingRequired}`,
+							message: `${this.schema.name}: Missing required property updating ${req.body.path}: ${validation.missingRequired}`,
 						});
 					} else {
 						reject({
 							statusCode: 400,
-							message: `${this.schema.name}: Update value is invalid for path ${this.req.body.path}: ${validation.invalidValue}`,
+							message: `${this.schema.name}: Update value is invalid for path ${req.body.path}: ${validation.invalidValue}`,
 						});
 					}
 					return;
 				}
 			}
 
-			this.model.exists(this.req.params.id)
+			this.model.exists(req.params.id)
 				.then((exists) => {
 					if (!exists) {
 						this.log('ERROR: Invalid ID', Route.LogLevel.ERR);
@@ -294,7 +294,7 @@ class UpdateOne extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return this.model.updateByPath(this.req.body, this.req.params.id);
+		return this.model.updateByPath(req.body, req.params.id);
 	}
 }
 routes.push(UpdateOne);
@@ -319,7 +319,7 @@ class DeleteOne extends Route {
 	}
 
 	_validate(req, res, token) {
-		return this.model.findById(this.req.params.id)
+		return this.model.findById(req.params.id)
 			.then((entity) => {
 				if (!entity) {
 					this.log(`${this.schema.name}: Invalid ID`, Route.LogLevel.ERR);
@@ -356,7 +356,7 @@ class DeleteMany extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			const ids = this.req.body;
+			const ids = req.body;
 			if (!ids) {
 				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
 				reject({statusCode: 400, message: `ERROR: No ${this.schema.name} IDs provided`});

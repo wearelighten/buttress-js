@@ -54,12 +54,12 @@ class GetPerson extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!this.req.params.id) {
+			if (!req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
-			Model.Person.findById(this.req.params.id).then((person) => {
+			Model.Person.findById(req.params.id).then((person) => {
 				if (!person) {
 					this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -91,8 +91,8 @@ class AddPerson extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!this.req.body.name ||
-					!this.req.body.email) {
+			if (!req.body.name ||
+					!req.body.email) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
@@ -103,11 +103,11 @@ class AddPerson extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.Person.add(this.req.body, this.req.authApp._id)
+		return Model.Person.add(req.body, req.authApp._id)
 			.then(Logging.Promise.logProp('Added Person', 'forename', Route.LogLevel.VERBOSE));
 
 		// return new Promise((resolve, reject) => {
-		//   Model.Person.add(this.req.body, this.req.appAuth._id)
+		//   Model.Person.add(req.body, req.appAuth._id)
 		//     .then(Logging.Promise.logProp('Added Person', 'forename', Route.LogLevel.VERBOSE))
 		//     .then(resolve, reject);
 		// });
@@ -151,11 +151,11 @@ class DeletePerson extends Route {
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.Person
-				.findById(this.req.params.id)
+				.findById(req.params.id)
 				.then((person) => {
 					if (!person) {
 						this.log('ERROR: Invalid Person ID', Route.LogLevel.ERR);
-						reject({statusCode: 400, message: `ERROR: Invalid Person ID: ${this.req.params.id}`});
+						reject({statusCode: 400, message: `ERROR: Invalid Person ID: ${req.params.id}`});
 						return;
 					}
 					resolve(person);

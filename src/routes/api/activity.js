@@ -53,12 +53,12 @@ class GetActivity extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!this.req.params.id) {
+			if (!req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
-			Model.Activity.findById(this.req.params.id).then((activity) => {
+			Model.Activity.findById(req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -112,17 +112,17 @@ class AddActivityMetadata extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			Model.Activity.findById(this.req.params.id).then((activity) => {
+			Model.Activity.findById(req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
 					return;
 				}
 				try {
-					JSON.parse(this.req.body.value);
+					JSON.parse(req.body.value);
 				} catch (e) {
 					this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
-					this.log(this.req.body.value, Route.LogLevel.ERR);
+					this.log(req.body.value, Route.LogLevel.ERR);
 					reject({statusCode: 400});
 					return;
 				}
@@ -134,7 +134,7 @@ class AddActivityMetadata extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return this._activity.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
+		return this._activity.addOrUpdateMetadata(req.params.key, req.body.value);
 	}
 }
 routes.push(AddActivityMetadata);
@@ -154,19 +154,19 @@ class UpdateActivityMetadata extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			Model.Activity.findById(this.req.params.id).then((activity) => {
+			Model.Activity.findById(req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
 					return;
 				}
-				if (activity.findMetadata(this.req.params.key) === false) {
+				if (activity.findMetadata(req.params.key) === false) {
 					this.log('ERROR: Metadata does not exist', Route.LogLevel.ERR);
 					reject({statusCode: 400});
 					return;
 				}
 				try {
-					JSON.parse(this.req.body.value);
+					JSON.parse(req.body.value);
 				} catch (e) {
 					this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
 					reject({statusCode: 400});
@@ -180,7 +180,7 @@ class UpdateActivityMetadata extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return this._activity.addOrUpdateMetadata(this.req.params.key, this.req.body.value);
+		return this._activity.addOrUpdateMetadata(req.params.key, req.body.value);
 	}
 }
 routes.push(UpdateActivityMetadata);
@@ -200,14 +200,14 @@ class GetActivityMetadata extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			Model.Activity.findById(this.req.params.id).then((activity) => {
+			Model.Activity.findById(req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
 					reject({statusCode: 400});
 					return;
 				}
 
-				this._metadata = activity.findMetadata(this.req.params.key);
+				this._metadata = activity.findMetadata(req.params.key);
 				if (this._metadata === false) {
 					this.log('WARN: Activity Metadata Not Found', Route.LogLevel.ERR);
 					reject({statusCode: 404});
@@ -240,11 +240,11 @@ class DeleteActivityMetadata extends Route {
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			Model.Activity
-				.findById(this.req.params.id).select('id')
+				.findById(req.params.id).select('id')
 				.then((activity) => {
 					if (!activity) {
 						this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
-						reject({statusCode: 400, message: `Invalid Activity ID: ${this.req.params.id}`});
+						reject({statusCode: 400, message: `Invalid Activity ID: ${req.params.id}`});
 						return;
 					}
 					this._activity = activity;
@@ -254,7 +254,7 @@ class DeleteActivityMetadata extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return this._activity.rmMetadata(this.req.params.key);
+		return this._activity.rmMetadata(req.params.key);
 	}
 }
 routes.push(DeleteActivityMetadata);

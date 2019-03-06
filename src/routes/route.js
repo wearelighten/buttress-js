@@ -103,7 +103,7 @@ class Route {
 		// TODO: Pass through req, res to validate / exec rather than setting data as a property
 		this.req = req;
 
-		this._timer = this.req.timer;
+		this._timer = req.timer;
 
 		return new Promise((resolve, reject) => {
 			if (!this._exec) {
@@ -144,15 +144,15 @@ class Route {
 
 		const broadcast = () => {
 			if (res) {
-				const appPId = Model.App.genPublicUID(this.req.authApp.name, this.req.token.value);
+				const appPId = Model.App.genPublicUID(req.authApp.name, req.token.value);
 				this._activityBroadcastSocket({
 					title: this.activityTitle,
 					description: this.activityDescription,
 					visibility: this.activityVisibility,
 					broadcast: this.activityBroadcast,
-					path: this.req.path,
+					path: req.path,
 					pathSpec: this.path,
-					params: this.req.params,
+					params: req.params,
 					verb: this.verb,
 					permissions: this.permissions,
 				}, result, appPId);
@@ -162,7 +162,7 @@ class Route {
 		setTimeout(() => {
 			// Craft activity object and add
 			if (addActivty) {
-				this._addLogActivity(req.body, this.path, this.verb);
+				this._addLogActivity(req, this.path, this.verb);
 			}
 			broadcast();
 		}, 50);
@@ -170,7 +170,7 @@ class Route {
 		return Promise.resolve(result);
 	}
 
-	_addLogActivity(body, path, verb) {
+	_addLogActivity(req, path, verb) {
 		return Model.Activity.add({
 			activityTitle: this.activityTitle,
 			activityDescription: this.activityDescription,
@@ -179,11 +179,11 @@ class Route {
 			verb: verb,
 			permissions: this.permissions,
 			auth: this.auth,
-			params: this.req.params,
+			params: req.params,
 			req: {
-				query: this.req.query,
-				body: body,
-				params: this.req.params,
+				query: req.query,
+				body: req.body,
+				params: req.params,
 			},
 			res: {},
 		})
@@ -203,7 +203,7 @@ class Route {
 			})
 			.catch((e) => {
 				Logging.logError(`[${verb.toUpperCase()}] ${path}`);
-				Logging.logError(body);
+				Logging.logError(req.body);
 				Logging.logError(e);
 			});
 	}
@@ -236,19 +236,19 @@ class Route {
 		return new Promise((resolve, reject) => {
 			if (this.auth === Constants.Auth.NONE) {
 				this.log(`WARN: OPEN API CALL`, Logging.Constants.LogLevel.WARN);
-				resolve(this.req.user);
+				resolve(req.user);
 				return;
 			}
 
-			if (!this.req.token) {
+			if (!req.token) {
 				this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR);
 				reject({statusCode: 401});
 				return;
 			}
-			this.log(this.req.token.value, Logging.Constants.LogLevel.SILLY);
+			this.log(req.token.value, Logging.Constants.LogLevel.SILLY);
 
 			this.log(`AUTHLEVEL: ${this.auth}`, Logging.Constants.LogLevel.VERBOSE);
-			if (this.req.token.authLevel < this.auth) {
+			if (req.token.authLevel < this.auth) {
 				this.log('EAUTH: INSUFFICIENT AUTHORITY', Logging.Constants.LogLevel.ERR);
 				reject({statusCode: 401});
 				return;
@@ -264,11 +264,11 @@ class Route {
 			 * @TODO Support Regex in specific ie match routes like app/:id/permission
 			 */
 			let authorised = false;
-			const token = this.req.token;
+			const token = req.token;
 			Logging.logSilly(token.permissions);
 			for (let x = 0; x < token.permissions.length; x++) {
 				const p = token.permissions[x];
-				if (this._matchRoute(p.route) && this._matchPermission(p.permission)) {
+				if (this._matchRoute(req, p.route) && this._matchPermission(p.permission)) {
 					authorised = true;
 					break;
 				}
@@ -282,7 +282,7 @@ class Route {
 
 			// BYPASS schema checks for app tokens
 			if (req.token.type === 'app') {
-				resolve(this.req.token);
+				resolve(req.token);
 				return;
 			}
 
@@ -294,7 +294,7 @@ class Route {
 
 				// HACK - BYPASS Permissions for company / service
 				if (['company', 'service'].includes(this.schema.name)) {
-					return resolve(this.req.token);
+					return resolve(req.token);
 				}
 
 				Logging.logSilly(`SAUTH: TOKEN ROLE - ${req.token.role}`);
@@ -331,17 +331,18 @@ class Route {
 				}
 			}
 
-			resolve(this.req.token);
+			resolve(req.token);
 		});
 	}
 
 	/**
+	 * @param {object} req - The request object to be compared to
 	 * @param {string} routeSpec - See above for accepted route specs
 	 * @return {boolean} - true if the route is authorised
 	 * @private
 	 */
-	_matchRoute(routeSpec) {
-		// if (routeSpec === '*' && this.req.token.authLevel >= Constants.Auth.SUPER) {
+	_matchRoute(req, routeSpec) {
+		// if (routeSpec === '*' && req.token.authLevel >= Constants.Auth.SUPER) {
 		if (routeSpec === '*') {
 			return true;
 		}
@@ -351,8 +352,8 @@ class Route {
 		}
 
 		const userWildcard = /^user\/me.+/;
-		if (routeSpec.match(userWildcard) && this.req.params.id == this.req.authUser._id) { // eslint-disable-line eqeqeq
-			Logging.logSilly(`Matched user ${this.req.authUser._id} to /user/${this.req.params.id}`);
+		if (routeSpec.match(userWildcard) && req.params.id == req.authUser._id) { // eslint-disable-line eqeqeq
+			Logging.logSilly(`Matched user ${req.authUser._id} to /user/${req.params.id}`);
 			return true;
 		}
 
@@ -361,7 +362,7 @@ class Route {
 		if (matches) {
 			Logging.logSilly(matches);
 			if (this.path.match(new RegExp(`^${matches[1]}`)) &&
-				this.req.token.authLevel >= Constants.Auth.ADMIN) {
+				req.token.authLevel >= Constants.Auth.ADMIN) {
 				return true;
 			}
 		}
