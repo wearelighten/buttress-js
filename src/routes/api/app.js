@@ -380,12 +380,12 @@ class GetAppSchema extends Route {
 				return;
 			}
 
-			resolve(Schema.buildCollections(this.req.authApp.__schema));
+			resolve(req.authApp.__schema);
 		});
 	}
 
-	_exec(schema) {
-		return schema;
+	_exec(req, res, schema) {
+		return Schema.buildCollections(schema);
 	}
 }
 routes.push(GetAppSchema);
