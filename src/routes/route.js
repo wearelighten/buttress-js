@@ -120,16 +120,16 @@ class Route {
 				.then(Logging.Promise.logSilly('validated'))
 				.then((validate) => this._exec(req, res, validate), reject)
 				.then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
-				.then((res) => this._logActivity(res), reject)
+				.then((result) => this._logActivity(req, res, result), reject)
 				.then(resolve, reject)
 				.catch(Logging.Promise.logError());
 		});
 	}
 
-	_logActivity(res) {
+	_logActivity(req, res, result) {
 		Logging.logSilly(`logging activity: [${this.verb}] ${this.path} (${this.auth}:${this.permissions})`);
-		if (res instanceof Mongo.Cursor || this.verb === Constants.Verbs.GET) {
-			return Promise.resolve(res);
+		if (result instanceof Mongo.Cursor || this.verb === Constants.Verbs.GET) {
+			return Promise.resolve(result);
 		}
 
 		let addActivty = true;
@@ -155,19 +155,19 @@ class Route {
 					params: this.req.params,
 					verb: this.verb,
 					permissions: this.permissions,
-				}, res, appPId);
+				}, result, appPId);
 			}
 		};
 
 		setTimeout(() => {
 			// Craft activity object and add
 			if (addActivty) {
-				this._addLogActivity(this.req.body, this.path, this.verb);
+				this._addLogActivity(req.body, this.path, this.verb);
 			}
 			broadcast();
 		}, 50);
 
-		return Promise.resolve(res);
+		return Promise.resolve(result);
 	}
 
 	_addLogActivity(body, path, verb) {
