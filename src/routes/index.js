@@ -12,12 +12,14 @@
 
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
 const Route = require('./route');
 const Logging = require('../logging');
 const Helpers = require('../helpers');
 const Model = require('../model');
 const Shared = require('../model/shared');
 const Mongo = require('mongodb');
+const Config = require('node-env-obj')('../');
 
 const SchemaRoutes = require('./schemaRoutes');
 
@@ -264,13 +266,15 @@ function _configCrossDomain(req, res, next) {
  * @return {Promise} - resolves once the tokens have been pre-cached
  */
 exports.init = (app) => {
-	Route.app = app;
+	// Route.app = app;
 
-	app.get('/favicon.ico', (req, res, next) => res.send(404));
-	app.get('/index.html', (req, res, next) => res.sendFile(path.join(__dirname, '../static/index.html')));
+	app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
+	app.get(['/', '/index.html'], (req, res, next) => res.sendFile(path.join(__dirname, '../static/index.html')));
 
-	app.use(_authenticateToken);
-	app.use(_configCrossDomain);
+	const apiRouter = express.Router();
+
+	apiRouter.use(_authenticateToken);
+	apiRouter.use(_configCrossDomain);
 
 	return Model.App.findAll().toArray()
 		.then((buttressApps) => {
@@ -278,7 +282,7 @@ exports.init = (app) => {
 			buttressApps.forEach((buttressApp) => {
 				if (buttressApp.__schema) {
 					buttressApp.__schema.forEach((schema) => {
-						_initSchemaRoutes(app, buttressApp, schema);
+						_initSchemaRoutes(apiRouter, buttressApp, schema);
 					});
 				}
 			});
@@ -290,11 +294,15 @@ exports.init = (app) => {
 				const routes = providers[x];
 				for (let y = 0; y < routes.length; y++) {
 					const route = routes[y];
-					_initRoute(app, route);
+					_initRoute(apiRouter, route);
 				}
 			}
 		})
-		.then(() => _loadTokens());
+		.then(() => _loadTokens())
+		.then(() => {
+			Logging.logSilly('Registered API Routes');	
+			app.use(Config.app.apiPrefix, apiRouter);
+		});
 };
 
 /**
