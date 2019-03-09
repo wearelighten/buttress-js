@@ -13,7 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-const Route = require('./route');
+// const Route = require('./route');
 const Logging = require('../logging');
 const Helpers = require('../helpers');
 const Model = require('../model');
@@ -32,7 +32,7 @@ const _timer = new Helpers.Timer();
  */
 function _initRoute(app, Route) {
 	const route = new Route();
-	app[route.verb](`/api/v1/${route.path}`, (req, res) => {
+	app[route.verb](`/${route.path}`, (req, res) => {
 		Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 		route
@@ -63,7 +63,7 @@ function _initRoute(app, Route) {
 function _initSchemaRoutes(express, app, schema) {
 	SchemaRoutes.forEach((Route) => {
 		const route = new Route(schema);
-		express[route.verb](`/api/v1/${route.path}`, (req, res) => {
+		express[route.verb](`/${route.path}`, (req, res) => {
 			Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 			route
@@ -271,7 +271,7 @@ exports.init = (app) => {
 	app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
 	app.get(['/', '/index.html'], (req, res, next) => res.sendFile(path.join(__dirname, '../static/index.html')));
 
-	const apiRouter = express.Router();
+	const apiRouter = express.Router(); // eslint-disable-line new-cap
 
 	apiRouter.use(_authenticateToken);
 	apiRouter.use(_configCrossDomain);
@@ -300,7 +300,7 @@ exports.init = (app) => {
 		})
 		.then(() => _loadTokens())
 		.then(() => {
-			Logging.logSilly('Registered API Routes');	
+			Logging.logSilly('Registered API Routes');
 			app.use(Config.app.apiPrefix, apiRouter);
 		});
 };

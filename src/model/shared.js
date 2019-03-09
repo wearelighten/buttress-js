@@ -773,7 +773,7 @@ module.exports.updateByPath = function(pathContext, schema, collection) {
 		return body.reduce((promise, update) => {
 			const config = flattenedSchema === false ? false : flattenedSchema[update.path];
 			return promise
-				.then(_doUpdate(this, update, extendedPathContext, config, collection, id));
+				.then(_doUpdate(this, update, extendedPathContext, config, collection, id)); // eslint-disable-line no-invalid-this
 		}, Promise.resolve([]));
 	};
 };

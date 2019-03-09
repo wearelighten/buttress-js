@@ -28,7 +28,7 @@
 			"version": "1.6.1",
 			"protocol": "http",
 			"host": "%BUTTRESS_HOST_URL%",
-			"apiPrefix": "/api/v1/"
+			"apiPrefix": "/api/v1"
 		},
 		"listenPorts": {
 			"rest": {
