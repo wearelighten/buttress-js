@@ -179,7 +179,6 @@ module.exports.ShortId = (id) => {
 	return output;
 };
 
-
 const __flattenRoles = (data, path) => {
 	if (!path) path = [];
 
@@ -189,9 +188,9 @@ const __flattenRoles = (data, path) => {
 			return _roles.concat(__flattenRoles(role, _path));
 		}
 
-		role.name = _path.join('.');
-
-		_roles.push(role);
+		const flatRole = Object.assign({}, role);
+		flatRole.name = _path.join('.');
+		_roles.push(flatRole);
 		return _roles;
 	}, []);
 };

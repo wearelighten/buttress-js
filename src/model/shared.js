@@ -325,7 +325,7 @@ const __validate = (schema, values, parentProperty) => {
 	return res;
 };
 
-const __prepareSchemaResult = (result, schema, token) => {
+const __prepareSchemaResult = (result, appRoles, schema, token) => {
 	if (!schema) {
 		throw new Error('Can\'t validate result without a data schema');
 	}
@@ -337,6 +337,16 @@ const __prepareSchemaResult = (result, schema, token) => {
 	const dataDisposition = {
 		READ: 'deny',
 	};
+
+	// Check endpointDisposition against app roles it exists
+	if (appRoles) {
+		const role = appRoles.find((r) => r.name === token.role);
+		if (role && role.dataDisposition) {
+			if (role.dataDisposition === 'allowAll') {
+				dataDisposition.READ = 'allow';
+			}
+		}
+	}
 
 	if (role && schema.roles) {
 		const schemaRole = schema.roles.find((r) => r.name === token.role);

@@ -69,14 +69,21 @@ function _initSchemaRoutes(express, app, schema) {
 			route
 				.exec(req, res)
 				.then((result) => {
+					// Fetch app roles if they exist
+					let appRoles = null;
+					if (req.authApp && req.authApp.__roles && req.authApp.__roles.roles) {
+						// This needs to be cached on startup
+						appRoles = Helpers.flattenRoles(req.authApp.__roles);
+					}
+
 					if (result instanceof Mongo.Cursor) {
 						const stringifyStream = new Helpers.JSONStringifyStream({}, (chunk) => {
-							return Shared.prepareSchemaResult(chunk, route.schema, req.token);
+							return Shared.prepareSchemaResult(chunk, appRoles, route.schema, req.token);
 						});
 						res.set('Content-Type', 'application/json');
 						result.stream().pipe(stringifyStream).pipe(res);
 					} else {
-						res.json(Shared.prepareSchemaResult(result, route.schema, req.token));
+						res.json(Shared.prepareSchemaResult(result, appRoles, route.schema, req.token));
 					}
 					Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
 					Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
