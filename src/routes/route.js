@@ -304,10 +304,32 @@ class Route {
 					DELETE: 'deny',
 				};
 
+				// Fetch app roles if they exist
+				let appRoles = null;
+				if (req.authApp && req.authApp.__roles && req.authApp.__roles.roles) {
+					// This needs to be cached on startup
+					appRoles = Helpers.flattenRoles(req.authApp.__roles);
+				}
+
+				// Check endpointDisposition against app roles it exists
+				if (appRoles) {
+					const role = appRoles.find((r) => r.name === req.token.role);
+					Logging.logSilly(`SAUTH: MATCHED APP ROLE - ${req.token.role}`);
+					if (role && role.endpointDisposition) {
+						if (role.endpointDisposition === 'allowAll') {
+							disposition.GET = 'allow';
+							disposition.PUT = 'allow';
+							disposition.POST = 'allow';
+							disposition.DELETE = 'allow';
+						}
+					}
+				}
+
 				// If schema has endpointDisposition roles set for the role then
 				// user the defined settings instead.
 				if (this.schema.roles) {
 					const role = this.schema.roles.find((r) => r.name === req.token.role);
+					Logging.logSilly(`SAUTH: MATCHED SCEHMA ROLE - ${req.token.role}`);
 					if (role && role.endpointDisposition) {
 						if (role.endpointDisposition.GET) disposition.GET = role.endpointDisposition.GET;
 						if (role.endpointDisposition.PUT) disposition.PUT = role.endpointDisposition.PUT;

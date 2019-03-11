@@ -178,3 +178,21 @@ module.exports.ShortId = (id) => {
 
 	return output;
 };
+
+
+const __flattenRoles = (data, path) => {
+	if (!path) path = [];
+
+	return data.roles.reduce((_roles, role) => {
+		const _path = path.concat(`${role.name}`);
+		if (role.roles && role.roles.length > 0) {
+			return _roles.concat(__flattenRoles(role, _path));
+		}
+
+		role.name = _path.join('.');
+
+		_roles.push(role);
+		return _roles;
+	}, []);
+};
+module.exports.flattenRoles = __flattenRoles;
