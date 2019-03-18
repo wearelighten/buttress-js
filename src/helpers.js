@@ -111,6 +111,11 @@ class JSONStringifyStream extends Transform {
 			chunk = __prepareResult(chunk, this.schema, this.token);
 		}
 
+		// Dont return any blank objects
+		if (typeof chunk === 'object' && Object.keys(chunk).length < 1) {
+			return cb();
+		}
+
 		const str = JSON.stringify(chunk, __replacer);
 
 		if (this._first) {
