@@ -112,7 +112,7 @@ class JSONStringifyStream extends Transform {
 		}
 
 		// Dont return any blank objects
-		if (typeof chunk === 'object' && Object.keys(chunk).length < 1) {
+		if (chunk === null || typeof chunk === 'object' && Object.keys(chunk).length < 1) {
 			return cb();
 		}
 
