@@ -333,6 +333,7 @@ const __prepareSchemaResult = (result, appRoles, schema, token) => {
 		throw new Error('Can\'t validate result without a token');
 	}
 
+	let filter = null;
 	const role = token.role || '';
 	const dataDisposition = {
 		READ: 'deny',
@@ -352,6 +353,10 @@ const __prepareSchemaResult = (result, appRoles, schema, token) => {
 		const schemaRole = schema.roles.find((r) => r.name === token.role);
 		if (schemaRole && schemaRole.dataDisposition) {
 			if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
+		}
+
+		if (schemaRole && schemaRole.filter) {
+			filter = schemaRole.filter;
 		}
 	}
 
@@ -396,6 +401,31 @@ const __prepareSchemaResult = (result, appRoles, schema, token) => {
 			if (ObjectId.isValid(chunk)) {
 				return chunk;
 			}
+
+			const tokenUser = token._user.toString();
+			let filterChunk = false;
+			if (filter) {
+				Object.keys(filter).forEach((key) => {
+					const keyPath = key.split('.');
+					keyPath.pop();
+					if (keyPath.toString() === path.toString()) {
+						if (chunk[key] && Array.isArray(chunk[key])) {
+							if (chunk[key].indexOf(tokenUser) === -1) {
+								filterChunk = true;
+							}
+						} else {
+							if (chunk[key] !== tokenUser) {
+								filterChunk = true;
+							}
+						}
+					}
+				});
+			}
+
+			if (filterChunk) {
+				return null;
+			}
+
 			Object.keys(chunk).forEach((key) => {
 				path.push(key);
 				let readDisposition = false;
