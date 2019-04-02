@@ -120,7 +120,7 @@ class ActivitySchemaModel extends SchemaModel {
 	 */
 	__add(body) {
 		return (prev) => {
-			const user = Model.authUser;
+			const user = body.req.authUser;
 			const userName = user && user.person ? `${user.person.forename} ${user.person.surname}` : 'System';
 
 			body.activityTitle = body.activityTitle.replace('%USER_NAME%', userName);
@@ -141,11 +141,10 @@ class ActivitySchemaModel extends SchemaModel {
 				params: body.req.params,
 				query: q,
 				body: body.req.body,
-				// response: response,
 				timestamp: new Date(),
-				_token: Model.token.id,
-				_user: (Model.authUser) ? Model.authUser._id : null,
-				_app: Model.authApp._id,
+				_token: body.req.token._id,
+				_user: (body.req.authUser) ? body.authUser._id : null,
+				_app: body.req.authApp._id,
 			};
 
 			if (body.id) {
@@ -157,15 +156,15 @@ class ActivitySchemaModel extends SchemaModel {
 		};
 	}
 
-	findAll() {
-		Logging.log(`getAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+	findAll(appId, tokenAuthLevel) {
+		Logging.log(`getAll: ${appId}`, Logging.Constants.LogLevel.DEBUG);
 
-		if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
+		if (tokenAuthLevel && tokenAuthLevel === Model.Token.Constants.AuthLevel.SUPER) {
 			return this.collection.find({});
 		}
 
 		return this.collection.find({
-			_app: Model.authApp._id,
+			_app: appId,
 			visibility: ActivitySchemaModel.Constants.Visibility.PUBLIC,
 		});
 	}

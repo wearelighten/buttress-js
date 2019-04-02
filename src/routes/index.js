@@ -126,7 +126,7 @@ function _authenticateToken(req, res, next) {
 					return;
 				}
 
-				Model.token = req.token = token;
+				req.token = token;
 
 				Model.Token.collection.updateOne({_id: token._id}, {$push: {
 					uses: new Date(),
@@ -141,7 +141,7 @@ function _authenticateToken(req, res, next) {
 		})
 		.then((token) => Model.User.findById(req.token._user))
 		.then((user) => {
-			Model.authUser = req.authUser = user;
+			req.authUser = user;
 		})
 		.then(Helpers.Promise.inject())
 		.then(next)

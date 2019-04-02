@@ -33,7 +33,7 @@ class GetActivityList extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.Activity.findAll();
+		return Model.Activity.findAll(req.authApp._id, req.token.authlevel);
 	}
 }
 routes.push(GetActivityList);

@@ -188,14 +188,14 @@ class TrackingSchemaModel extends SchemaModel {
 	/**
 	 * @return {Promise} - resolves to an array of Apps
 	 */
-	findAll() {
-		Logging.log(`findAll: ${Model.authApp._id}`, Logging.Constants.LogLevel.DEBUG);
+	findAll(appId, tokenAuthLevel) {
+		Logging.log(`findAll: ${appId}`, Logging.Constants.LogLevel.DEBUG);
 
-		if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
+		if (tokenAuthLevel === Model.Token.Constants.AuthLevel.SUPER) {
 			return this.collection.find({});
 		}
 
-		return this.collection.find({_app: Model.authApp._id});
+		return this.collection.find({_app: appId});
 	}
 }
 

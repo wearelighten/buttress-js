@@ -372,12 +372,12 @@ class UserSchemaModel extends SchemaModel {
 	 * @param {ObjectId} appId - id of the App that owns the user
 	 * @return {Promise} - resolves to an array of Apps
 	 */
-	findAll() {
-		Logging.logSilly(`findAll: ${Model.authApp._id}`);
+	findAll(appId, tokenAuthLevel) {
+		Logging.logSilly(`findAll: ${appId}`);
 
 		return new Promise((resolve) => {
-			let findTask = () => super.find({_apps: Model.authApp._id});
-			if (Model.token.authLevel === Model.Token.Constants.AuthLevel.SUPER) {
+			let findTask = () => super.find({_apps: appId});
+			if (tokenAuthLevel && tokenAuthLevel === Model.Token.Constants.AuthLevel.SUPER) {
 				findTask = () => super.find({});
 			}
 

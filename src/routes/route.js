@@ -152,7 +152,7 @@ class Route {
 					params: req.params,
 					verb: this.verb,
 					permissions: this.permissions,
-				}, result, appPId);
+				}, req, result, appPId);
 			}
 		};
 
@@ -177,11 +177,7 @@ class Route {
 			permissions: this.permissions,
 			auth: this.auth,
 			params: req.params,
-			req: {
-				query: req.query,
-				body: req.body,
-				params: req.params,
-			},
+			req: req,
 			res: {},
 		})
 			.then((activity) => {
@@ -196,7 +192,7 @@ class Route {
 					verb: 'post',
 					params: activity.params,
 					permissions: 'write',
-				}, activity);
+				}, req, activity);
 			})
 			.catch((e) => {
 				Logging.logError(`[${verb.toUpperCase()}] ${path}`);
@@ -205,7 +201,7 @@ class Route {
 			});
 	}
 
-	_activityBroadcastSocket(activity, res, appPid) {
+	_activityBroadcastSocket(activity, req, res, appPid) {
 		nrp.emit('activity', {
 			title: activity.title,
 			description: activity.description,
@@ -218,7 +214,7 @@ class Route {
 			params: activity.params,
 			timestamp: new Date(),
 			response: Helpers.prepareResult(res),
-			user: Model.authUser ? Model.authUser._id : '',
+			user: req.authUser ? req.authUser._id : '',
 			appPId: appPid ? appPid : '',
 		});
 	}

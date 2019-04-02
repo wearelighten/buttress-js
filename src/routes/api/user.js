@@ -34,7 +34,7 @@ class GetUserList extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.User.findAll()
+		return Model.User.findAll(req.authUser._id, req.token.authLevel)
 			.then((users) => {
 				return users.map((user) => {
 					return {
