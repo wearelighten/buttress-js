@@ -185,7 +185,7 @@ class CreateUserAuthToken extends Route {
 
 	_exec(req, res, user) {
 		return Model.Token.add(req.body.auth, {
-			_app: Model.authApp._id,
+			_app: req.authApp._id,
 			_user: user._id,
 		})
 			.then((t) => t.value);

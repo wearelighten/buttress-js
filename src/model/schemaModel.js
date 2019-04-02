@@ -14,6 +14,7 @@
 const ObjectId = require('mongodb').ObjectId;
 const Logging = require('../logging');
 const Shared = require('./shared');
+const Helpers = require('../helpers');
 const shortId = require('../helpers').ShortId;
 
 /* ********************************************************************************
@@ -60,6 +61,56 @@ class SchemaModel {
 		const validation = body.map((b) => this.__doValidation(b)).filter((v) => v.isValid === false);
 
 		return validation.length >= 1 ? validation[0] : {isValid: true};
+	}
+
+	generateRoleFilterQuery(token, roles) {
+		const output = {};
+		const env = {
+			authUserId: token._user,
+		};
+
+		let envFlat = Helpers.flatternObject(env);
+
+		if (roles.schema && roles.schema.authFilter) {
+			// Process ENV
+			// TODO - Parse and build env properties
+
+			envFlat = Helpers.flatternObject(env);
+
+			// TODO - Extend out so it can be used as part of the env building
+			if (roles.schema.authFilter.query) {
+				const query = roles.schema.authFilter.query;
+
+				for (const property in query) {
+					if (!query.hasOwnProperty(property)) continue;
+					const command = query[property];
+
+					for (const operator in command) {
+						if (!command.hasOwnProperty(operator)) continue;
+						let operand = command[operator];
+
+						// Check to see if operand is a path and fetch value
+						if (operand.indexOf('.') !== -1) {
+							let path = operand.split('.');
+							const key = path.shift();
+
+							path = path.join('.');
+
+							if (key === 'env' && envFlat[path]) {
+								operand = envFlat[path];
+							}
+						}
+
+						if (!output[property]) {
+							output[property] = {};
+						}
+						output[property][`$${operator}`] = operand;
+					}
+				}
+			}
+		}
+
+		return output;
 	}
 
 	/*

@@ -247,6 +247,11 @@ class Route {
 				return;
 			}
 
+			req.roles = {
+				app: null,
+				schema: null,
+			};
+
 			/**
 			 * @description Route:
 			 *  '*' - all routes (SUPER)
@@ -311,6 +316,10 @@ class Route {
 				if (appRoles) {
 					const role = appRoles.find((r) => r.name === req.token.role);
 					Logging.logSilly(`SAUTH: MATCHED APP ROLE - ${req.token.role}`);
+
+					// Set schema role on the req object for use by route/schema
+					req.roles.app = role;
+
 					if (role && role.endpointDisposition) {
 						if (role.endpointDisposition === 'allowAll') {
 							disposition.GET = 'allow';
@@ -326,6 +335,10 @@ class Route {
 				if (this.schema.roles) {
 					const role = this.schema.roles.find((r) => r.name === req.token.role);
 					Logging.logSilly(`SAUTH: MATCHED SCEHMA ROLE - ${req.token.role}`);
+
+					// Set schema role on the req object for use by route/schema
+					req.roles.schema = role;
+
 					if (role && role.endpointDisposition) {
 						if (role.endpointDisposition.GET) disposition.GET = role.endpointDisposition.GET;
 						if (role.endpointDisposition.PUT) disposition.PUT = role.endpointDisposition.PUT;

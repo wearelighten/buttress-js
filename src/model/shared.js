@@ -316,6 +316,19 @@ const __validate = (schema, values, parentProperty) => {
 
 				return errors;
 			}, res);
+		} else if (config.__type === 'array' && config.__itemtype) {
+			for (const idx in propVal.value) {
+				if (!propVal.value.hasOwnProperty(idx)) continue;
+				const prop = {
+					value: propVal.value[idx],
+				};
+				if (!__validateProp(prop, {__type: config.__itemtype})) {
+					Logging.logWarn(`Invalid ${property}.${idx}: ${prop.value} [${typeof prop.value}] expected [${config.__itemtype}]`);
+					res.isValid = false;
+					res.invalid.push(`${parentProperty}.${idx}:${prop.value}[${typeof prop.value}] [${config.__itemtype}]`);
+				}
+				propVal.value[idx] = prop.value;
+			}
 		}
 	}
 
@@ -499,7 +512,6 @@ const __populateObject = (schema, values) => {
 				path: property,
 				value: __getPropDefault(config),
 			};
-			// console.log(propVal);
 		}
 
 		if (propVal === undefined) continue;
@@ -612,7 +624,7 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 
 		const config = flattenedSchema[body.path];
 		if (config) {
-			if (config.__type === 'array') {
+			if (config.__type === 'array' && config.__itemtype) {
 				if (config.__schema) {
 					const validation = __validate(config.__schema, __getFlattenedBody(body.value), `${body.path}.`);
 					if (validation.isValid !== true) {

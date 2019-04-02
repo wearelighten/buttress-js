@@ -12,6 +12,7 @@
 
 const stream = require('stream');
 const Transform = stream.Transform;
+const ObjectId = require('mongodb').ObjectId;
 
 class Timer {
 	constructor() {
@@ -200,3 +201,22 @@ const __flattenRoles = (data, path) => {
 	}, []);
 };
 module.exports.flattenRoles = __flattenRoles;
+
+const __flatternObject = (obj, output, paths) => {
+	if (!output) output = {};
+	if (!paths) paths = [];
+
+	return Object.getOwnPropertyNames(obj).reduce(function(out, key) {
+		paths.push(key);
+		if (typeof obj[key] === 'object' && ObjectId.isValid(obj[key])) {
+			out[paths.join('.')] = obj[key];
+		} else if (typeof obj[key] === 'object') {
+			__flatternObject(obj[key], out, paths);
+		} else {
+			out[paths.join('.')] = obj[key];
+		}
+		paths.pop();
+		return out;
+	}, output);
+};
+module.exports.flatternObject = __flatternObject;

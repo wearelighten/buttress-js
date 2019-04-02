@@ -135,11 +135,11 @@ function _authenticateToken(req, res, next) {
 				resolve(token);
 			});
 		})
-		.then((token) => Model.App.findById(req.token._app))
+		.then(() => Model.App.findById(req.token._app))
 		.then((app) => {
 			Model.authApp = req.authApp = app;
 		})
-		.then((token) => Model.User.findById(req.token._user))
+		.then(() => Model.User.findById(req.token._user))
 		.then((user) => {
 			req.authUser = user;
 		})
