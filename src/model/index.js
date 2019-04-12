@@ -62,7 +62,7 @@ class Model {
 			.then((apps) => {
 				apps.forEach((app) => {
 					if (app.__schema) {
-						Schema.buildCollections(app.__schema).forEach((schema) => {
+						Schema.buildCollections(Schema.decode(app.__schema)).forEach((schema) => {
 							this._initSchemaModel(app, schema);
 						});
 					}

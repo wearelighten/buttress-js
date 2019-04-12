@@ -14,6 +14,7 @@ const SchemaModel = require('../schemaModel');
 const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
+const Schema = require('../../schema');
 // const Sugar = require('sugar');
 const Shared = require('../shared');
 // const Helpers = require('../../helpers');
@@ -140,7 +141,7 @@ class ActivitySchemaModel extends SchemaModel {
 				authLevel: body.auth,
 				params: body.req.params,
 				query: q,
-				body: body.req.body,
+				body: Schema.encode(body.req.body), // HACK - Due to schema update results.
 				timestamp: new Date(),
 				_token: body.req.token._id,
 				_user: (body.req.authUser) ? body.authUser._id : null,
@@ -154,6 +155,13 @@ class ActivitySchemaModel extends SchemaModel {
 			const validated = Shared.applyAppProperties(false, body);
 			return prev.concat([Object.assign(md, validated)]);
 		};
+	}
+
+	add(body, internals) {
+		body.req.body = Schema.encode(body.req.body);
+
+		const sharedAddFn = Shared.add(this.collection, (item) => this.__add(item, internals));
+		return sharedAddFn(body);
 	}
 
 	findAll(appId, tokenAuthLevel) {

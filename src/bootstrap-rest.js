@@ -23,6 +23,7 @@ const Config = require('node-env-obj')('../');
 const Model = require('./model');
 const Routes = require('./routes');
 const Logging = require('./logging');
+const Schema = require('./schema');
 const MongoClient = require('mongodb').MongoClient;
 const NRP = require('node-redis-pubsub');
 const shortId = require('./helpers').ShortId;
@@ -188,7 +189,7 @@ const __initMaster = () => {
 
 				// Build a update queue for merging local schema with each app schema
 				apps.forEach((app) => {
-					const appSchema = app.__schema;
+					const appSchema = Schema.decode(app.__schema);
 					const appShortId = shortId(app._id);
 					Logging.log(`Adding ${localSchema.length} local schema for ${appShortId}:${app.name}:${appSchema.length}`);
 					localSchema.forEach((cS) => {

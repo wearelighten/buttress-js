@@ -15,6 +15,7 @@ const path = require('path');
 const express = require('express');
 // const Route = require('./route');
 const Logging = require('../logging');
+const Schema = require('../schema');
 const Helpers = require('../helpers');
 const Model = require('../model');
 const Shared = require('../model/shared');
@@ -288,7 +289,7 @@ exports.init = (app) => {
 		// Fetch app schemas and init
 			buttressApps.forEach((buttressApp) => {
 				if (buttressApp.__schema) {
-					buttressApp.__schema.forEach((schema) => {
+					Schema.decode(buttressApp.__schema).forEach((schema) => {
 						_initSchemaRoutes(apiRouter, buttressApp, schema);
 					});
 				}

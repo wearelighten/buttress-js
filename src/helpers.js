@@ -220,3 +220,4 @@ const __flatternObject = (obj, output, paths) => {
 	}, output);
 };
 module.exports.flatternObject = __flatternObject;
+

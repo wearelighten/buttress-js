@@ -15,6 +15,22 @@ class Schema {
 		this.schema = schema;
 	}
 
+	static encode(obj) {
+		return JSON.parse(Schema.encodeKey(JSON.stringify(obj)));
+	}
+
+	static decode(obj) {
+		return JSON.parse(Schema.decodeKey(JSON.stringify(obj)));
+	}
+
+	static encodeKey(key) {
+		return key.replace('\\', '\\\\').replace('\$', '\\u0024').replace('.', '\\u002e');
+	}
+
+	static decodeKey(key) {
+		return key.replace('\\u002e', '.').replace('\\u0024', '\$').replace('\\\\', '\\');
+	}
+
 	static buildCollections(schemas) {
 		return Schema.build(schemas).filter((s) => s.type === 'collection');
 	}

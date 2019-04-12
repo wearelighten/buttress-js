@@ -384,7 +384,7 @@ class GetAppSchema extends Route {
 	}
 
 	_exec(req, res, schema) {
-		return Schema.buildCollections(schema);
+		return Schema.buildCollections(Schema.decode(schema));
 	}
 }
 routes.push(GetAppSchema);
@@ -413,7 +413,8 @@ class UpdateAppSchema extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.App.updateSchema(req.authApp._id, req.body).then((res) => true);
+		return Model.App.updateSchema(req.authApp._id, req.body)
+			.then(() => true);
 	}
 }
 routes.push(UpdateAppSchema);

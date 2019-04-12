@@ -12,6 +12,7 @@
 
 const Config = require('node-env-obj')('../');
 const Logging = require('../logging');
+const Schema = require('../schema');
 const Model = require('../model');
 const Mongo = require('mongodb');
 const NRP = require('node-redis-pubsub');
@@ -195,8 +196,8 @@ class Route {
 				}, req, activity);
 			})
 			.catch((e) => {
-				Logging.logError(`[${verb.toUpperCase()}] ${path}`);
-				Logging.logError(req.body);
+				// Logging.logError(`[${verb.toUpperCase()}] ${path}`);
+				// Logging.logError(req.body);
 				Logging.logError(e);
 			});
 	}

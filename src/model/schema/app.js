@@ -16,6 +16,7 @@ const crypto = require('crypto');
 const SchemaModel = require('../schemaModel');
 const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
+const Schema = require('../../schema');
 const Logging = require('../../logging');
 const Config = require('node-env-obj')('../');
 const NRP = require('node-redis-pubsub');
@@ -151,7 +152,8 @@ class AppSchemaModel extends SchemaModel {
 		});
 
 		// Merge in local schema
-		this.__schema = appSchema;
+		appSchema = Schema.encode(appSchema);
+		// this.__schema = appSchema;
 
 		nrp.emit('app-metadata:changed', {appId: appId});
 
