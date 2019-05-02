@@ -16,19 +16,21 @@ class Schema {
 	}
 
 	static encode(obj) {
-		return JSON.parse(Schema.encodeKey(JSON.stringify(obj)));
+		return JSON.stringify(obj);
+		// return JSON.parse(Schema.encodeKey(JSON.stringify(obj)));
 	}
 
 	static decode(obj) {
-		return JSON.parse(Schema.decodeKey(JSON.stringify(obj)));
+		return JSON.parse(obj);
+		// return JSON.parse(Schema.decodeKey(JSON.stringify(obj)));
 	}
 
 	static encodeKey(key) {
-		return key.replace('\\', '\\\\').replace('\$', '\\u0024').replace('.', '\\u002e');
+		return key.replace(/\\/g, '\\\\').replace(/\$/g, '\\u0024').replace(/\./g, '\\u002e');
 	}
 
 	static decodeKey(key) {
-		return key.replace('\\u002e', '.').replace('\\u0024', '\$').replace('\\\\', '\\');
+		return key.replace(/\\u002e/g, '.').replace(/\\u0024/g, '$').replace(/\\\\/g, '\\');
 	}
 
 	static buildCollections(schemas) {
