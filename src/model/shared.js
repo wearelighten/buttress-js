@@ -638,7 +638,7 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 						return res;
 					}
 				}
-			} else if (!__validateProp(body, config)) {
+			} else if (!config.__schema && !__validateProp(body, config)) {
 				res.invalidValue = `${body.path} failed schema test`;
 				return res;
 			}
