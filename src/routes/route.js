@@ -316,7 +316,7 @@ class Route {
 				// Check endpointDisposition against app roles it exists
 				if (appRoles) {
 					const role = appRoles.find((r) => r.name === req.token.role);
-					Logging.logSilly(`SAUTH: MATCHED APP ROLE - ${req.token.role}`);
+					Logging.logSilly(`SAUTH: MATCHING APP ROLE - ${req.token.role}`);
 
 					// Set schema role on the req object for use by route/schema
 					req.roles.app = role;
@@ -328,14 +328,18 @@ class Route {
 							disposition.POST = 'allow';
 							disposition.DELETE = 'allow';
 						}
+					} else {
+						Logging.logSilly(`SAUTH: APP ROLE DOESN'T SPECIFY - ${req.token.role}`);
 					}
+				} else {
+					Logging.logSilly(`SAUTH: NO APP ROLES DEFINED, USING DEFAULTS`);
 				}
 
 				// If schema has endpointDisposition roles set for the role then
 				// user the defined settings instead.
 				if (this.schema.roles) {
 					const role = this.schema.roles.find((r) => r.name === req.token.role);
-					Logging.logSilly(`SAUTH: MATCHED SCEHMA ROLE - ${req.token.role}`);
+					Logging.logSilly(`SAUTH: MATCHING SCEHMA ROLE - ${req.token.role}`);
 
 					// Set schema role on the req object for use by route/schema
 					req.roles.schema = role;
@@ -345,7 +349,11 @@ class Route {
 						if (role.endpointDisposition.PUT) disposition.PUT = role.endpointDisposition.PUT;
 						if (role.endpointDisposition.POST) disposition.POST = role.endpointDisposition.POST;
 						if (role.endpointDisposition.DELETE) disposition.DELETE = role.endpointDisposition.DELETE;
+					} else {
+						Logging.logSilly(`SAUTH: SCHEMA ROLE DOESN'T SPECIFY - ${req.token.role}`);
 					}
+				} else {
+					Logging.logSilly(`SAUTH: NO SCHEMA ROLES DEFINED, USING DEFAULTS.`);
 				}
 
 				// Check the role has permission on this endpoint
