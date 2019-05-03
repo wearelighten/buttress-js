@@ -87,8 +87,9 @@ class AppSchemaModel extends SchemaModel {
 					__allowUpdate: false,
 				},
 				__schema: {
-					__type: 'array',
+					__type: 'string',
 					__required: true,
+					__default: '[]',
 					__allowUpdate: true,
 				},
 				__roles: {
