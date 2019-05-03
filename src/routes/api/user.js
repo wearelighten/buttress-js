@@ -34,13 +34,14 @@ class GetUserList extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.User.findAll(req.authUser._id, req.token.authLevel)
+		return Model.User.findAll(req.authApp._id, req.token.authLevel)
 			.then((users) => {
 				return users.map((user) => {
 					return {
 						id: user._id,
 						profiles: user.auth.map((a) => ({
 							app: a.app,
+							appId: a.appId,
 							username: a.username,
 							email: a.email,
 							url: a.profileUrl,
