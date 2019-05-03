@@ -118,19 +118,7 @@ class AddApp extends Route {
 				} break;
 				case Model.Token.Constants.AuthLevel.ADMIN: {
 					const permissions = [
-						{route: 'org/*', permission: '*'},
-						{route: 'group/*', permission: '*'},
-						{route: 'user/*', permission: '*'},
-						{route: 'campaign/*', permission: '*'},
-						{route: 'activity/*', permission: '*'},
-						{route: 'company/*', permission: '*'},
-						{route: 'contact-list/*', permission: '*'},
-						{route: 'call/*', permission: '*'},
-						{route: 'task/*', permission: '*'},
-						{route: 'appointment/*', permission: '*'},
-						{route: 'notification/*', permission: '*'},
-						{route: 'contract/*', permission: '*'},
-						{route: 'document/*', permission: '*'},
+						{route: '*', permission: '*'},
 					];
 
 					req.body.permissions = JSON.stringify(permissions);
@@ -169,9 +157,7 @@ class AddApp extends Route {
 	_exec(req, res, validate) {
 		return new Promise((resolve, reject) => {
 			Model.App.add(req.body)
-				.then((res) => {
-					return Object.assign(res.app.details, {token: res.token.value});
-				})
+				.then((res) => Object.assign(res.app, {token: res.token.value}))
 				.then(Logging.Promise.logProp('Added App', 'name', Route.LogLevel.INFO))
 				.then(resolve, reject);
 		});
