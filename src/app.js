@@ -25,6 +25,7 @@ Bootstrap.rest()
 		if (isMaster) {
 			Logging.log(`${Config.app.title}:${Config.app.code} REST Server Master v${Config.app.version} listening on port ` +
 				`${Config.listenPorts.rest} in ${Config.env} mode.`);
+			Logging.log(`Configured Main Endpoint: ${Config.app.protocol}://${Config.app.host}`);
 		} else {
 			Logging.log(`${Config.app.title}:${Config.app.code} REST Server Worker v${Config.app.version} ` +
 				`in ${Config.env} mode.`);
