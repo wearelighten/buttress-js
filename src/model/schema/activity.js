@@ -144,7 +144,7 @@ class ActivitySchemaModel extends SchemaModel {
 				body: Schema.encode(body.req.body), // HACK - Due to schema update results.
 				timestamp: new Date(),
 				_token: body.req.token._id,
-				_user: (body.req.authUser) ? body.authUser._id : null,
+				_user: (body.req.authUser) ? body.req.authUser._id : null,
 				_app: body.req.authApp._id,
 			};
 
