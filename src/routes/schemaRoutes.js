@@ -36,11 +36,11 @@ class GetList extends Route {
 	}
 
 	_validate(req, res, token) {
-		let query = {};
+		let query = Promise.resolve({});
 		if (token.authLevel < 3) {
-			query = this.model.generateRoleFilterQuery(token, req.roles);
+			query = this.model.generateRoleFilterQuery(token, req.roles, Model);
 		}
-		return Promise.resolve(query);
+		return query;
 	}
 
 	_exec(req, res, query) {

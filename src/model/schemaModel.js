@@ -63,54 +63,104 @@ class SchemaModel {
 		return validation.length >= 1 ? validation[0] : {isValid: true};
 	}
 
-	generateRoleFilterQuery(token, roles) {
-		const output = {};
-		const env = {
-			authUserId: token._user,
+	generateRoleFilterQuery(token, roles, Model) {
+		if (!roles.schema || !roles.schema.authFilter) {
+			return Promise.resolve({});
+		}
+
+		// Parse schema authFilter.query object and apply env items.
+		const __parseQuery = (query, envFlat, output) => {
+			for (const property in query) {
+				if (!query.hasOwnProperty(property)) continue;
+				const command = query[property];
+
+				for (const operator in command) {
+					if (!command.hasOwnProperty(operator)) continue;
+					let operand = command[operator];
+
+					// Check to see if operand is a path and fetch value
+					if (operand.indexOf('.') !== -1) {
+						let path = operand.split('.');
+						const key = path.shift();
+
+						path = path.join('.');
+
+						if (key === 'env' && envFlat[path]) {
+							operand = envFlat[path];
+						} else {
+							throw new Error(`Unable to find ${path} in schema.authFilter.env`);
+						}
+					}
+
+					if (!output[property]) {
+						output[property] = {};
+					}
+					output[property][`$${operator}`] = operand;
+				}
+			}
+
+			return output;
 		};
 
-		let envFlat = Helpers.flatternObject(env);
+		// Parse schema authFilter.env object, gather information that's needed.
+		const buildEnv = (authFilter) => {
+			const env = {
+				authUserId: token._user,
+			};
 
-		if (roles.schema && roles.schema.authFilter) {
-			// Process ENV
-			// TODO - Parse and build env properties
+			const tasks = [];
 
-			envFlat = Helpers.flatternObject(env);
+			if (authFilter.env) {
+				for (const property in roles.schema.authFilter.env) {
+					if (!roles.schema.authFilter.env.hasOwnProperty(property)) continue;
+					const query = roles.schema.authFilter.env[property];
 
-			// TODO - Extend out so it can be used as part of the env building
-			if (roles.schema.authFilter.query) {
-				const query = roles.schema.authFilter.query;
+					for (const command in query) {
+						if (!query.hasOwnProperty(command)) continue;
 
-				for (const property in query) {
-					if (!query.hasOwnProperty(property)) continue;
-					const command = query[property];
+						if (command.includes('schema.')) {
+							const commandPath = command.split('.');
+							commandPath.shift(); // Remove "schema"
+							const collectionName = commandPath.shift();
+							const propertyPath = commandPath.join('.');
 
-					for (const operator in command) {
-						if (!command.hasOwnProperty(operator)) continue;
-						let operand = command[operator];
+							let propertyQuery = {};
+							propertyQuery[propertyPath] = query[command];
+							propertyQuery = __parseQuery(propertyQuery, env, {});
 
-						// Check to see if operand is a path and fetch value
-						if (operand.indexOf('.') !== -1) {
-							let path = operand.split('.');
-							const key = path.shift();
+							const fields = {};
+							fields[propertyPath] = true;
 
-							path = path.join('.');
-
-							if (key === 'env' && envFlat[path]) {
-								operand = envFlat[path];
-							}
+							tasks.push(() => {
+								return Model[collectionName].find(propertyQuery, fields)
+									.then((res) => {
+										env[property] = res.map((i) => i._id);
+									});
+							});
+						} else {
+							// Unknown operation
 						}
-
-						if (!output[property]) {
-							output[property] = {};
-						}
-						output[property][`$${operator}`] = operand;
 					}
 				}
 			}
-		}
 
-		return output;
+			// The env process may need to query other collections so group them into tasks.
+			return tasks.reduce((prev, task) => prev.then(() => task()), Promise.resolve())
+				.then(() => env);
+		};
+
+		// Build the query structure with the built env object applyed to it.
+		const buildQuery = (schemaQuery, env) => {
+			return new Promise((resolve) => {
+				const query = (schemaQuery) ? schemaQuery : {};
+
+				resolve(__parseQuery(query, env, {}));
+			});
+		};
+
+		// Engage.
+		return buildEnv(roles.schema.authFilter)
+			.then((env) => buildQuery(roles.schema.authFilter.query, env));
 	}
 
 	/*
