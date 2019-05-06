@@ -47,6 +47,7 @@ class GetUserList extends Route {
 							url: a.profileUrl,
 							image: a.images.profile,
 						})),
+						role: user.role,
 						formalName: user.person.formalName,
 						name: user.person.name,
 					};
@@ -76,15 +77,17 @@ class GetUser extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.User.findById(req.params.id).then((user) => {
-				if (!user) {
-					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
-				}
 
-				resolve(user);
-			});
+			Model.User.findById(req.params.id, req.authApp._id)
+				.then((user) => {
+					if (!user) {
+						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+						reject({statusCode: 400});
+						return;
+					}
+
+					resolve(user);
+				});
 		});
 	}
 
@@ -171,7 +174,7 @@ class CreateUserAuthToken extends Route {
 				return;
 			}
 
-			Model.User.findById(req.params.id)
+			Model.User.findById(req.params.id, req.authApp._id)
 				.then((user) => {
 					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 					if (user) {
@@ -222,16 +225,17 @@ class UpdateUserAppToken extends Route {
 				return;
 			}
 
-			Model.User.findById(req.params.id).then((user) => {
-				Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
-				this._user = user;
-				if (this._user) {
-					resolve(true);
-				} else {
-					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-					resolve({statusCode: 400});
-				}
-			});
+			Model.User.findById(req.params.id, req.authApp._id)
+				.then((user) => {
+					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
+					this._user = user;
+					if (this._user) {
+						resolve(true);
+					} else {
+						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+						resolve({statusCode: 400});
+					}
+				});
 		});
 	}
 
@@ -322,16 +326,17 @@ class UpdateUserAppInfo extends Route {
 				return;
 			}
 
-			Model.User.findById(req.params.id).then((user) => {
-				Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
-				this._user = user;
-				if (this._user) {
-					resolve(true);
-				} else {
-					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-				}
-			});
+			Model.User.findById(req.params.id, req.authApp._id)
+				.then((user) => {
+					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
+					this._user = user;
+					if (this._user) {
+						resolve(true);
+					} else {
+						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+						reject({statusCode: 400});
+					}
+				});
 		});
 	}
 
@@ -371,16 +376,17 @@ class AddUserAuth extends Route {
 				return;
 			}
 
-			Model.User.findById(req.params.id).then((user) => {
-				Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
-				this._user = user;
-				if (this._user) {
-					resolve(true);
-				} else {
-					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-					resolve({statusCode: 400});
-				}
-			});
+			Model.User.findById(req.params.id, req.authApp._id)
+				.then((user) => {
+					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
+					this._user = user;
+					if (this._user) {
+						resolve(true);
+					} else {
+						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+						resolve({statusCode: 400});
+					}
+				});
 		});
 	}
 
@@ -488,15 +494,16 @@ class DeleteUser extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.User.findById(req.params.id).then((user) => {
-				if (!user) {
-					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
-				}
-				this._user = user;
-				resolve(true);
-			});
+			Model.User.findById(req.params.id, req.authApp._id)
+				.then((user) => {
+					if (!user) {
+						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+						reject({statusCode: 400});
+						return;
+					}
+					this._user = user;
+					resolve(true);
+				});
 		});
 	}
 

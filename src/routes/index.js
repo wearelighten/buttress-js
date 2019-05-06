@@ -140,7 +140,7 @@ function _authenticateToken(req, res, next) {
 		.then((app) => {
 			Model.authApp = req.authApp = app;
 		})
-		.then(() => Model.User.findById(req.token._user))
+		.then(() => Model.User.findById(req.token._user, req.authApp._id))
 		.then((user) => {
 			req.authUser = user;
 		})

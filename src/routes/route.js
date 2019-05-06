@@ -110,6 +110,8 @@ class Route {
 				return;
 			}
 
+			Logging.logSilly(`EXEC [${this.name.toUpperCase()}] ${this.path}`);
+
 			this._authenticate(req, res)
 				.then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then(Logging.Promise.logSilly('authenticated'))

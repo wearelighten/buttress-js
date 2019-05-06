@@ -381,9 +381,45 @@ class UserSchemaModel extends SchemaModel {
 				findTask = () => super.find({});
 			}
 
-			findTask()
-				.then((users) => resolve(users));
+			return Promise.all([
+				findTask(),
+				Model.Token.find({
+					type: 'user',
+					_app: appId,
+				}),
+			])
+				.then((data) => {
+					resolve(data[0].map((user) => {
+						const token = data[1].find((t) => user._id.equals(t._user));
+						user.role = token.role;
+						return user;
+					}));
+				});
 		});
+	}
+
+	/**
+	 * @param {String} id - entity id to get
+	 * @param {ObjectId} appId - id of the App that owns the user
+	 * @return {Promise} - resolves to an array of Companies
+	 */
+	findById(id, appId) {
+		Logging.logSilly(`findById: ${this.collectionName} ${id}`);
+
+		console.log(id);
+
+		return Promise.all([
+			super.findById(id),
+			Model.Token.find({
+				type: 'user',
+				_app: appId,
+				_user: id,
+			}),
+		])
+			.then((data) => {
+				console.log(data);
+				return data[0];
+			});
 	}
 
 	/**
