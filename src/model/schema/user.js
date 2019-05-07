@@ -12,7 +12,7 @@
  */
 
 const SchemaModel = require('../schemaModel');
-const humanname = require('humanname');
+// const humanname = require('humanname');
 const Model = require('../');
 const Logging = require('../../logging');
 // const Shared = require('../shared');
@@ -123,94 +123,11 @@ class UserSchemaModel extends SchemaModel {
 						},
 					},
 				},
-				person: {
-					title: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					formalName: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					name: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					forename: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					initials: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					surname: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					suffix: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					emails: {
-						__type: 'array',
-						__allowUpdate: true,
-					},
-					address: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					postcode: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					phone: {
-						landline: {
-							__type: 'string',
-							__default: '',
-							__allowUpdate: true,
-						},
-						mobile: {
-							__type: 'string',
-							__default: '',
-							__allowUpdate: true,
-						},
-					},
-					company: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					role: {
-						__type: 'string',
-						__default: '',
-						__allowUpdate: true,
-					},
-					_dataOwner: {
-						__type: 'id',
-						__required: true,
-						__allowUpdate: false,
-					},
-				},
 				_apps: {
 					__type: 'array',
 					__required: true,
 					__allowUpdate: true,
-				},
-				_tokens: {
-					__type: 'array',
-					__required: true,
-					__allowUpdate: true,
-				},
+				}
 			},
 		};
 	}
@@ -221,11 +138,6 @@ class UserSchemaModel extends SchemaModel {
 	 * @return {Promise} - returns a promise that is fulfilled when the database request is completed
 	 */
 	add(body, auth) {
-		const name = humanname.parse(body.name);
-
-		const title = name.salutation ? name.salutation + ' ' : '';
-		const initials = name.initials ? name.initials + ' ' : '';
-
 		const user = {
 			auth: [{
 				app: body.app,
@@ -240,22 +152,6 @@ class UserSchemaModel extends SchemaModel {
 				token: body.token,
 				tokenSecret: body.tokenSecret,
 			}],
-			person: {
-				title: name.salutation,
-				formalName: `${title}${name.firstName} ${initials}${name.lastName}`.trim(),
-				name: `${name.firstName} ${name.lastName}`.trim(),
-				forename: name.firstName,
-				initials: name.initials,
-				surname: name.lastName,
-				suffix: name.suffix,
-				emails: [body.email],
-				telephone: {
-					landline: body.landline,
-					mobile: body.mobile,
-				},
-				address: body.address,
-				postcode: body.postcode,
-			},
 		};
 
 		let _user = null;
@@ -406,19 +302,16 @@ class UserSchemaModel extends SchemaModel {
 	findById(id, appId) {
 		Logging.logSilly(`findById: ${this.collectionName} ${id}`);
 
-		console.log(id);
-
 		return Promise.all([
 			super.findById(id),
-			Model.Token.find({
+			Model.Token.findOne({
 				type: 'user',
 				_app: appId,
 				_user: id,
 			}),
 		])
 			.then((data) => {
-				console.log(data);
-				return data[0];
+				return data;
 			});
 	}
 

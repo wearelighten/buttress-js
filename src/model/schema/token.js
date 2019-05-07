@@ -185,18 +185,18 @@ class TokenSchemaModel extends SchemaModel {
 	 * @param {String} appId - DB id for the app
 	 * @return {Promise} - resolves to an array of Tokens
 	 */
-	findUserAuthToken(userId, appId) {
+	findUserAuthTokens(userId, appId) {
 		return new Promise((resolve) => {
-			this.collection.findOne({
+			this.collection.find({
 				allocated: true,
 				_app: appId,
 				_user: userId,
-			}, {}, (err, doc) => {
+			}).toArray((err, doc) => {
 				if (err) throw err;
 				resolve(doc);
 			});
 		});
-	}
+	}	
 }
 
 /**

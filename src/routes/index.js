@@ -64,6 +64,7 @@ function _initRoute(app, Route) {
 function _initSchemaRoutes(express, app, schema) {
 	SchemaRoutes.forEach((Route) => {
 		const route = new Route(schema);
+		Logging.logSilly(`REGISTER: [${route.verb.toUpperCase()}] ${route.path}`);
 		express[route.verb](`/${route.path}`, (req, res) => {
 			Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
@@ -289,9 +290,11 @@ exports.init = (app) => {
 		// Fetch app schemas and init
 			buttressApps.forEach((buttressApp) => {
 				if (buttressApp.__schema) {
-					Schema.decode(buttressApp.__schema).forEach((schema) => {
-						_initSchemaRoutes(apiRouter, buttressApp, schema);
-					});
+					Schema.decode(buttressApp.__schema)
+						.filter((s) => s.type === 'collection')
+						.forEach((schema) => {
+							_initSchemaRoutes(apiRouter, buttressApp, schema);
+						});
 				}
 			});
 		})

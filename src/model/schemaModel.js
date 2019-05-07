@@ -74,28 +74,32 @@ class SchemaModel {
 				if (!query.hasOwnProperty(property)) continue;
 				const command = query[property];
 
-				for (const operator in command) {
-					if (!command.hasOwnProperty(operator)) continue;
-					let operand = command[operator];
+				if (property === '$or' && Array.isArray(command)) {
+					output['$or'] = command.map((q) => __parseQuery(q, envFlat, {}));
+				} else {
+					for (const operator in command) {
+						if (!command.hasOwnProperty(operator)) continue;
+						let operand = command[operator];
 
-					// Check to see if operand is a path and fetch value
-					if (operand.indexOf('.') !== -1) {
-						let path = operand.split('.');
-						const key = path.shift();
+						// Check to see if operand is a path and fetch value
+						if (operand.indexOf('.') !== -1) {
+							let path = operand.split('.');
+							const key = path.shift();
 
-						path = path.join('.');
+							path = path.join('.');
 
-						if (key === 'env' && envFlat[path]) {
-							operand = envFlat[path];
-						} else {
-							throw new Error(`Unable to find ${path} in schema.authFilter.env`);
+							if (key === 'env' && envFlat[path]) {
+								operand = envFlat[path];
+							} else {
+								throw new Error(`Unable to find ${path} in schema.authFilter.env`);
+							}
 						}
-					}
 
-					if (!output[property]) {
-						output[property] = {};
+						if (!output[property]) {
+							output[property] = {};
+						}
+						output[property][`$${operator}`] = operand;
 					}
-					output[property][`$${operator}`] = operand;
 				}
 			}
 

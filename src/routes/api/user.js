@@ -25,7 +25,7 @@ class GetUserList extends Route {
 	constructor() {
 		super('user', 'GET USER LIST');
 		this.verb = Route.Constants.Verbs.GET;
-		this.auth = Route.Constants.Auth.USER;
+		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.LIST;
 	}
 
@@ -34,25 +34,7 @@ class GetUserList extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.User.findAll(req.authApp._id, req.token.authLevel)
-			.then((users) => {
-				return users.map((user) => {
-					return {
-						id: user._id,
-						profiles: user.auth.map((a) => ({
-							app: a.app,
-							appId: a.appId,
-							username: a.username,
-							email: a.email,
-							url: a.profileUrl,
-							image: a.images.profile,
-						})),
-						role: user.role,
-						formalName: user.person.formalName,
-						name: user.person.name,
-					};
-				});
-			});
+		return Model.User.findAll(req.authApp._id, req.token.authLevel);
 	}
 }
 routes.push(GetUserList);
@@ -114,15 +96,26 @@ class FindUser extends Route {
 				.then((_user) => {
 					Logging.logSilly(`FindUser: ${_user !== null}`);
 					if (_user) {
-						Model.Token.findUserAuthToken(_user._id, req.authApp._id)
-							.then((token) => {
-								Logging.logSilly(`FindUserToken: ${token !== null}`);
-								const _userAuthToken = token ? token.value : false;
-								Model.User.updateApps(_user, req.authApp)
-									.then(() => resolve({
-										user: _user,
-										userAuthToken: _userAuthToken,
-									}), reject);
+						Model.Token.findUserAuthTokens(_user._id, req.authApp._id)
+							.then((tokens) => {
+								const hasFoundToken = (tokens && tokens.lenght > 0);
+								Logging.logSilly(`FindUserToken: ${hasFoundToken === true}`);
+
+								resolve({
+									id: _user._id,
+									tokens: tokens.map((t) => {
+										return {
+											value: t.value,
+											role: t.role,
+										};
+									}),
+								});
+
+								// Model.User.updateApps(_user, req.authApp)
+								// 	.then(() => resolve({
+								// 		id: _user._id,
+								// 		tokens: _userAuthToken,
+								// 	}), reject);
 							});
 					} else {
 						resolve(false);
@@ -132,14 +125,7 @@ class FindUser extends Route {
 	}
 
 	_exec(req, res, validate) {
-		if (!validate) {
-			return Promise.resolve(false);
-		}
-
-		return Promise.resolve({
-			id: validate.user._id,
-			authToken: validate.userAuthToken,
-		});
+		return Promise.resolve(validate);
 	}
 }
 routes.push(FindUser);
@@ -289,8 +275,7 @@ class AddUser extends Route {
 	}
 
 	_exec(req, res, validate) {
-		return Model.User
-			.add(req.body.user, req.body.auth)
+		return Model.User.add(req.body.user, req.body.auth)
 			.then((user) => {
 				return user;
 			});
@@ -396,7 +381,7 @@ class AddUserAuth extends Route {
 			.then((user) => {
 				const tasks = [
 					Promise.resolve(user.details),
-					Model.Token.findUserAuthToken(this._user._id, req.authApp._id),
+					Model.Token.findUserAuthTokens(this._user._id, req.authApp._id),
 				];
 
 				return Promise.all(tasks);

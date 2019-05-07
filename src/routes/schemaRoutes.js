@@ -40,6 +40,7 @@ class GetList extends Route {
 		if (token.authLevel < 3) {
 			query = this.model.generateRoleFilterQuery(token, req.roles, Model);
 		}
+
 		return query;
 	}
 

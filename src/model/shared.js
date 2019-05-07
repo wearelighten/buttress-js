@@ -624,19 +624,23 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 
 		const config = flattenedSchema[body.path];
 		if (config) {
-			if (config.__type === 'array' && config.__itemtype) {
-				if (config.__schema) {
-					const validation = __validate(config.__schema, __getFlattenedBody(body.value), `${body.path}.`);
-					if (validation.isValid !== true) {
-						if (validation.missing.length) {
-							res.isMissingRequired = true;
-							res.missingRequired = validation.missing[0];
-						}
-						if (validation.invalid.length) {
-							res.invalidValue = validation.invalid[0];
-						}
-						return res;
+			if (config.__type === 'array' && config.__schema) {
+				const validation = __validate(config.__schema, __getFlattenedBody(body.value), `${body.path}.`);
+				if (validation.isValid !== true) {
+					if (validation.missing.length) {
+						res.isMissingRequired = true;
+						res.missingRequired = validation.missing[0];
 					}
+					if (validation.invalid.length) {
+						res.invalidValue = validation.invalid[0];
+					}
+					return res;
+				}
+			} else if (config.__type === 'array' && config.__itemtype) {
+				if (!__validateProp(body, {__type: config.__itemtype})) {
+					// Logging.logWarn(`Invalid ${property}.${idx}: ${prop.value} [${typeof prop.value}] expected [${config.__itemtype}]`);
+					res.invalidValue = `${body.path}:${body.value}[${typeof body.value}] [${config.__itemtype}]`;
+					return res;
 				}
 			} else if (!config.__schema && !__validateProp(body, config)) {
 				res.invalidValue = `${body.path} failed schema test`;

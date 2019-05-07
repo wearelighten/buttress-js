@@ -21,6 +21,7 @@ const Config = require('node-env-obj')('../');
 const Model = require('./model');
 const Logging = require('./logging');
 const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require('mongodb').ObjectId;
 const NRP = require('node-redis-pubsub');
 
 /* ********************************************************************************
@@ -228,7 +229,7 @@ const __initMaster = (express) => {
 		// Spawn worker processes, pass through build app objects
 			apps.map((app) => {
 				const token = tokens.find((t) => {
-					return t._id.toString() === app._token.toString();
+					return app._token && t._id.equals(app._token);
 				});
 				if (!token) {
 					Logging.logWarn(`No Token found for ${app.name}`);
