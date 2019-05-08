@@ -68,6 +68,11 @@
         "__allowUpdate": true
       }
     },
+    "avatar": {
+      "__type": "string",
+      "__default": "",
+      "__allowUpdate": true
+    },
     "company": {
       "__type": "string",
       "__default": "",
