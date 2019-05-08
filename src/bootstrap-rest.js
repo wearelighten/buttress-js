@@ -35,9 +35,11 @@ Error.stackTraceLimit = Infinity;
  *
  *
  **********************************************************************************/
-// const processes = os.cpus().length;
-const processes = 1;
+const processes = os.cpus().length;
+// const processes = 1;
 const _workers = [];
+
+Logging.setLogLevel(Logging.Constants.LogLevel.SILLY);
 
 /* ********************************************************************************
  *
@@ -253,6 +255,8 @@ function _getLocalSchemas() {
  *
  **********************************************************************************/
 const _initRestApp = () => {
+	Logging.setLogLevel(Logging.Constants.LogLevel.SILLY);
+
 	let p = null;
 	if (cluster.isMaster) {
 		p = __initMaster();

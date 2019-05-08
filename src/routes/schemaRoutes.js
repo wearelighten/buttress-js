@@ -27,6 +27,9 @@ class GetList extends Route {
 		this.auth = Route.Constants.Auth.USER;
 		this.permissions = Route.Constants.Permissions.LIST;
 
+		this.activityDescription = `GET ${schema.name} LIST`;
+		this.activityBroadcast = false;
+
 		// Fetch model
 		this.schema = schema;
 		this.model = Model[schema.collection];
@@ -59,6 +62,9 @@ class GetOne extends Route {
 		this.verb = Route.Constants.Verbs.GET;
 		this.auth = Route.Constants.Auth.USER;
 		this.permissions = Route.Constants.Permissions.READ;
+
+		this.activityDescription = `GET ${schema.name}`;
+		this.activityBroadcast = false;
 
 		this.schema = schema;
 		this.model = Model[schema.collection];
@@ -95,7 +101,7 @@ class GetMany extends Route {
 		this.permissions = Route.Constants.Permissions.READ;
 
 		this.activityDescription = `BULK GET ${schema.name}`;
-		this.activityBroadcast = true;
+		this.activityBroadcast = false;
 
 		this.schema = schema;
 		this.model = Model[schema.collection];
@@ -248,7 +254,7 @@ class UpdateOne extends Route {
 		this.auth = Route.Constants.Auth.USER;
 		this.permissions = Route.Constants.Permissions.WRITE;
 
-		this.activityDescription = `ADD ${schema.name}`;
+		this.activityDescription = `UPDATE ${schema.name}`;
 		this.activityBroadcast = true;
 
 		this.schema = schema;
@@ -314,7 +320,7 @@ class DeleteOne extends Route {
 		this.auth = Route.Constants.Auth.USER;
 		this.permissions = Route.Constants.Permissions.DELETE;
 
-		this.activityDescription = `ADD ${schema.name}`;
+		this.activityDescription = `DELETE ${schema.name}`;
 		this.activityBroadcast = true;
 
 		this.schema = schema;
@@ -393,12 +399,12 @@ routes.push(DeleteMany);
  */
 class DeleteAll extends Route {
 	constructor(schema) {
-		super(`${schema.name}`, `DELETE ${schema.name}`);
+		super(`${schema.name}`, `DELETE ALL ${schema.name}`);
 		this.verb = Route.Constants.Verbs.DEL;
 		this.auth = Route.Constants.Auth.SUPER;
 		this.permissions = Route.Constants.Permissions.DELETE;
 
-		this.activityDescription = `DELETE ${schema.name}`;
+		this.activityDescription = `DELETE ALL ${schema.name}`;
 		this.activityBroadcast = true;
 
 		this.schema = schema;

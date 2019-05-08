@@ -21,7 +21,7 @@ const Config = require('node-env-obj')('../');
 const Model = require('./model');
 const Logging = require('./logging');
 const MongoClient = require('mongodb').MongoClient;
-const ObjectId = require('mongodb').ObjectId;
+// const ObjectId = require('mongodb').ObjectId;
 const NRP = require('node-redis-pubsub');
 
 /* ********************************************************************************
@@ -29,7 +29,8 @@ const NRP = require('node-redis-pubsub');
  *
  *
  **********************************************************************************/
-const processes = os.cpus().length;
+// const processes = os.cpus().length;
+const processes = 1;
 const _workers = [];
 
 /* ********************************************************************************
@@ -170,7 +171,7 @@ const __initMaster = (express) => {
 		Logging.logDebug(`Primary Master`);
 		nrp.on('activity', (data) => {
 			const publicId = data.appPId;
-			Logging.logDebug(`[${data.appPId}]: ${data.verb} ${data.path}`);
+			Logging.logDebug(`[${data.appPId}]: [${data.verb}] ${data.path}`);
 
 			// Super apps?
 			superApps.forEach((superPublicId) => {
@@ -183,10 +184,12 @@ const __initMaster = (express) => {
 
 			// Disable broadcasting to public space
 			if (data.broadcast === false) {
+				Logging.logDebug(`[${data.appPId}]: ${data.verb} ${data.path} - Early out as it isn't public.`);
 				return;
 			}
 			// Don't emit activity if activity has super app PId, as it's already been sent
 			if (superApps.includes(publicId)) {
+				Logging.logDebug(`[${data.appPId}]: ${data.verb} ${data.path} - Early out on super app activity`);
 				return;
 			}
 
@@ -265,6 +268,8 @@ const __initMaster = (express) => {
  *
  **********************************************************************************/
 const _initSocketApp = () => {
+	Logging.setLogLevel(Logging.Constants.LogLevel.SILLY);
+
 	if (cluster.isMaster) {
 		__initMaster();
 	} else {

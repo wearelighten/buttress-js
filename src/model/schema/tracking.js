@@ -186,7 +186,9 @@ class TrackingSchemaModel extends SchemaModel {
 	}
 
 	/**
-	 * @return {Promise} - resolves to an array of Apps
+	* @param {object} appId - appId which we are requesting tracking for.
+	* @param {int} tokenAuthLevel - Auth level of the current token in use.
+	* @return {Promise} - resolves to an array of Apps
 	 */
 	findAll(appId, tokenAuthLevel) {
 		Logging.log(`findAll: ${appId}`, Logging.Constants.LogLevel.DEBUG);

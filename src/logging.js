@@ -40,7 +40,7 @@ module.exports.Constants = {
 };
 
 let _logApp = 'app';
-let _logLabel = '';
+let _logLabel = 'MASTER';
 const setLogApp = (app) => {
 	_logApp = app;
 	if (cluster.isWorker) {

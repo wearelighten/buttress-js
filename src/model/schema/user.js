@@ -127,7 +127,7 @@ class UserSchemaModel extends SchemaModel {
 					__type: 'array',
 					__required: true,
 					__allowUpdate: true,
-				}
+				},
 			},
 		};
 	}
@@ -266,6 +266,7 @@ class UserSchemaModel extends SchemaModel {
 
 	/**
 	 * @param {ObjectId} appId - id of the App that owns the user
+	 * @param {int} tokenAuthLevel - level of the current token in use.
 	 * @return {Promise} - resolves to an array of Apps
 	 */
 	findAll(appId, tokenAuthLevel) {

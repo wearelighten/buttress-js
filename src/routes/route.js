@@ -12,7 +12,7 @@
 
 const Config = require('node-env-obj')('../');
 const Logging = require('../logging');
-const Schema = require('../schema');
+// const Schema = require('../schema');
 const Model = require('../model');
 const Mongo = require('mongodb');
 const NRP = require('node-redis-pubsub');

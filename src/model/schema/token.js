@@ -196,7 +196,7 @@ class TokenSchemaModel extends SchemaModel {
 				resolve(doc);
 			});
 		});
-	}	
+	}
 }
 
 /**
