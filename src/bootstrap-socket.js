@@ -240,9 +240,10 @@ const __initMaster = (express) => {
 				}
 
 				app.token = token;
-				app.publicId = Model.App.genPublicUID(app.name, token.value);
+				app.publicId = Model.App.genPublicUID(app.name, app.id);
 				const isSuper = token.authLevel > 2;
-				Logging.log(`App Public ID: ${app.name}, ${app.publicId}, ${(isSuper) ? 'SUPER' : ''}`);
+				Logging.logSilly(`Name: ${app.name}, Token: ${app.id}`);
+				Logging.log(`Public ID: ${app.name}, ${app.publicId}, ${(isSuper) ? 'SUPER' : ''}`);
 
 				if (isSuper) {
 					namespace[app.publicId] = {

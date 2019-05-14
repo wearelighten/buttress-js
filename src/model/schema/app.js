@@ -237,7 +237,7 @@ class AppSchemaModel extends SchemaModel {
 	 * @return {String} - UID
 	 */
 	getPublicUID() {
-		return this.genPublicUID(this.name, this.tokenValue);
+		return this.genPublicUID(this.name, this._id);
 	}
 
 	/**
@@ -249,13 +249,13 @@ class AppSchemaModel extends SchemaModel {
 
 	/**
 	 * @param {String} name - name of application
-	 * @param {String} tokenValue - application token
+	 * @param {String} id - application id
 	 * @return {String} - UID
 	 */
-	genPublicUID(name, tokenValue) {
+	genPublicUID(name, id) {
 		const hash = crypto.createHash('sha512');
 		// Logging.log(`Create UID From: ${this.name}.${this.tokenValue}`, Logging.Constants.LogLevel.DEBUG);
-		hash.update(`${name}.${tokenValue}`);
+		hash.update(`${name}.${id}`);
 		const bytes = hash.digest();
 
 		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

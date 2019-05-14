@@ -144,7 +144,7 @@ class Route {
 
 		const broadcast = () => {
 			if (res) {
-				const appPId = Model.App.genPublicUID(req.authApp.name, req.token.value);
+				const appPId = Model.App.genPublicUID(req.authApp.name, req.id);
 				this._activityBroadcastSocket({
 					title: this.activityTitle,
 					description: this.activityDescription,
