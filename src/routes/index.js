@@ -143,7 +143,7 @@ function _authenticateToken(req, res, next) {
 		})
 		.then(() => Model.User.findById(req.token._user, req.authApp._id))
 		.then((user) => {
-			req.authUser = user;
+			req.authUser = user[0];
 		})
 		.then(Helpers.Promise.inject())
 		.then(next)
