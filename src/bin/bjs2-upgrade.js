@@ -17,6 +17,7 @@ const MongoClient = require('mongodb').MongoClient;
 
 const Config = require('node-env-obj')('../');
 const Logging = require('../logging');
+const Schema = require('../schema');
 
 Logging.init('bjs2-upgrade');
 
@@ -25,6 +26,7 @@ program.version(Config.app.version)
 	.option('--dry-run', 'Dry run, no live data writes')
 	.option('--verbose', 'Verbose mode')
 	.option('--all', 'Full Upgrade')
+	.option('--app', 'Apps Upgrade')
 	.parse(process.argv);
 
 class BJ2Upgrade {
@@ -34,6 +36,7 @@ class BJ2Upgrade {
 			verbose: (program.verbose) ? program.verbose : false,
 
 			all: (program.all) ? program.all : false,
+			app: (program.app) ? program.app : false,
 			person: (program.person) ? program.person : false,
 		};
 
@@ -54,12 +57,16 @@ class BJ2Upgrade {
 		Logging.log('INIT upgrade process');
 
 		const programs = {
+			app: () => this.__upgradeApps(),
 			person: () => this.__mapPeopleTouser(),
 		};
 		let selectedPrograms = {};
 
 		if (this.options.person) {
 			selectedPrograms.person = programs.person;
+		}
+		if (this.options.app) {
+			selectedPrograms.app = programs.app;
 		}
 
 		if (this.options.all) {
@@ -89,6 +96,48 @@ class BJ2Upgrade {
 		});
 
 		return tasks.reduce((prev, next) => prev.then(() => next()), Promise.resolve());
+	}
+
+	__upgradeApps() {
+		const App = this.mongoDB.collection('apps');
+
+		const dbData = {
+			apps: null,
+		};
+
+		return new Promise((resolve) => App.find({}).toArray((err, doc) => {
+			if (err) throw err;
+			dbData.apps = doc;
+			resolve(doc);
+		}))
+			.then(() => {
+				const updates = [];
+
+				dbData.apps.forEach((app) => {
+					if (app.__schema && typeof app.__schema === 'object') {
+						updates.push({
+							id: app._id,
+							change: {
+								__schema: Schema.encode(app.__schema),
+							},
+						});
+					}
+				});
+
+				Logging.log(`${updates.length} Updates to apps`);
+
+				return updates.map((update) => {
+					return () => {
+						return new Promise((resolve) => {
+							App.updateOne({_id: update.id}, {$set: update.change}, {}, (err, object) => {
+								if (err) throw new Error(err);
+								resolve(object);
+							});
+						});
+					};
+				});
+			})
+			.then((updates) => updates.reduce((prev, next) => prev.then(() => next()), Promise.resolve()));
 	}
 
 	__mapPeopleTouser() {
