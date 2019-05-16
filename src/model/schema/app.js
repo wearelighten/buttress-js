@@ -63,7 +63,7 @@ class AppSchemaModel extends SchemaModel {
 					__default: '',
 					__allowUpdate: true,
 				},
-				visibility: {
+				type: {
 					__type: 'string',
 					__default: 'server',
 					__enum: type,
