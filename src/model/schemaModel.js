@@ -121,6 +121,10 @@ class SchemaModel {
 					if (!roles.schema.authFilter.env.hasOwnProperty(property)) continue;
 					const query = roles.schema.authFilter.env[property];
 
+					let propertyMap = '_id';
+					if (query.map) {
+						propertyMap = query.map;
+					}
 					for (const command in query) {
 						if (!query.hasOwnProperty(command)) continue;
 
@@ -140,7 +144,10 @@ class SchemaModel {
 							tasks.push(() => {
 								return Model[collectionName].find(propertyQuery, fields)
 									.then((res) => {
-										env[property] = res.map((i) => i._id);
+										// Map fetched properties into a array.
+										env[property] = res.map((i) => i[propertyMap]);
+										// Hack - Flattern any sub arrays down to the single level.
+										env[property] = [].concat.apply([], env[property]);
 									});
 							});
 						} else {
