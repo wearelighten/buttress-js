@@ -76,6 +76,8 @@ class SchemaModel {
 
 				if (property === '$or' && Array.isArray(command)) {
 					output['$or'] = command.map((q) => __parseQuery(q, envFlat, {}));
+				} else if (property === '$and' && Array.isArray(command)) {
+					output['$and'] = command.map((q) => __parseQuery(q, envFlat, {}));
 				} else {
 					for (const operator in command) {
 						if (!command.hasOwnProperty(operator)) continue;
