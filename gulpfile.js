@@ -2,100 +2,136 @@
 
 const gulp = require('gulp');
 const eslint = require('gulp-eslint');
-const clean = require('gulp-clean');
+const gulpClean = require('gulp-clean');
+const pug = require('gulp-pug');
 const bump = require('gulp-bump');
-const cache = require('gulp-cached');
 
 const Paths = {
-  SOURCE: 'app/server',
-  DEST: 'deploy',
-  EMAIL_DEST: 'deploy/email'
+	SOURCE: 'src',
+	DEST: 'deploy',
+	EMAIL_DEST: 'deploy/email',
 };
 
 const Sources = {
-  JS: [`${Paths.SOURCE}/*.js`, `${Paths.SOURCE}/**/*.js`],
-  JSON: [`${Paths.SOURCE}/*.json`, `${Paths.SOURCE}/**/*.json`],
-  PUG: [`${Paths.SOURCE}/*.pug`, `${Paths.SOURCE}/**/*.pug`],
-  EMAIL_LESS: [`${Paths.SOURCE}/email/**/*.less`],
-  EMAIL_PUG: [`${Paths.SOURCE}/email/**/*.pug`]
+	JS: [`${Paths.SOURCE}/*.js`, `${Paths.SOURCE}/**/*.js`],
+	JSON: [`${Paths.SOURCE}/*.json`, `${Paths.SOURCE}/**/*.json`],
+	PUG: [`${Paths.SOURCE}/*.pug`, `${Paths.SOURCE}/**/*.pug`],
+	EMAIL_LESS: [`${Paths.SOURCE}/email/**/*.less`],
+	EMAIL_PUG: [`${Paths.SOURCE}/email/**/*.pug`],
 };
 
 // Scripts
-gulp.task('js', function() {
-  return gulp.src(Sources.JS, { base: Paths.SOURCE })
-    .pipe(cache('js'))
-    .pipe(eslint())
-    .pipe(eslint.format())
-    // .pipe(eslint.failAfterError())
-    .pipe(gulp.dest(Paths.DEST));
-});
-gulp.task('scripts', function() {
-  return gulp.start('js');
-});
+const js = () => {
+	return gulp.src(Sources.JS, {base: Paths.SOURCE})
+		.pipe(eslint())
+		.pipe(eslint.format())
+		.pipe(gulp.dest(Paths.DEST));
+};
+const jsSrcFix = () => {
+	return gulp.src(Sources.JS, {base: Paths.SOURCE})
+		.pipe(eslint({
+			fix: true,
+		}))
+		.pipe(eslint.format())
+		.pipe(gulp.dest(Paths.SOURCE));
+};
+const scripts = (done) => {
+	return gulp.series('js')(done);
+};
 
 // Email
-gulp.task('email-styles', function() {
-  return gulp.src(Sources.EMAIL_LESS, { base: Paths.SOURCE })
-    .pipe(gulp.dest(Paths.EMAIL_DEST));
-});
-gulp.task('styles', function() {
-  return gulp.start('email-styles');
-});
-gulp.task('views-email', function() {
-  return gulp.src(Sources.EMAIL_PUG, { base: 'app/server/email' })
-    .pipe(gulp.dest(Paths.EMAIL_DEST));
-});
-gulp.task('views', function() {
-  return gulp.start('views-email');
-});
+const emailStyles = () => {
+	return gulp.src(Sources.EMAIL_LESS, {base: Paths.SOURCE})
+		.pipe(gulp.dest(Paths.EMAIL_DEST));
+};
+const styles = (done) => {
+	return gulp.series('emailStyles')(done);
+};
+
+const viewsStatic = () => {
+	return gulp.src(Sources.PUG, {base: Paths.SOURCE})
+		.pipe(pug())
+		.pipe(gulp.dest(Paths.DEST));
+};
+const viewsEmail = () => {
+	return gulp.src(Sources.EMAIL_PUG, {base: 'app/server/email'})
+		.pipe(pug())
+		.pipe(gulp.dest(Paths.EMAIL_DEST));
+};
+const views = (done) => {
+	return gulp.series(['viewsStatic', 'viewsEmail'])(done);
+};
 
 // Statics
-gulp.task('json', function() {
-  return gulp.src(Sources.JSON, { base: Paths.SOURCE })
-    .pipe(gulp.dest(Paths.DEST));
-});
+const json = () => {
+	return gulp.src(Sources.JSON, {base: Paths.SOURCE})
+		.pipe(gulp.dest(Paths.DEST));
+};
+const resources = (done) => {
+	return gulp.series(['json'])(done);
+};
 
-gulp.task('resources', function() {
-  return gulp.start(['json']);
-});
+// // Commands
+const clean = () => {
+	return gulp.src([`${Paths.DEST}/*`], {read: false})
+		.pipe(gulpClean());
+};
+const build = (done) => {
+	return gulp.series('clean', gulp.parallel('scripts', 'styles', 'views', 'resources'))(done);
+};
+const watch = (done) => {
+	return gulp.series('build', () => {
+		gulp.watch(Sources.EMAIL_LESS, gulp.series('styles'));
+		gulp.watch(Sources.PUG, gulp.series('views'));
+		gulp.watch(Sources.EMAIL_PUG, gulp.series('views'));
+		// Watch Scripts
+		gulp.watch(Sources.JS, gulp.series('js'));
+		// Watch Resources
+		gulp.watch(Sources.JSON, gulp.series('resources'));
+	})(done);
+};
 
-// Commands
-gulp.task('watch', ['build'], function() {
-  // Watch Styles
-  gulp.watch(Sources.EMAIL_LESS, ['styles']);
-  gulp.watch(Sources.EMAIL_PUG, ['views']);
-  // Watch Scripts
-  gulp.watch(Sources.JS, ['js']);
-  // Watch Resources
-  gulp.watch(Sources.JSON, ['resources']);
-});
+const bumpMajor = () => {
+	return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
+		.pipe(bump({type: 'major'}))
+		.pipe(gulp.dest('./'));
+};
+const bumpMinor = () => {
+	return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
+		.pipe(bump({type: 'minor'}))
+		.pipe(gulp.dest('./'));
+};
+const bumpPatch = () => {
+	return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
+		.pipe(bump({type: 'patch'}))
+		.pipe(gulp.dest('./'));
+};
+const bumpPrerelease = () => {
+	return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
+		.pipe(bump({type: 'prerelease'}))
+		.pipe(gulp.dest('./'));
+};
 
-gulp.task('clean', function() {
-  return gulp.src([`${Paths.DEST}/*`], {read: false})
-    .pipe(clean());
-});
+module.exports = {
+	js,
+	jsSrcFix,
+	scripts,
 
-gulp.task('build', ['clean'], function() {
-  return gulp.start('scripts', 'styles', 'views', 'resources');
-});
+	emailStyles,
+	styles,
+	viewsStatic,
+	viewsEmail,
+	views,
 
-gulp.task('bump-major', function() {
-  return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
-    .pipe(bump({type: 'major'}))
-    .pipe(gulp.dest('./'));
-});
-gulp.task('bump-minor', function() {
-  return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
-    .pipe(bump({type: 'minor'}))
-    .pipe(gulp.dest('./'));
-});
-gulp.task('bump-patch', function() {
-  return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
-    .pipe(bump({type: 'patch'}))
-    .pipe(gulp.dest('./'));
-});
-gulp.task('bump-prerelease', function() {
-  return gulp.src(['./package.json', './README.md', 'app/server/config.json'], {base: './'})
-    .pipe(bump({type: 'prerelease'}))
-    .pipe(gulp.dest('./'));
-});
+	json,
+	resources,
+
+	clean,
+	build,
+	watch,
+
+	bumpMajor,
+	bumpMinor,
+	bumpPatch,
+	bumpPrerelease,
+};
