@@ -1,7 +1,6 @@
 #IDE
 .idea
 .vscode
-nginx
 .public
 
 # Logs
@@ -43,8 +42,12 @@ jspm_packages
 # Optional REPL history
 .node_repl_history
 
-app_data
+nginx/*
+!nginx/example.conf
 
 # Env files
 *.env
 !.example.env
+
+# App Data
+app_data/*
