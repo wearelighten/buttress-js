@@ -23,7 +23,7 @@
 		"env": "%NODE_ENV%",
 		"app": {
 			"title": "%BUTTRESS_APP_TITLE%",
-			"description": "Realtime datastore for business software",
+			"description": "Realtime datastore for software",
 			"code": "%BUTTRESS_APP_CODE%",
 			"version": "1.6.1",
 			"protocol": "http",

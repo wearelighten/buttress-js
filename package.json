@@ -1,7 +1,7 @@
 {
   "name": "ButtressJS",
   "version": "1.6.1",
-  "description": "Realtime datastore for business software",
+  "description": "Realtime datastore for software",
   "author": "Lighten",
   "license": "MIT",
   "private": true,

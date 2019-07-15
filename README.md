@@ -1,5 +1,5 @@
 # ButtressJS
-Realtime datastore for business software.
+Realtime datastore for software.
 
 # What's New
 

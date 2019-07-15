@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * ButtressJS - Realtime datastore for business software
+ * ButtressJS - Realtime datastore for software
  *
  * @file factory.js
  * @description Email factory - creates valid html formatted emails based on templates

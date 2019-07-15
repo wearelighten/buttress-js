@@ -2,7 +2,7 @@
 'use strict';
 
 /**
- * ButtressJS - Realtime datastore for business software
+ * ButtressJS - Realtime datastore for software
  *
  * @file bjs2-upgrade.js
  * @description

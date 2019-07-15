@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * ButtressJS - Realtime datastore for business software
+ * ButtressJS - Realtime datastore for software
  *
  * @file schemaRoutes.js
  * @description A list of default routes for schema

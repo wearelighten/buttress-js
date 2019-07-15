@@ -1,7 +1,7 @@
 'use strict'; // eslint-disable-line max-lines
 
 /**
- * ButtressJS - Realtime datastore for business software
+ * ButtressJS - Realtime datastore for software
  *
  * @file user.js
  * @description USER API specification

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * ButtressJS - Realtime datastore for business software
+ * ButtressJS - Realtime datastore for software
  *
  * @file tracking.js
  * @description Tracking API specification

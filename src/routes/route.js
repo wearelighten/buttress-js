@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * ButtressJS - Realtime datastore for business software
+ * ButtressJS - Realtime datastore for software
  *
  * @file route.js
  * @description Route Class - Route authorisation (against app permissions), validation and execution
