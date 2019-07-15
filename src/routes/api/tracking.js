@@ -81,47 +81,47 @@ class AddTracking extends Route {
 routes.push(AddTracking);
 
 class UpdateTracking extends Route {
-  constructor() {
-    super('tracking/:id', 'UPDATE TRACKING');
-    this.verb = Route.Constants.Verbs.PUT;
-    this.auth = Route.Constants.Auth.ADMIN;
-    this.permissions = Route.Constants.Permissions.WRITE;
+	constructor() {
+		super('tracking/:id', 'UPDATE TRACKING');
+		this.verb = Route.Constants.Verbs.PUT;
+		this.auth = Route.Constants.Auth.ADMIN;
+		this.permissions = Route.Constants.Permissions.WRITE;
 
-    this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
-    this.activityBroadcast = true;
-  }
+		this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+		this.activityBroadcast = true;
+	}
 
-  _validate() {
-    return new Promise((resolve, reject) => {
-      let validation = Model.Tracking.validateUpdate(this.req.body);
-      if (!validation.isValid) {
-        if (validation.isPathValid === false) {
-          this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `TRACKING: Update path is invalid: ${validation.invalidPath}`});
-          return;
-        }
-        if (validation.isValueValid === false) {
-          this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
-          reject({statusCode: 400, message: `TRACKING: Update value is invalid: ${validation.invalidValue}`});
-          return;
-        }
-      }
+	_validate() {
+		return new Promise((resolve, reject) => {
+			const validation = Model.Tracking.validateUpdate(this.req.body);
+			if (!validation.isValid) {
+				if (validation.isPathValid === false) {
+					this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+					reject({statusCode: 400, message: `TRACKING: Update path is invalid: ${validation.invalidPath}`});
+					return;
+				}
+				if (validation.isValueValid === false) {
+					this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+					reject({statusCode: 400, message: `TRACKING: Update value is invalid: ${validation.invalidValue}`});
+					return;
+				}
+			}
 
-      Model.Tracking.exists(this.req.params.id)
-      .then(exists => {
-        if (!exists) {
-          this.log('ERROR: Invalid Tracking ID', Route.LogLevel.ERR);
-          reject({statusCode: 400});
-          return;
-        }
-        resolve(true);
-      });
-    });
-  }
+			Model.Tracking.exists(this.req.params.id)
+				.then((exists) => {
+					if (!exists) {
+						this.log('ERROR: Invalid Tracking ID', Route.LogLevel.ERR);
+						reject({statusCode: 400});
+						return;
+					}
+					resolve(true);
+				});
+		});
+	}
 
-  _exec() {
-    return Model.Tracking.updateByPath(this.req.body, this.req.params.id);
-  }
+	_exec() {
+		return Model.Tracking.updateByPath(this.req.body, this.req.params.id);
+	}
 }
 routes.push(UpdateTracking);
 

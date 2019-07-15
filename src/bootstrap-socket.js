@@ -9,7 +9,7 @@
  * @author Chris Bates-Keegan
  *
  */
-const os = require('os');
+// const os = require('os');
 const cluster = require('cluster');
 const net = require('net');
 const Express = require('express');
