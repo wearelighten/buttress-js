@@ -87,7 +87,7 @@ class UpdateTracking extends Route {
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.WRITE;
 
-		this.activityVisibility = Model.Constants.Activity.Visibility.PRIVATE;
+		this.activityVisibility = Model.Activity.Constants.Visibility.PRIVATE;
 		this.activityBroadcast = true;
 	}
 
