@@ -2,7 +2,9 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.0.0 :tada:
+### Version: 2.0.1
+- FIX: Unneeded files added after merge
+### 2.0.0 :tada:
 - REFACTOR: There are no longer core models or API's for companies, contracts, etc.. (user, tokens cores models still exist). It's now up to the apps to specify the schema's it would like to use. 
 - REFACTOR: It's now the apps responsibility to manage user profile data. Authentication is still managed via buttress.
 - ADDED: User app roles for grouping and controling user permissions.
