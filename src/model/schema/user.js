@@ -172,10 +172,13 @@ class UserSchemaModel extends SchemaModel {
 				});
 			})
 			.then((token) => {
-				_user.authToken = false;
+				_user.tokens = [];
 
 				if (token) {
-					_user.authToken = token.value;
+					_user.tokens.push({
+						value: token.value,
+						role: token.role,
+					});
 				}
 
 				return _user;
