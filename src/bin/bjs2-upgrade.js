@@ -13,7 +13,7 @@
 
 const program = require('commander');
 const MongoClient = require('mongodb').MongoClient;
-// const ObjectId = require('mongodb').ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 
 const Config = require('node-env-obj')('../');
 const Logging = require('../logging');
@@ -27,6 +27,8 @@ program.version(Config.app.version)
 	.option('--verbose', 'Verbose mode')
 	.option('--all', 'Full Upgrade')
 	.option('--app', 'Apps Upgrade')
+	.option('--person', 'Maps existing bjs v1 person objects to user object')
+	.option('--fix-person', 'Fixup person objects')
 	.parse(process.argv);
 
 class BJ2Upgrade {
@@ -38,6 +40,7 @@ class BJ2Upgrade {
 			all: (program.all) ? program.all : false,
 			app: (program.app) ? program.app : false,
 			person: (program.person) ? program.person : false,
+			fixPerson: (program.fixPerson) ? program.fixPerson : false,
 		};
 
 		this.mongoDB = null;
@@ -67,6 +70,9 @@ class BJ2Upgrade {
 		}
 		if (this.options.app) {
 			selectedPrograms.app = programs.app;
+		}
+		if (this.options.fixPerson) {
+			selectedPrograms.fixPerson = () => this.__mapFixupPerson();
 		}
 
 		if (this.options.all) {
@@ -130,6 +136,88 @@ class BJ2Upgrade {
 					return () => {
 						return new Promise((resolve) => {
 							App.updateOne({_id: update.id}, {$set: update.change}, {}, (err, object) => {
+								if (err) throw new Error(err);
+								resolve(object);
+							});
+						});
+					};
+				});
+			})
+			.then((updates) => updates.reduce((prev, next) => prev.then(() => next()), Promise.resolve()));
+	}
+
+	__mapFixupPerson() {
+		const People = this.mongoDB.collection('people');
+		const Users = this.mongoDB.collection('users');
+
+		const dbData = {
+			people: null,
+			users: null,
+		};
+
+		return new Promise((resolve) => People.find({}).toArray((err, doc) => {
+			if (err) throw err;
+			dbData.people = doc;
+			resolve(doc);
+		}))
+			.then(() => new Promise((resolve) => Users.find({}).toArray((err, doc) => {
+				if (err) throw err;
+				dbData.users = doc;
+				resolve(doc);
+			})))
+			.then(() => {
+				// Process the data
+				const updates = [];
+
+				dbData.users.forEach((user) => {
+					if (!user._person) {
+						Logging.log(`User ${user._id} has no _person attached.`);
+						return;
+					}
+
+					const userPerson = dbData.people.find((p) => p._id.equals(user._person));
+					if (!userPerson) {
+						Logging.log(`User ${user._id} unable to find person: ${user._person}.`, Logging.Constants.LogLevel.ERR);
+						return;
+					}
+
+					if (!userPerson.authId || !user._id.equals(userPerson.authId)) {
+						updates.push({
+							id: userPerson._id,
+							change: {
+								authId: user._id,
+							},
+						});
+					}
+
+					const combinedName = [];
+					if (userPerson.forename) combinedName.push(userPerson.forename);
+					if (userPerson.surname) combinedName.push(userPerson.surname);
+					if (!userPerson.name || userPerson.name !== combinedName.join(' ')) {
+						updates.push({
+							id: userPerson._id,
+							change: {
+								name: combinedName.join(' '),
+							},
+						});
+					}
+
+					if (!userPerson.avatar || userPerson.avatar !== user.auth[0].images.profile) {
+						updates.push({
+							id: userPerson._id,
+							change: {
+								avatar: user.auth[0].images.profile,
+							},
+						});
+					}
+				});
+
+				Logging.log(`Updates ${updates.length}`);
+
+				return updates.map((update) => {
+					return () => {
+						return new Promise((resolve) => {
+							People.updateOne({_id: update.id}, {$set: update.change}, {}, (err, object) => {
 								if (err) throw new Error(err);
 								resolve(object);
 							});
