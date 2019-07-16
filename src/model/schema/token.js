@@ -13,7 +13,7 @@
 
 const Crypto = require('crypto');
 const SchemaModel = require('../schemaModel');
-// const ObjectId = require('mongodb').ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 // const Shared = require('../shared');
 const Logging = require('../../logging');
 
@@ -194,6 +194,21 @@ class TokenSchemaModel extends SchemaModel {
 			}).toArray((err, doc) => {
 				if (err) throw err;
 				resolve(doc);
+			});
+		});
+	}
+
+	/**
+	 * @param {ObjectId} tokenId - token ID which will be updated
+	 * @param {string} role - the role value
+	 * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
+	 */
+	updateRole(tokenId, role) {
+		return new Promise((resolve, reject) => {
+			this.collection.updateOne({_id: tokenId}, {$set: {role: role}}, {}, (err, object) => {
+				if (err) throw new Error(err);
+
+				resolve(object);
 			});
 		});
 	}
