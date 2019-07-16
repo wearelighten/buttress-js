@@ -103,6 +103,7 @@ class FindUser extends Route {
 
 								resolve({
 									id: _user._id,
+									auth: _user.auth,
 									tokens: tokens.map((t) => {
 										return {
 											value: t.value,
