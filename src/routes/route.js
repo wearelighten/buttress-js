@@ -144,7 +144,7 @@ class Route {
 
 		const broadcast = () => {
 			if (res) {
-				const appPId = Model.App.genPublicUID(req.authApp.name, req.id);
+				const appPId = Model.App.genPublicUID(req.authApp.name, req.authApp._id);
 				this._activityBroadcastSocket({
 					title: this.activityTitle,
 					description: this.activityDescription,
@@ -364,7 +364,6 @@ class Route {
 				}
 
 				if (authorised === false) {
-					this.log(token.permissions, Logging.Constants.LogLevel.ERR);
 					this.log(`SAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
 					reject({statusCode: 403});
 				}

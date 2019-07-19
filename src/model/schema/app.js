@@ -266,7 +266,7 @@ class AppSchemaModel extends SchemaModel {
 			uid += chars[bytes[byte] & mask];
 		}
 
-		Logging.log(`Got UID: ${uid}`, Logging.Constants.LogLevel.SILLY);
+		// Logging.log(`Got UID: ${uid}`, Logging.Constants.LogLevel.SILLY);
 		return uid;
 	}
 }
