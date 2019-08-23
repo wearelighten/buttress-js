@@ -2,7 +2,12 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.0.2
+### Version: 2.0.3
+- ADDED: Script to aid mapping existing person objects over to a app usable format
+- FIX: Don't filter data against user roles if request is using a app token
+- FIX: User token mapping will mutiple tokens
+- FIX: App ID not being passed to public ID generator
+### 2.0.2
 - FIX: Assign default role when creating a user.
 - FIX: The returned user object should contain a array of tokens & the auth object.
 ### 2.0.1
