@@ -415,51 +415,53 @@ const __prepareSchemaResult = (result, appRoles, schema, token) => {
 				return chunk;
 			}
 
-			const tokenUser = token._user.toString();
-			let filterChunk = false;
-			if (filter) {
-				Object.keys(filter).forEach((key) => {
-					const keyPath = key.split('.');
-					keyPath.pop();
-					if (keyPath.toString() === path.toString()) {
-						if (chunk[key] && Array.isArray(chunk[key])) {
-							if (chunk[key].indexOf(tokenUser) === -1) {
-								filterChunk = true;
-							}
-						} else {
-							if (chunk[key] !== tokenUser) {
-								filterChunk = true;
+			if (token.type === 'user') {
+				const tokenUser = token._user.toString();
+				let filterChunk = false;
+				if (filter) {
+					Object.keys(filter).forEach((key) => {
+						const keyPath = key.split('.');
+						keyPath.pop();
+						if (keyPath.toString() === path.toString()) {
+							if (chunk[key] && Array.isArray(chunk[key])) {
+								if (chunk[key].indexOf(tokenUser) === -1) {
+									filterChunk = true;
+								}
+							} else {
+								if (chunk[key] !== tokenUser) {
+									filterChunk = true;
+								}
 							}
 						}
+					});
+				}
+
+				if (filterChunk) {
+					return null;
+				}
+
+				Object.keys(chunk).forEach((key) => {
+					path.push(key);
+					let readDisposition = false;
+
+					const property = path.join('.');
+					if (properties[property]) {
+						readDisposition = properties[property].READ === 'allow';
+					} else {
+						readDisposition = dataDisposition.READ === 'allow';
 					}
+
+					if (!readDisposition) {
+						Logging.logSilly(`${key} removed from result for ${role}`);
+						delete chunk[key];
+						path.pop();
+						return;
+					}
+
+					chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => _prepare(c, path)) : _prepare(chunk[key], path);
+					path.pop();
 				});
 			}
-
-			if (filterChunk) {
-				return null;
-			}
-
-			Object.keys(chunk).forEach((key) => {
-				path.push(key);
-				let readDisposition = false;
-
-				const property = path.join('.');
-				if (properties[property]) {
-					readDisposition = properties[property].READ === 'allow';
-				} else {
-					readDisposition = dataDisposition.READ === 'allow';
-				}
-
-				if (!readDisposition) {
-					Logging.logSilly(`${key} removed from result for ${role}`);
-					delete chunk[key];
-					path.pop();
-					return;
-				}
-
-				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => _prepare(c, path)) : _prepare(chunk[key], path);
-				path.pop();
-			});
 		}
 
 		return chunk;

@@ -290,8 +290,13 @@ class UserSchemaModel extends SchemaModel {
 			])
 				.then((data) => {
 					resolve(data[0].map((user) => {
-						const token = data[1].find((t) => user._id.equals(t._user));
-						user.role = token.role;
+						const tokens = data[1].filter((t) => user._id.equals(t._user));
+						user.tokens = [];
+
+						if (tokens) {
+							user.tokens = tokens;
+						}
+
 						return user;
 					}));
 				});
