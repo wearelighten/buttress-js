@@ -24,12 +24,12 @@ const shortId = require('../helpers').ShortId;
  **********************************************************************************/
 
 class SchemaModel {
-	constructor(MongoDb, schema, app) {
-		this.schema = schema;
+	constructor(MongoDb, schemaData, app) {
+		this.schemaData = schemaData;
 		this.app = app || null;
 
 		this.appShortId = (app) ? shortId(app._id) : null;
-		this.collectionName = `${schema.collection}`;
+		this.collectionName = `${schemaData.collection}`;
 
 		if (this.appShortId) {
 			this.collectionName = `${this.appShortId}-${this.collectionName}`;
@@ -45,7 +45,7 @@ class SchemaModel {
 			invalid: [],
 		};
 
-		const app = Shared.validateAppProperties(this.schema, body);
+		const app = Shared.validateAppProperties(this.schemaData, body);
 		if (app.isValid === false) {
 			res.isValid = false;
 			res.invalid = res.invalid.concat(app.invalid);
@@ -188,12 +188,12 @@ class SchemaModel {
 				entity._id = new ObjectId(body.id);
 			}
 
-			if (this.schema.extends && this.schema.extends.includes('timestamps')) {
+			if (this.schemaData.extends && this.schemaData.extends.includes('timestamps')) {
 				entity.createdAt = new Date();
 				entity.updatedAt = null;
 			}
 
-			const validated = Shared.applyAppProperties(this.schema, body);
+			const validated = Shared.applyAppProperties(this.schemaData, body);
 			return prev.concat([Object.assign(validated, entity)]);
 		};
 	}
@@ -216,17 +216,17 @@ class SchemaModel {
 		});
 	}
 	validateUpdate(body) {
-		const sharedFn = Shared.validateUpdate({}, this.schema);
+		const sharedFn = Shared.validateUpdate({}, this.schemaData);
 		return sharedFn(body);
 	}
 	updateByPath(body, id) {
-		const sharedFn = Shared.updateByPath({}, this.schema, this.collection);
+		const sharedFn = Shared.updateByPath({}, this.schemaData, this.collection);
 
 		if (body instanceof Array === false) {
 			body = [body];
 		}
 
-		if (this.schema.extends && this.schema.extends.includes('timestamps')) {
+		if (this.schemaData.extends && this.schemaData.extends.includes('timestamps')) {
 			body.push({
 				path: 'updatedAt',
 				value: new Date(),
@@ -310,10 +310,15 @@ class SchemaModel {
 	/**
 	 * @param {Object} query - mongoDB query
 	 * @param {Object} excludes - mongoDB query excludes
+	 * @param {Boolean} stream - should return a stream
 	 * @return {Promise} - resolves to an array of docs
 	 */
-	find(query, excludes = {}) {
+	find(query, excludes = {}, stream = false) {
 		Logging.logSilly(`find: ${this.collectionName} ${query}`);
+
+		if (stream) {
+			return this.collection.find(query, excludes);
+		}
 
 		return new Promise((resolve) => {
 			this.collection.find(query, excludes).toArray((err, doc) => {

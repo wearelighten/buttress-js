@@ -10,9 +10,53 @@
  *
  */
 
+const crypto = require('crypto');
+const Helpers = require('./helpers');
+
 class Schema {
-	constructor(schema) {
-		this.schema = schema;
+	constructor(data) {
+		this.data = data;
+
+		this.digest = null;
+
+		this.__flattened = null;
+		this.__flattenedPermissionProperties = null;
+
+		this.init();
+	}
+
+	init() {
+		if (this.data) {
+			const hash = crypto.createHash('sha1');
+			hash.update(Schema.encode(this.data));
+			this.digest = hash.digest('hex');
+
+			this.__flattened = Helpers.getFlattenedSchema(this.data);
+		}
+	}
+
+	getFlat() {
+		return this.__flattened;
+	}
+
+	getFlatPermissionProperties() {
+		if (this.__flattenedPermissionProperties) {
+			return this.__flattenedPermissionProperties;
+		}
+
+		const properties = this.getFlat();
+		const permissions = {};
+
+		for (const property in properties) {
+			if (properties.hasOwnProperty(property)) {
+				if (properties[property].__permissions) {
+					permissions[property] = properties[property].__permissions;
+				}
+			}
+		}
+
+		this.__flattenedPermissionProperties = permissions;
+		return permissions;
 	}
 
 	static encode(obj) {

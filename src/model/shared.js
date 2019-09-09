@@ -12,6 +12,7 @@
  */
 
 const Logging = require('../logging');
+const Helpers = require('../helpers');
 const Model = require('./index');
 const ObjectId = require('mongodb').ObjectId;
 const Sugar = require('sugar');
@@ -77,45 +78,6 @@ module.exports.add = (collection, __add) => {
 * SCHEMA HELPERS
 *
 **********************************************************************************/
-const __getFlattenedSchema = (schema) => {
-	const __buildFlattenedSchema = (property, parent, path, flattened) => {
-		path.push(property);
-
-		let isRoot = true;
-		for (const childProp in parent[property]) {
-			if (!parent[property].hasOwnProperty(childProp)) continue;
-			if (/^__/.test(childProp)) {
-				if (childProp === '__schema') {
-					parent[property].__schema = __getFlattenedSchema({properties: parent[property].__schema});
-				}
-				continue;
-			}
-
-			isRoot = false;
-			__buildFlattenedSchema(childProp, parent[property], path, flattened);
-		}
-
-		if (isRoot === true) {
-			flattened[path.join('.')] = parent[property];
-			path.pop();
-			return;
-		}
-
-		path.pop();
-		return;
-	};
-
-	const flattened = {};
-	const path = [];
-	for (const property in schema.properties) {
-		if (!schema.properties.hasOwnProperty(property)) continue;
-		__buildFlattenedSchema(property, schema.properties, path, flattened);
-	}
-
-	Logging.logSilly(flattened);
-	return flattened;
-};
-
 const __getFlattenedBody = (body) => {
 	const __buildFlattenedBody = (property, parent, path, flattened) => {
 		if (/^_/.test(property)) return; // ignore internals
@@ -304,7 +266,6 @@ const __validate = (schema, values, parentProperty) => {
 		if (config.__type === 'array' && config.__schema) {
 			propVal.value.reduce((errors, v, idx) => {
 				const values = __getFlattenedBody(v);
-				Logging.logSilly(values);
 				const res = __validate(config.__schema, values, `${property}.${idx}.`);
 				if (!res.invalid) return errors;
 				if (res.missing.length) {
@@ -332,64 +293,13 @@ const __validate = (schema, values, parentProperty) => {
 		}
 	}
 
-	Logging.logSilly(res.missing);
-	Logging.logSilly(res.invalid);
+	Logging.logSilly(`res.missing`, res.missing);
+	Logging.logSilly(`res.invalid`, res.invalid);
 
 	return res;
 };
 
-const __prepareSchemaResult = (result, appRoles, schema, token) => {
-	if (!schema) {
-		throw new Error('Can\'t validate result without a data schema');
-	}
-	if (!token) {
-		throw new Error('Can\'t validate result without a token');
-	}
-
-	let filter = null;
-	const role = token.role || '';
-	const dataDisposition = {
-		READ: 'deny',
-	};
-
-	// Check endpointDisposition against app roles it exists
-	if (appRoles) {
-		const role = appRoles.find((r) => r.name === token.role);
-		if (role && role.dataDisposition) {
-			if (role.dataDisposition === 'allowAll') {
-				dataDisposition.READ = 'allow';
-			}
-		}
-	}
-
-	if (role && schema.roles) {
-		const schemaRole = schema.roles.find((r) => r.name === token.role);
-		if (schemaRole && schemaRole.dataDisposition) {
-			if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
-		}
-
-		if (schemaRole && schemaRole.filter) {
-			filter = schemaRole.filter;
-		}
-	}
-
-	const properties = __getFlattenedSchema(schema);
-
-	// Remove properties without permission and reduce property to permission
-	for (const property in properties) {
-		if (properties.hasOwnProperty(property)) {
-			if (properties[property].__permissions) {
-				const propertyRole = properties[property].__permissions.find((r) => r.role === role);
-				if (propertyRole) {
-					properties[property] = propertyRole;
-					continue;
-				}
-			}
-
-			delete properties[property];
-		}
-	}
-
+const __prepareSchemaResult = (result, dataDisposition, filter, permissions, token) => {
 	const _prepare = (chunk, path) => {
 		if (!chunk) return chunk;
 
@@ -404,10 +314,6 @@ const __prepareSchemaResult = (result, appRoles, schema, token) => {
 		if (chunk._user) {
 			chunk.userId = chunk._user;
 			delete chunk._user;
-		}
-
-		if (!schema || !token || !token.role) {
-			return chunk;
 		}
 
 		if (typeof chunk === 'object') {
@@ -445,14 +351,13 @@ const __prepareSchemaResult = (result, appRoles, schema, token) => {
 					let readDisposition = false;
 
 					const property = path.join('.');
-					if (properties[property]) {
-						readDisposition = properties[property].READ === 'allow';
+					if (permissions[property]) {
+						readDisposition = permissions[property].READ === 'allow';
 					} else {
 						readDisposition = dataDisposition.READ === 'allow';
 					}
 
 					if (!readDisposition) {
-						Logging.logSilly(`${key} removed from result for ${role}`);
 						delete chunk[key];
 						path.pop();
 						return;
@@ -480,7 +385,7 @@ const _validateAppProperties = function(schema, body) {
 	// const schema = __getCollectionSchema(collection);
 	if (schema === false) return {isValid: true};
 
-	const flattenedSchema = __getFlattenedSchema(schema);
+	const flattenedSchema = Helpers.getFlattenedSchema(schema);
 	const flattenedBody = __getFlattenedBody(body);
 
 	return __validate(flattenedSchema, flattenedBody, '');
@@ -536,7 +441,6 @@ const __populateObject = (schema, values) => {
 
 		res[root] = value;
 	}
-	Logging.logSilly(res);
 	return res;
 };
 
@@ -549,7 +453,7 @@ const _applyAppProperties = function(schema, body) {
 	// const schema = __getCollectionSchema(collection);
 	if (schema === false) return {isValid: true};
 
-	const flattenedSchema = __getFlattenedSchema(schema);
+	const flattenedSchema = Helpers.getFlattenedSchema(schema);
 	const flattenedBody = __getFlattenedBody(body);
 
 	return __populateObject(flattenedSchema, flattenedBody);
@@ -809,7 +713,7 @@ module.exports.validateUpdate = function(pathContext, schema) {
 		}
 
 		// const schema = __getCollectionSchema(collection);
-		const flattenedSchema = schema ? __getFlattenedSchema(schema) : false;
+		const flattenedSchema = schema ? Helpers.getFlattenedSchema(schema) : false;
 		const extendedPathContext = __extendPathContext(pathContext, flattenedSchema, '');
 
 		const validation = body.map(_doValidateUpdate(extendedPathContext, flattenedSchema)).filter((v) => v.isValid === false);
@@ -824,9 +728,8 @@ module.exports.updateByPath = function(pathContext, schema, collection) {
 			body = [body];
 		}
 		// const schema = __getCollectionSchema(collectionName);
-		const flattenedSchema = schema ? __getFlattenedSchema(schema) : false;
+		const flattenedSchema = schema ? Helpers.getFlattenedSchema(schema) : false;
 		const extendedPathContext = __extendPathContext(pathContext, flattenedSchema, '');
-		Logging.logSilly(extendedPathContext);
 
 		return body.reduce((promise, update) => {
 			const config = flattenedSchema === false ? false : flattenedSchema[update.path];
@@ -848,9 +751,6 @@ module.exports.updateByPath = function(pathContext, schema, collection) {
  * @return {Promise} - resolves when save operation is completed, rejects if metadata already exists
  */
 module.exports.addOrUpdateMetadata = function(key, value) {
-	Logging.logSilly(key);
-	Logging.logSilly(value);
-
 	const exists = this.metadata.find((m) => m.key === key);
 	if (exists) {
 		exists.value = value;
