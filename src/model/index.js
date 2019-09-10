@@ -39,20 +39,21 @@ class Model {
 		this.mongoDb = db;
 
 		// Core Models
-		this.initCoreModels();
-
-		// Load schema models
-		this.initSchema();
+		return this.initCoreModels()
+			.then(() => this.initSchema());
 	}
 
 	initCoreModels(db) {
-		if (db) this.mongoDb = db;
-		// Core Models
-		const models = _getModels();
-		Logging.log(models, Logging.Constants.LogLevel.SILLY);
-		for (let x = 0; x < models.length; x++) {
-			this._initModel(models[x]);
-		}
+		return new Promise((resolve) => {
+			if (db) this.mongoDb = db;
+			// Core Models
+			const models = _getModels();
+			Logging.log(models, Logging.Constants.LogLevel.SILLY);
+			for (let x = 0; x < models.length; x++) {
+				this._initModel(models[x]);
+			}
+			resolve();
+		});
 	}
 
 	initSchema(db) {

@@ -34,7 +34,9 @@ class GetList extends Route {
 		// Fetch model
 		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
+
 		if (!this.model) {
+			throw new Error('GetList Route missing model');
 			// Somthing went wrong!!1?
 		}
 	}
