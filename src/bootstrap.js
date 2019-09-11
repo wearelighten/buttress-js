@@ -10,8 +10,8 @@
  *
  */
 
-const Rest = require('./bootstrap-rest');
-const Socket = require('./bootstrap-socket');
+const BootstrapRest = require('./bootstrap-rest');
+const BootstrapSocket = require('./bootstrap-socket');
 
 /* ********************************************************************************
  *
@@ -19,6 +19,6 @@ const Socket = require('./bootstrap-socket');
  *
  **********************************************************************************/
 module.exports = {
-	rest: () => new Rest(),
-	socket: Socket.init,
+	rest: () => new BootstrapRest(),
+	socket: () => new BootstrapSocket(),
 };
