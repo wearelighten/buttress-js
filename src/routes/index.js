@@ -37,7 +37,8 @@ function _initRoute(app, Route) {
 		Config.app.apiPrefix,
 		route.path,
 	]);
-	app[route.verb](`/${routePath}`, (req, res) => {
+	Logging.logSilly(`REGISTER: [${route.verb.toUpperCase()}] ${routePath}`);
+	app[route.verb](routePath, (req, res) => {
 		Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 		route
@@ -68,13 +69,14 @@ function _initRoute(app, Route) {
 function _initSchemaRoutes(express, app, schemaData) {
 	SchemaRoutes.forEach((Route) => {
 		const route = new Route(schemaData);
-		const routePath = path.join(...[
+		let routePath = path.join(...[
 			(app.apiPath) ? app.apiPath : Helpers.ShortId(app._id),
 			Config.app.apiPrefix,
 			route.path,
 		]);
+		if (routePath.indexOf('/') !== 0) routePath = `/${routePath}`;
 		Logging.logSilly(`REGISTER: [${route.verb.toUpperCase()}] ${routePath}`);
-		express[route.verb](`/${routePath}`, (req, res) => {
+		express[route.verb](routePath, (req, res) => {
 			Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 			route
@@ -372,7 +374,7 @@ exports.init = (app) => {
 		.then(() => _loadTokens())
 		.then(() => {
 			Logging.logSilly('Registered API Routes');
-			app.use(apiRouter);
+			app.use('', apiRouter);
 		});
 };
 
