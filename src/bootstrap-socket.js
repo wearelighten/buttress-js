@@ -26,7 +26,7 @@ const NRP = require('node-redis-pubsub');
 
 class BootstrapSocket {
 	constructor() {
-		Logging.setLogLevel(Logging.Constants.LogLevel.SILLY);
+		Logging.setLogLevel(Logging.Constants.LogLevel.INFO);
 
 		this.processes = os.cpus().length;
 		this.workers = [];
