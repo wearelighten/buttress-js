@@ -221,3 +221,41 @@ const __flatternObject = (obj, output, paths) => {
 };
 module.exports.flatternObject = __flatternObject;
 
+const __getFlattenedSchema = (schema) => {
+	const __buildFlattenedSchema = (property, parent, path, flattened) => {
+		path.push(property);
+
+		let isRoot = true;
+		for (const childProp in parent[property]) {
+			if (!parent[property].hasOwnProperty(childProp)) continue;
+			if (/^__/.test(childProp)) {
+				if (childProp === '__schema') {
+					parent[property].__schema = __getFlattenedSchema({properties: parent[property].__schema});
+				}
+				continue;
+			}
+
+			isRoot = false;
+			__buildFlattenedSchema(childProp, parent[property], path, flattened);
+		}
+
+		if (isRoot === true) {
+			flattened[path.join('.')] = parent[property];
+			path.pop();
+			return;
+		}
+
+		path.pop();
+		return;
+	};
+
+	const flattened = {};
+	const path = [];
+	for (const property in schema.properties) {
+		if (!schema.properties.hasOwnProperty(property)) continue;
+		__buildFlattenedSchema(property, schema.properties, path, flattened);
+	}
+
+	return flattened;
+};
+module.exports.getFlattenedSchema = __getFlattenedSchema;

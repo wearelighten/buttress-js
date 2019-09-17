@@ -171,6 +171,7 @@ class Route {
 	}
 
 	_addLogActivity(req, path, verb) {
+		// TODO: Activty should pass back a stripped version of the activty object. 
 		return Model.Activity.add({
 			activityTitle: this.activityTitle,
 			activityDescription: this.activityDescription,
@@ -266,7 +267,7 @@ class Route {
 			 */
 			let authorised = false;
 			const token = req.token;
-			Logging.logSilly(token.permissions);
+			Logging.logSilly(`permissions`, token.permissions);
 			for (let x = 0; x < token.permissions.length; x++) {
 				const p = token.permissions[x];
 				if (this._matchRoute(req, p.route) && this._matchPermission(p.permission)) {
@@ -294,7 +295,7 @@ class Route {
 				authorised = false;
 
 				// HACK - BYPASS Permissions for company / service
-				if (['company', 'service'].includes(this.schema.name)) {
+				if (['company', 'service'].includes(this.schema.data.name)) {
 					return resolve(req.token);
 				}
 
@@ -339,8 +340,8 @@ class Route {
 
 				// If schema has endpointDisposition roles set for the role then
 				// user the defined settings instead.
-				if (this.schema.roles) {
-					const role = this.schema.roles.find((r) => r.name === req.token.role);
+				if (this.schema.data.roles) {
+					const role = this.schema.data.roles.find((r) => r.name === req.token.role);
 					Logging.logSilly(`SAUTH: MATCHING SCEHMA ROLE - ${req.token.role}`);
 
 					// Set schema role on the req object for use by route/schema
@@ -398,7 +399,6 @@ class Route {
 		const wildcard = /(.+)(\/\*)/;
 		const matches = routeSpec.match(wildcard);
 		if (matches) {
-			Logging.logSilly(matches);
 			if (this.path.match(new RegExp(`^${matches[1]}`)) &&
 				req.token.authLevel >= Constants.Auth.ADMIN) {
 				return true;

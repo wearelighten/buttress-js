@@ -14,6 +14,7 @@ const Logging = require('../logging');
 const Route = require('./route');
 const Model = require('../model');
 // const Helpers = require('../../helpers');
+const Schema = require('../schema');
 
 const routes = [];
 
@@ -31,9 +32,11 @@ class GetList extends Route {
 		this.activityBroadcast = false;
 
 		// Fetch model
-		this.schema = schema;
+		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
+
 		if (!this.model) {
+			throw new Error('GetList Route missing model');
 			// Somthing went wrong!!1?
 		}
 	}
@@ -48,7 +51,7 @@ class GetList extends Route {
 	}
 
 	_exec(req, res, query) {
-		return this.model.find(query);
+		return this.model.find(query, {}, true);
 	}
 }
 routes.push(GetList);
@@ -66,7 +69,7 @@ class GetOne extends Route {
 		this.activityDescription = `GET ${schema.name}`;
 		this.activityBroadcast = false;
 
-		this.schema = schema;
+		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
 	}
 
@@ -103,7 +106,7 @@ class GetMany extends Route {
 		this.activityDescription = `BULK GET ${schema.name}`;
 		this.activityBroadcast = false;
 
-		this.schema = schema;
+		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
 	}
 
@@ -143,7 +146,7 @@ class AddOne extends Route {
 		this.activityDescription = `ADD ${schema.name}`;
 		this.activityBroadcast = true;
 
-		this.schema = schema;
+		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
 	}
 
@@ -198,7 +201,7 @@ class AddMany extends Route {
 		this.activityDescription = `BULK ADD ${schema.name}`;
 		this.activityBroadcast = true;
 
-		this.schema = schema;
+		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
 	}
 
@@ -257,7 +260,7 @@ class UpdateOne extends Route {
 		this.activityDescription = `UPDATE ${schema.name}`;
 		this.activityBroadcast = true;
 
-		this.schema = schema;
+		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
 
 		this._entity = null;
@@ -323,7 +326,7 @@ class DeleteOne extends Route {
 		this.activityDescription = `DELETE ${schema.name}`;
 		this.activityBroadcast = true;
 
-		this.schema = schema;
+		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
 
 		this._entity = false;
@@ -361,7 +364,7 @@ class DeleteMany extends Route {
 		this.activityDescription = `BULK DELETE ${schema.name}`;
 		this.activityBroadcast = true;
 
-		this.schema = schema;
+		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
 	}
 
@@ -407,7 +410,7 @@ class DeleteAll extends Route {
 		this.activityDescription = `DELETE ALL ${schema.name}`;
 		this.activityBroadcast = true;
 
-		this.schema = schema;
+		this.schema = new Schema(schema);
 		this.model = Model[schema.collection];
 	}
 

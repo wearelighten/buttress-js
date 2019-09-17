@@ -39,20 +39,21 @@ class Model {
 		this.mongoDb = db;
 
 		// Core Models
-		this.initCoreModels();
-
-		// Load schema models
-		this.initSchema();
+		return this.initCoreModels()
+			.then(() => this.initSchema());
 	}
 
 	initCoreModels(db) {
-		if (db) this.mongoDb = db;
-		// Core Models
-		const models = _getModels();
-		Logging.log(models, Logging.Constants.LogLevel.SILLY);
-		for (let x = 0; x < models.length; x++) {
-			this._initModel(models[x]);
-		}
+		return new Promise((resolve) => {
+			if (db) this.mongoDb = db;
+			// Core Models
+			const models = _getModels();
+			Logging.log(models, Logging.Constants.LogLevel.SILLY);
+			for (let x = 0; x < models.length; x++) {
+				this._initModel(models[x]);
+			}
+			resolve();
+		});
 	}
 
 	initSchema(db) {
@@ -62,8 +63,8 @@ class Model {
 			.then((apps) => {
 				apps.forEach((app) => {
 					if (app.__schema) {
-						Schema.buildCollections(Schema.decode(app.__schema)).forEach((schema) => {
-							this._initSchemaModel(app, schema);
+						Schema.buildCollections(Schema.decode(app.__schema)).forEach((schemaData) => {
+							this._initSchemaModel(app, schemaData);
 						});
 					}
 				});
@@ -92,15 +93,15 @@ class Model {
 
 	/**
 	 * @param {object} app - application container
-	 * @param {object} schema - schema object
+	 * @param {object} schemaData - schema data object
 	 * @return {object} SchemaModel - initiated schema model built from passed schema object
 	 * @private
 	 */
-	_initSchemaModel(app, schema) {
-		const name = schema.collection;
+	_initSchemaModel(app, schemaData) {
+		const name = schemaData.collection;
 
 		if (!this.models[name]) {
-			this.models[name] = new SchemaModel(this.mongoDb, schema, app);
+			this.models[name] = new SchemaModel(this.mongoDb, schemaData, app);
 		}
 
 		this.__defineGetter__(name, () => this.models[name]);
