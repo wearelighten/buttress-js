@@ -33,7 +33,11 @@ const _timer = new Helpers.Timer();
  */
 function _initRoute(app, Route) {
 	const route = new Route();
-	app[route.verb](`/${route.path}`, (req, res) => {
+	const routePath = path.join(...[
+		Config.app.apiPrefix,
+		route.path,
+	]);
+	app[route.verb](`/${routePath}`, (req, res) => {
 		Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 		route
@@ -58,14 +62,19 @@ function _initRoute(app, Route) {
 
 /**
  * @param  {Object} express - express applcation container
- * @param  {Object} app - application container
+ * @param  {Object} app - app data object
  * @param  {Object} schemaData - schema data object
  */
 function _initSchemaRoutes(express, app, schemaData) {
 	SchemaRoutes.forEach((Route) => {
 		const route = new Route(schemaData);
-		Logging.logSilly(`REGISTER: [${route.verb.toUpperCase()}] ${route.path}`);
-		express[route.verb](`/${route.path}`, (req, res) => {
+		const routePath = path.join(...[
+			(app.apiPath) ? app.apiPath : Helpers.ShortId(app._id),
+			Config.app.apiPrefix,
+			route.path,
+		]);
+		Logging.logSilly(`REGISTER: [${route.verb.toUpperCase()}] ${routePath}`);
+		express[route.verb](`/${routePath}`, (req, res) => {
 			Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 			route
@@ -158,11 +167,11 @@ let _tokens = [];
  * @private
  */
 function _authenticateToken(req, res, next) {
-	Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.SILLY);
 	req.session = null; // potentially prevents a write
 	req.timer = _timer;
 	req.timer.start();
-	Logging.logVerbose(`START [${req.method.toUpperCase()}] ${req.path}`);
+	Logging.logVerbose(`AUTH [${req.method.toUpperCase()}] ${req.path}`);
+	Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.SILLY);
 
 	if (!req.query.token) {
 		Logging.log('EAUTH: Missing Token', Logging.Constants.LogLevel.ERR);
@@ -363,7 +372,7 @@ exports.init = (app) => {
 		.then(() => _loadTokens())
 		.then(() => {
 			Logging.logSilly('Registered API Routes');
-			app.use(Config.app.apiPrefix, apiRouter);
+			app.use(apiRouter);
 		});
 };
 

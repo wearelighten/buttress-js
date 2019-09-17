@@ -74,6 +74,11 @@ class AppSchemaModel extends SchemaModel {
 					__default: '',
 					__allowUpdate: true,
 				},
+				apiPath: {
+					__type: 'string',
+					__default: '',
+					__allowUpdate: true,
+				},
 				_owner: {
 					__type: 'id',
 					__required: true,
