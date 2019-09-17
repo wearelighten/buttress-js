@@ -2,7 +2,10 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.0.3
+### Version: 2.1.0
+- ADDED: App namespacing to the API routes
+- REFACTOR: prepareSchemaResult dataDisposition computation has been moved outside of the loop process
+### 2.0.3
 - ADDED: Script to aid mapping existing person objects over to a app usable format
 - FIX: Don't filter data against user roles if request is using a app token
 - FIX: User token mapping will mutiple tokens
