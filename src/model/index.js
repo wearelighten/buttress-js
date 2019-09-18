@@ -16,6 +16,7 @@ const Logging = require('../logging');
 const Sugar = require('sugar');
 const Schema = require('../schema');
 const SchemaModel = require('./schemaModel');
+const shortId = require('../helpers').ShortId;
 
 /**
  * @param {string} model - name of the model to load
@@ -98,7 +99,12 @@ class Model {
 	 * @private
 	 */
 	_initSchemaModel(app, schemaData) {
-		const name = schemaData.collection;
+		let name = `${schemaData.collection}`;
+		const appShortId = (app) ? shortId(app._id) : null;
+
+		if (appShortId) {
+			name = `${appShortId}-${schemaData.collection}`;
+		}
 
 		if (!this.models[name]) {
 			this.models[name] = new SchemaModel(this.mongoDb, schemaData, app);

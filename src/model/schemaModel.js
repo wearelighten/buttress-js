@@ -131,7 +131,7 @@ class SchemaModel {
 						if (command.includes('schema.')) {
 							const commandPath = command.split('.');
 							commandPath.shift(); // Remove "schema"
-							const collectionName = commandPath.shift();
+							const collectionName = `${this.appShortId}-${commandPath.shift()}`;
 							const propertyPath = commandPath.join('.');
 
 							let propertyQuery = {};

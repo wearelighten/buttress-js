@@ -22,7 +22,7 @@ const routes = [];
  * @class GetList
  */
 class GetList extends Route {
-	constructor(schema) {
+	constructor(schema, appShort) {
 		super(`${schema.name}`, `GET ${schema.name} LIST`);
 		this.verb = Route.Constants.Verbs.GET;
 		this.auth = Route.Constants.Auth.USER;
@@ -31,13 +31,17 @@ class GetList extends Route {
 		this.activityDescription = `GET ${schema.name} LIST`;
 		this.activityBroadcast = false;
 
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
 		// Fetch model
 		this.schema = new Schema(schema);
-		this.model = Model[schema.collection];
+		this.model = Model[schemaCollection];
 
 		if (!this.model) {
-			throw new Error('GetList Route missing model');
-			// Somthing went wrong!!1?
+			throw new Error(`GetList Route missing model ${schemaCollection}`);
 		}
 	}
 
@@ -60,7 +64,7 @@ routes.push(GetList);
  * @class GetOne
  */
 class GetOne extends Route {
-	constructor(schema) {
+	constructor(schema, appShort) {
 		super(`${schema.name}/:id`, `GET ${schema.name}`);
 		this.verb = Route.Constants.Verbs.GET;
 		this.auth = Route.Constants.Auth.USER;
@@ -69,8 +73,18 @@ class GetOne extends Route {
 		this.activityDescription = `GET ${schema.name}`;
 		this.activityBroadcast = false;
 
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
 		this.schema = new Schema(schema);
-		this.model = Model[schema.collection];
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`GetList Route missing model ${schemaCollection}`);
+		}
 	}
 
 	_validate(req, res, token) {
@@ -97,7 +111,7 @@ routes.push(GetOne);
  * @class GetMany
  */
 class GetMany extends Route {
-	constructor(schema) {
+	constructor(schema, appShort) {
 		super(`${schema.name}/bulk/load`, `BULK GET ${schema.name}`);
 		this.verb = Route.Constants.Verbs.POST;
 		this.auth = Route.Constants.Auth.ADMIN;
@@ -106,8 +120,18 @@ class GetMany extends Route {
 		this.activityDescription = `BULK GET ${schema.name}`;
 		this.activityBroadcast = false;
 
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
 		this.schema = new Schema(schema);
-		this.model = Model[schema.collection];
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`GetList Route missing model ${schemaCollection}`);
+		}
 	}
 
 	_validate(req, res, token) {
@@ -137,7 +161,7 @@ routes.push(GetMany);
  * @class AddOne
  */
 class AddOne extends Route {
-	constructor(schema) {
+	constructor(schema, appShort) {
 		super(`${schema.name}`, `ADD ${schema.name}`);
 		this.verb = Route.Constants.Verbs.POST;
 		this.auth = Route.Constants.Auth.USER;
@@ -146,8 +170,18 @@ class AddOne extends Route {
 		this.activityDescription = `ADD ${schema.name}`;
 		this.activityBroadcast = true;
 
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
 		this.schema = new Schema(schema);
-		this.model = Model[schema.collection];
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`GetList Route missing model ${schemaCollection}`);
+		}
 	}
 
 	_validate(req, res, token) {
@@ -192,7 +226,7 @@ routes.push(AddOne);
  * @class AddMany
  */
 class AddMany extends Route {
-	constructor(schema) {
+	constructor(schema, appShort) {
 		super(`${schema.name}/bulk/add`, `BULK ADD ${schema.name}`);
 		this.verb = Route.Constants.Verbs.POST;
 		this.auth = Route.Constants.Auth.ADMIN;
@@ -201,8 +235,18 @@ class AddMany extends Route {
 		this.activityDescription = `BULK ADD ${schema.name}`;
 		this.activityBroadcast = true;
 
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
 		this.schema = new Schema(schema);
-		this.model = Model[schema.collection];
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`GetList Route missing model ${schemaCollection}`);
+		}
 	}
 
 	_validate(req, res, token) {
@@ -251,7 +295,7 @@ routes.push(AddMany);
  * @class UpdateOne
  */
 class UpdateOne extends Route {
-	constructor(schema) {
+	constructor(schema, appShort) {
 		super(`${schema.name}/:id`, `UPDATE ${schema.name}`);
 		this.verb = Route.Constants.Verbs.PUT;
 		this.auth = Route.Constants.Auth.USER;
@@ -260,8 +304,18 @@ class UpdateOne extends Route {
 		this.activityDescription = `UPDATE ${schema.name}`;
 		this.activityBroadcast = true;
 
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
 		this.schema = new Schema(schema);
-		this.model = Model[schema.collection];
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`GetList Route missing model ${schemaCollection}`);
+		}
 
 		this._entity = null;
 	}
@@ -317,7 +371,7 @@ routes.push(UpdateOne);
  * @class DeleteOne
  */
 class DeleteOne extends Route {
-	constructor(schema) {
+	constructor(schema, appShort) {
 		super(`${schema.name}/:id`, `DELETE ${schema.name}`);
 		this.verb = Route.Constants.Verbs.DEL;
 		this.auth = Route.Constants.Auth.USER;
@@ -326,8 +380,18 @@ class DeleteOne extends Route {
 		this.activityDescription = `DELETE ${schema.name}`;
 		this.activityBroadcast = true;
 
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
 		this.schema = new Schema(schema);
-		this.model = Model[schema.collection];
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`GetList Route missing model ${schemaCollection}`);
+		}
 
 		this._entity = false;
 	}
@@ -355,7 +419,7 @@ routes.push(DeleteOne);
  * @class DeleteMany
  */
 class DeleteMany extends Route {
-	constructor(schema) {
+	constructor(schema, appShort) {
 		super(`${schema.name}/bulk/delete`, `BULK DELETE ${schema.name}`);
 		this.verb = Route.Constants.Verbs.POST;
 		this.auth = Route.Constants.Auth.ADMIN;
@@ -364,8 +428,18 @@ class DeleteMany extends Route {
 		this.activityDescription = `BULK DELETE ${schema.name}`;
 		this.activityBroadcast = true;
 
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
 		this.schema = new Schema(schema);
-		this.model = Model[schema.collection];
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`GetList Route missing model ${schemaCollection}`);
+		}
 	}
 
 	_validate(req, res, token) {
@@ -401,7 +475,7 @@ routes.push(DeleteMany);
  * @class DeleteAll
  */
 class DeleteAll extends Route {
-	constructor(schema) {
+	constructor(schema, appShort) {
 		super(`${schema.name}`, `DELETE ALL ${schema.name}`);
 		this.verb = Route.Constants.Verbs.DEL;
 		this.auth = Route.Constants.Auth.SUPER;
@@ -410,8 +484,18 @@ class DeleteAll extends Route {
 		this.activityDescription = `DELETE ALL ${schema.name}`;
 		this.activityBroadcast = true;
 
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
 		this.schema = new Schema(schema);
-		this.model = Model[schema.collection];
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`GetList Route missing model ${schemaCollection}`);
+		}
 	}
 
 	_validate(req, res, token) {
