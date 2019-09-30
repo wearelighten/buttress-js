@@ -502,7 +502,7 @@ class DeleteUser extends Route {
 	constructor() {
 		super('user/:id', 'DELETE USER');
 		this.verb = Route.Constants.Verbs.DEL;
-		this.auth = Route.Constants.Auth.ADMIN;
+		this.auth = Route.Constants.Auth.SUPER;
 		this.permissions = Route.Constants.Permissions.DELETE;
 		this._user = false;
 	}
