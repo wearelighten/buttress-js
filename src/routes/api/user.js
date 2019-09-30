@@ -515,20 +515,22 @@ class DeleteUser extends Route {
 				return;
 			}
 			Model.User.findById(req.params.id, req.authApp._id)
-				.then((user) => {
-					if (!user) {
+				.then((userToken) => {
+					if (userToken) {
+						const user = (Array.isArray(userToken)) ? userToken[0] : userToken;
+						Logging.logDebug(`CreateUserAuthToken:findById: ${user ? user.id : user}`);
+						resolve(user);
+					} else {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
+						resolve({statusCode: 400});
 					}
-					this._user = user;
-					resolve(true);
 				});
 		});
 	}
 
-	_exec(req, res, validate) {
-		return Model.User.rm(this._user).then(() => true);
+	_exec(req, res, user) {
+		return Model.User.rm(user)
+			.then(() => true);
 	}
 }
 routes.push(DeleteUser);
