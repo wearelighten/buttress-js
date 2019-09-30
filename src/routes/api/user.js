@@ -98,7 +98,7 @@ class FindUser extends Route {
 					if (_user) {
 						Model.Token.findUserAuthTokens(_user._id, req.authApp._id)
 							.then((tokens) => {
-								const hasFoundToken = (tokens && tokens.lenght > 0);
+								const hasFoundToken = (tokens && tokens.length > 0);
 								Logging.logSilly(`FindUserToken: ${hasFoundToken === true}`);
 
 								resolve({
