@@ -137,23 +137,24 @@ routes.push(FindUser);
 class CreateUserAuthToken extends Route {
 	constructor() {
 		super('user/:id/token', 'CREATE USER AUTH TOKEN');
-		this.verb = Route.Constants.Verbs.PUT;
-		this.auth = Route.Constants.Auth.ADMIN;
+		this.verb = Route.Constants.Verbs.POST;
+		this.auth = Route.Constants.Auth.SUPER;
 		this.permissions = Route.Constants.Permissions.WRITE;
 	}
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!req.body.auth ||
-				!req.body.auth.authLevel ||
-				!req.body.auth.permissions ||
-				!req.body.auth.domains) {
+			if (!req.body ||
+				!req.body.authLevel ||
+				!req.body.permissions ||
+				!req.body.domains ||
+				!req.body.role) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
-			req.body.auth.type = Model.Token.Constants.Type.USER;
-			req.body.auth.app = req.authApp;
+
+			req.body.type = Model.Token.Constants.Type.USER;
 
 			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
@@ -162,9 +163,10 @@ class CreateUserAuthToken extends Route {
 			}
 
 			Model.User.findById(req.params.id, req.authApp._id)
-				.then((user) => {
-					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
-					if (user) {
+				.then((userToken) => {
+					if (userToken) {
+						const user = (Array.isArray(userToken)) ? userToken[0] : userToken;
+						Logging.logDebug(`CreateUserAuthToken:findById: ${user ? user.id : user}`);
 						resolve(user);
 					} else {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
@@ -175,11 +177,16 @@ class CreateUserAuthToken extends Route {
 	}
 
 	_exec(req, res, user) {
-		return Model.Token.add(req.body.auth, {
+		return Model.Token.add(req.body, {
 			_app: req.authApp._id,
 			_user: user._id,
 		})
-			.then((t) => t.value);
+			.then((t) => {
+				return {
+					value: t.value,
+					role: t.role,
+				};
+			});
 	}
 }
 routes.push(CreateUserAuthToken);
