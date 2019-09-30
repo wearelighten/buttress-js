@@ -194,10 +194,14 @@ class UpdateUserAppToken extends Route {
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.READ;
 
+		console.warn('Deprecated: Registered UpdateUserAppToken');
+
 		this._user = false;
 	}
 
 	_validate(req, res, token) {
+		console.warn('Deprecated: Call to UpdateUserAppToken');
+
 		return new Promise((resolve, reject) => {
 			if (!req.body ||
 				!req.body.token) {
@@ -316,10 +320,14 @@ class UpdateUserAppInfo extends Route {
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.WRITE;
 
+		console.warn('Deprecated: Registered UpdateUserAppInfo');
+
 		this._user = false;
 	}
 
 	_validate(req, res, token) {
+		console.warn('Deprecated: Call to UpdateUserAppInfo');
+
 		return new Promise((resolve, reject) => {
 			if (!req.body ||
 				!req.body.token) {
@@ -364,10 +372,14 @@ class AddUserAuth extends Route {
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.ADD;
 
+		console.warn('Deprecated: Registered AddUserAuth');
+
 		this._user = null;
 	}
 
 	_validate(req, res, token) {
+		console.warn('Deprecated: Call to AddUserAuth');
+
 		return new Promise((resolve, reject) => {
 			Logging.log(req.body.auth, Logging.Constants.LogLevel.DEBUG);
 			const auth = req.body.auth;
