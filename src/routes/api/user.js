@@ -138,7 +138,7 @@ class CreateUserAuthToken extends Route {
 	constructor() {
 		super('user/:id/token', 'CREATE USER AUTH TOKEN');
 		this.verb = Route.Constants.Verbs.POST;
-		this.auth = Route.Constants.Auth.SUPER;
+		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.WRITE;
 	}
 
@@ -509,7 +509,7 @@ class DeleteUser extends Route {
 	constructor() {
 		super('user/:id', 'DELETE USER');
 		this.verb = Route.Constants.Verbs.DEL;
-		this.auth = Route.Constants.Auth.SUPER;
+		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.DELETE;
 		this._user = false;
 	}
