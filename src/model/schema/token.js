@@ -108,12 +108,6 @@ class TokenSchemaModel extends SchemaModel {
 					__required: true,
 					__allowUpdate: true,
 				},
-				allocated: {
-					__type: Boolean,
-					__default: false,
-					__required: true,
-					__allowUpdate: true,
-				},
 				_app: {
 					__type: 'id',
 					__required: true,
@@ -188,7 +182,6 @@ class TokenSchemaModel extends SchemaModel {
 	findUserAuthTokens(userId, appId) {
 		return new Promise((resolve) => {
 			this.collection.find({
-				allocated: true,
 				_app: appId,
 				_user: userId,
 			}).toArray((err, doc) => {

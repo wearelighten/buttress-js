@@ -98,13 +98,14 @@ class BootstrapSocket {
 
 					const isSuper = token.authLevel > 2;
 					Logging.logSilly(`Name: ${app.name}, App ID: ${app._id}, Public ID: ${app.publicId}`);
-					Logging.log(`Public ID: ${app.name}, ${app.publicId}, ${(isSuper) ? 'SUPER' : ''}`);
+
+					this.__namespace[app.publicId] = {
+						emitter: this.emitter.of(`/${app.publicId}`),
+						sequence: 0,
+					};
+					Logging.logDebug(`[${app.publicId}]: Created Namespace for ${app.name}, ${(isSuper) ? 'SUPER' : ''}`);
 
 					if (isSuper) {
-						this.__namespace[app.publicId] = {
-							emitter: this.emitter.of(`/${app.publicId}`),
-							sequence: 0,
-						};
 						this.__superApps.push(app.publicId);
 					}
 
@@ -151,7 +152,6 @@ class BootstrapSocket {
 
 	__onActivityReceived(data) {
 		const publicId = data.appPId;
-		Logging.logDebug(`[${data.appPId}]: [${data.verb}] ${data.path}`);
 
 		if (!this.emitter) {
 			throw new Error('SIO Emitter isn\'t defined');
@@ -168,12 +168,13 @@ class BootstrapSocket {
 
 		// Disable broadcasting to public space
 		if (data.broadcast === false) {
-			Logging.logDebug(`[${data.appPId}]: ${data.verb} ${data.path} - Early out as it isn't public.`);
+			Logging.logDebug(`[${publicId}]: [${data.verb}] ${data.path} - Early out as it isn't public.`);
 			return;
 		}
+
 		// Don't emit activity if activity has super app PId, as it's already been sent
 		if (this.__superApps.includes(publicId)) {
-			Logging.logDebug(`[${data.appPId}]: ${data.verb} ${data.path} - Early out on super app activity`);
+			Logging.logDebug(`[${publicId}]: [${data.verb}] ${data.path} - Early out on super app activity`);
 			return;
 		}
 
@@ -184,6 +185,8 @@ class BootstrapSocket {
 				sequence: 0,
 			};
 		}
+
+		Logging.logDebug(`[${publicId}]: [${data.verb}] ${data.path}`);
 
 		this.__namespace[publicId].sequence++;
 		this.__namespace[publicId].emitter.emit('db-activity', {

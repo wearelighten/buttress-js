@@ -133,7 +133,6 @@ class Route {
 		}
 
 		let addActivty = true;
-
 		// Early out if tracking, we don't wan't to create activity for this
 		if (this.path === 'tracking') {
 			addActivty = false;
@@ -141,6 +140,14 @@ class Route {
 		if (this.path === 'user/:app?') {
 			addActivty = false;
 		}
+
+		let path = req.path.split('/');
+		if (path[0] === '') path.shift();
+		if (req.authApp && req.authApp.apiPath && path.indexOf(req.authApp.apiPath) === 0) {
+			path.shift();
+		}
+		// Replace API version prefix
+		path = `/${path.join('/')}`.replace(Config.app.apiPrefix, '');
 
 		const broadcast = () => {
 			if (res) {
@@ -150,7 +157,7 @@ class Route {
 					description: this.activityDescription,
 					visibility: this.activityVisibility,
 					broadcast: this.activityBroadcast,
-					path: req.path,
+					path: path,
 					pathSpec: this.path,
 					params: req.params,
 					verb: this.verb,
@@ -211,7 +218,7 @@ class Route {
 			description: activity.description,
 			visibility: activity.visibility,
 			broadcast: activity.broadcast,
-			path: activity.path.replace(Config.app.apiPrefix, ''),
+			path: activity.path,
 			pathSpec: activity.pathSpec,
 			verb: activity.verb,
 			permissions: activity.permissions,

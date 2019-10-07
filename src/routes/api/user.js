@@ -98,7 +98,7 @@ class FindUser extends Route {
 					if (_user) {
 						Model.Token.findUserAuthTokens(_user._id, req.authApp._id)
 							.then((tokens) => {
-								const hasFoundToken = (tokens && tokens.lenght > 0);
+								const hasFoundToken = (tokens && tokens.length > 0);
 								Logging.logSilly(`FindUserToken: ${hasFoundToken === true}`);
 
 								resolve({
@@ -137,23 +137,24 @@ routes.push(FindUser);
 class CreateUserAuthToken extends Route {
 	constructor() {
 		super('user/:id/token', 'CREATE USER AUTH TOKEN');
-		this.verb = Route.Constants.Verbs.PUT;
+		this.verb = Route.Constants.Verbs.POST;
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.WRITE;
 	}
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			if (!req.body.auth ||
-				!req.body.auth.authLevel ||
-				!req.body.auth.permissions ||
-				!req.body.auth.domains) {
+			if (!req.body ||
+				!req.body.authLevel ||
+				!req.body.permissions ||
+				!req.body.domains ||
+				!req.body.role) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
 				reject({statusCode: 400});
 				return;
 			}
-			req.body.auth.type = Model.Token.Constants.Type.USER;
-			req.body.auth.app = req.authApp;
+
+			req.body.type = Model.Token.Constants.Type.USER;
 
 			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
@@ -162,9 +163,10 @@ class CreateUserAuthToken extends Route {
 			}
 
 			Model.User.findById(req.params.id, req.authApp._id)
-				.then((user) => {
-					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
-					if (user) {
+				.then((userToken) => {
+					if (userToken) {
+						const user = (Array.isArray(userToken)) ? userToken[0] : userToken;
+						Logging.logDebug(`CreateUserAuthToken:findById: ${user ? user.id : user}`);
 						resolve(user);
 					} else {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
@@ -175,11 +177,16 @@ class CreateUserAuthToken extends Route {
 	}
 
 	_exec(req, res, user) {
-		return Model.Token.add(req.body.auth, {
+		return Model.Token.add(req.body, {
 			_app: req.authApp._id,
 			_user: user._id,
 		})
-			.then((t) => t.value);
+			.then((t) => {
+				return {
+					value: t.value,
+					role: t.role,
+				};
+			});
 	}
 }
 routes.push(CreateUserAuthToken);
@@ -194,10 +201,14 @@ class UpdateUserAppToken extends Route {
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.READ;
 
+		console.warn('Deprecated: Registered UpdateUserAppToken');
+
 		this._user = false;
 	}
 
 	_validate(req, res, token) {
+		console.warn('Deprecated: Call to UpdateUserAppToken');
+
 		return new Promise((resolve, reject) => {
 			if (!req.body ||
 				!req.body.token) {
@@ -316,10 +327,14 @@ class UpdateUserAppInfo extends Route {
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.WRITE;
 
+		console.warn('Deprecated: Registered UpdateUserAppInfo');
+
 		this._user = false;
 	}
 
 	_validate(req, res, token) {
+		console.warn('Deprecated: Call to UpdateUserAppInfo');
+
 		return new Promise((resolve, reject) => {
 			if (!req.body ||
 				!req.body.token) {
@@ -364,10 +379,14 @@ class AddUserAuth extends Route {
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.ADD;
 
+		console.warn('Deprecated: Registered AddUserAuth');
+
 		this._user = null;
 	}
 
 	_validate(req, res, token) {
+		console.warn('Deprecated: Call to AddUserAuth');
+
 		return new Promise((resolve, reject) => {
 			Logging.log(req.body.auth, Logging.Constants.LogLevel.DEBUG);
 			const auth = req.body.auth;
@@ -503,20 +522,22 @@ class DeleteUser extends Route {
 				return;
 			}
 			Model.User.findById(req.params.id, req.authApp._id)
-				.then((user) => {
-					if (!user) {
+				.then((userToken) => {
+					if (userToken) {
+						const user = (Array.isArray(userToken)) ? userToken[0] : userToken;
+						Logging.logDebug(`CreateUserAuthToken:findById: ${user ? user.id : user}`);
+						resolve(user);
+					} else {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
+						resolve({statusCode: 400});
 					}
-					this._user = user;
-					resolve(true);
 				});
 		});
 	}
 
-	_exec(req, res, validate) {
-		return Model.User.rm(this._user).then(() => true);
+	_exec(req, res, user) {
+		return Model.User.rm(user)
+			.then(() => true);
 	}
 }
 routes.push(DeleteUser);

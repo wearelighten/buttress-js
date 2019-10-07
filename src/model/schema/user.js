@@ -164,8 +164,6 @@ class UserSchemaModel extends SchemaModel {
 					return false;
 				}
 
-				auth.allocated = true;
-
 				return Model.Token.add(auth, {
 					_app: Model.authApp._id,
 					_user: _user._id,

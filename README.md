@@ -2,7 +2,11 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.1.0
+### Version: 2.1.1
+- FIX: Strip API version & App Prefix from activity path property
+- ADDED: Deprecated warnings for some v1 urls
+- REFACTOR: token.allocated has been removed
+### 2.1.0
 - ADDED: App namespacing to the API routes
 - REFACTOR: prepareSchemaResult dataDisposition computation has been moved outside of the loop process
 ### 2.0.3
