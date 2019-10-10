@@ -229,7 +229,7 @@ class BootstrapSocket {
 				return socket.disconnect(0);
 			}
 
-			Logging.logSilly(`${socket.id} Connected on ${publicId}`);
+			Logging.log(`${socket.id} Connected on ${publicId}`);
 			socket.on('disconnect', () => {
 				Logging.logSilly(`${socket.id} Disconnect on ${publicId}`);
 			});
