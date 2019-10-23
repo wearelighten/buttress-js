@@ -2,7 +2,9 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.1.1
+### Version: 2.1.2
+- FIX: Promise rejection in route execution process gets caught by the next exeuction step instead of early-out
+### 2.1.1
 - FIX: Strip API version & App Prefix from activity path property
 - ADDED: Deprecated warnings for some v1 urls
 - REFACTOR: token.allocated has been removed
