@@ -115,14 +115,14 @@ class Route {
 			this._authenticate(req, res)
 				.then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then(Logging.Promise.logSilly('authenticated'))
-				.then((token) => this._validate(req, res, token), reject)
+				.then((token) => this._validate(req, res, token))
 				.then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then(Logging.Promise.logSilly('validated'))
-				.then((validate) => this._exec(req, res, validate), reject)
+				.then((validate) => this._exec(req, res, validate))
 				.then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
-				.then((result) => this._logActivity(req, res, result), reject)
-				.then(resolve, reject)
-				.catch(Logging.Promise.logError());
+				.then((result) => this._logActivity(req, res, result))
+				.then(resolve)
+				.catch(reject);
 		});
 	}
 
@@ -373,7 +373,7 @@ class Route {
 
 				if (authorised === false) {
 					this.log(`SAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
-					reject({statusCode: 403});
+					return reject({statusCode: 403});
 				}
 			}
 
