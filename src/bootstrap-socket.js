@@ -97,7 +97,7 @@ class BootstrapSocket {
 					app.publicId = Model.App.genPublicUID(app.name, app._id);
 
 					const isSuper = token.authLevel > 2;
-					Logging.logSilly(`Name: ${app.name}, App ID: ${app._id}, Public ID: ${app.publicId}`);
+					Logging.log(`Name: ${app.name}, App ID: ${app._id}, Public ID: ${app.publicId}`);
 
 					this.__namespace[app.publicId] = {
 						emitter: this.emitter.of(`/${app.publicId}`),
