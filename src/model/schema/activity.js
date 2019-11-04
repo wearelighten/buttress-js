@@ -172,7 +172,7 @@ class ActivitySchemaModel extends SchemaModel {
 		}
 
 		return this.collection.find({
-			_app: appId,
+			_app: new ObjectId(appId),
 			visibility: ActivitySchemaModel.Constants.Visibility.PUBLIC,
 		});
 	}

@@ -60,15 +60,29 @@ class GetUser extends Route {
 				return;
 			}
 
-			Model.User.findById(req.params.id, req.authApp._id)
-				.then((user) => {
-					if (!user) {
-						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
-					}
+			Model.User.findById(req.params.id)
+				.then((_user) => {
+					if (_user) {
+						Model.Token.findUserAuthTokens(_user._id, req.authApp._id)
+							.then((tokens) => {
+								const hasFoundToken = (tokens && tokens.length > 0);
+								Logging.logSilly(`FindUserToken: ${hasFoundToken === true}`);
 
-					resolve(user);
+								resolve({
+									id: _user._id,
+									auth: _user.auth,
+									tokens: tokens.map((t) => {
+										return {
+											value: t.value,
+											role: t.role,
+										};
+									}),
+								});
+							});
+					} else {
+						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+						resolve({statusCode: 400});
+					}
 				});
 		});
 	}
@@ -111,12 +125,6 @@ class FindUser extends Route {
 										};
 									}),
 								});
-
-								// Model.User.updateApps(_user, req.authApp)
-								// 	.then(() => resolve({
-								// 		id: _user._id,
-								// 		tokens: _userAuthToken,
-								// 	}), reject);
 							});
 					} else {
 						resolve(false);
@@ -162,10 +170,9 @@ class CreateUserAuthToken extends Route {
 				return;
 			}
 
-			Model.User.findById(req.params.id, req.authApp._id)
-				.then((userToken) => {
-					if (userToken) {
-						const user = (Array.isArray(userToken)) ? userToken[0] : userToken;
+			Model.User.findById(req.params.id)
+				.then((user) => {
+					if (user) {
 						Logging.logDebug(`CreateUserAuthToken:findById: ${user ? user.id : user}`);
 						resolve(user);
 					} else {
@@ -178,8 +185,8 @@ class CreateUserAuthToken extends Route {
 
 	_exec(req, res, user) {
 		return Model.Token.add(req.body, {
-			_app: req.authApp._id,
-			_user: user._id,
+			_app: new ObjectId(req.authApp._id),
+			_user: new ObjectId(user._id),
 		})
 			.then((t) => {
 				return {
@@ -223,7 +230,7 @@ class UpdateUserAppToken extends Route {
 				return;
 			}
 
-			Model.User.findById(req.params.id, req.authApp._id)
+			Model.User.findById(req.params.id)
 				.then((user) => {
 					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 					this._user = user;
@@ -349,7 +356,7 @@ class UpdateUserAppInfo extends Route {
 				return;
 			}
 
-			Model.User.findById(req.params.id, req.authApp._id)
+			Model.User.findById(req.params.id)
 				.then((user) => {
 					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 					this._user = user;
@@ -403,7 +410,7 @@ class AddUserAuth extends Route {
 				return;
 			}
 
-			Model.User.findById(req.params.id, req.authApp._id)
+			Model.User.findById(req.params.id)
 				.then((user) => {
 					Logging.log(`User: ${user ? user.id : null}`, Logging.Constants.LogLevel.DEBUG);
 					this._user = user;
@@ -521,10 +528,9 @@ class DeleteUser extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			Model.User.findById(req.params.id, req.authApp._id)
-				.then((userToken) => {
-					if (userToken) {
-						const user = (Array.isArray(userToken)) ? userToken[0] : userToken;
+			Model.User.findById(req.params.id)
+				.then((user) => {
+					if (user) {
 						Logging.logDebug(`CreateUserAuthToken:findById: ${user ? user.id : user}`);
 						resolve(user);
 					} else {

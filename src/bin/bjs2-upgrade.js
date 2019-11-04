@@ -13,7 +13,7 @@
 
 const program = require('commander');
 const MongoClient = require('mongodb').MongoClient;
-const ObjectId = require('mongodb').ObjectId;
+// const ObjectId = require('mongodb').ObjectId;
 
 const Config = require('node-env-obj')('../');
 const Logging = require('../logging');

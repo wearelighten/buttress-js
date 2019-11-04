@@ -12,7 +12,7 @@
  */
 
 const SchemaModel = require('../schemaModel');
-// const ObjectId = require('mongodb').ObjectId;
+const ObjectId = require('mongodb').ObjectId;
 const Model = require('../');
 const Logging = require('../../logging');
 // const Shared = require('../shared');
@@ -197,7 +197,7 @@ class TrackingSchemaModel extends SchemaModel {
 			return this.collection.find({});
 		}
 
-		return this.collection.find({_app: appId});
+		return this.collection.find({_app: new ObjectId(appId)});
 	}
 }
 

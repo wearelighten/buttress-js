@@ -763,7 +763,7 @@ module.exports.addOrUpdateMetadata = function(key, value) {
 
 module.exports.getAllMetadata = function(collection) {
 	return function() {
-		collection.find({_app: Model.authApp._id}, {metadata: 1});
+		collection.find({_app: new ObjectId(Model.authApp._id)}, {metadata: 1});
 	};
 };
 

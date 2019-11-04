@@ -204,9 +204,9 @@ function _authenticateToken(req, res, next) {
 		.then((app) => {
 			Model.authApp = req.authApp = app;
 		})
-		.then(() => Model.User.findById(req.token._user, req.authApp._id))
+		.then(() => Model.User.findById(req.token._user))
 		.then((user) => {
-			req.authUser = user[0];
+			req.authUser = user;
 		})
 		.then(Helpers.Promise.inject())
 		.then(next)
