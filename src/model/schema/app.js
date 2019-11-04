@@ -125,7 +125,7 @@ class AppSchemaModel extends SchemaModel {
 			authLevel: body.authLevel,
 			permissions: body.permissions,
 		}, {
-			_app: app.id,
+			_app: new ObjectId(app.id),
 		})
 			.then((token) => {
 				_token = token;

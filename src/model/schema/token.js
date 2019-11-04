@@ -182,8 +182,8 @@ class TokenSchemaModel extends SchemaModel {
 	findUserAuthTokens(userId, appId) {
 		return new Promise((resolve) => {
 			this.collection.find({
-				_app: appId,
-				_user: userId,
+				_app: new ObjectId(appId),
+				_user: new ObjectId(userId),
 			}).toArray((err, doc) => {
 				if (err) throw err;
 				resolve(doc);

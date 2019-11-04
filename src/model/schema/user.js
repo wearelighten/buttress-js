@@ -283,7 +283,7 @@ class UserSchemaModel extends SchemaModel {
 				findTask(),
 				Model.Token.find({
 					type: 'user',
-					_app: appId,
+					_app: new ObjectId(appId),
 				}),
 			])
 				.then((data) => {
@@ -309,17 +309,7 @@ class UserSchemaModel extends SchemaModel {
 	findById(id, appId) {
 		Logging.logSilly(`findById: ${this.collectionName} ${id}`);
 
-		return Promise.all([
-			super.findById(id),
-			Model.Token.findOne({
-				type: 'user',
-				_app: appId,
-				_user: id,
-			}),
-		])
-			.then((data) => {
-				return data;
-			});
+		return super.findById(id);
 	}
 
 	/**
