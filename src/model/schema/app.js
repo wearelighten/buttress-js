@@ -131,7 +131,7 @@ class AppSchemaModel extends SchemaModel {
 				_token = token;
 				Logging.log(token.value);
 				return super.add(app, {
-					_token: token.id,
+					_token: token._id,
 				});
 			})
 			.then((app) => {
