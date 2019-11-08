@@ -134,23 +134,8 @@ class AddApp extends Route {
 				reject({statusCode: 400});
 				return;
 			}
-			if (req.body.ownerGroupId) {
-				Model.Group.findById(req.body.ownerGroupId)
-					.then(Logging.Promise.logProp('Group', 'details', Route.LogLevel.SILLY))
-					.then((group) => {
-						if (!group) {
-							Logging.log('Error: Invalid Group ID', Route.LogLevel.WARN);
-							reject({statusCode: 400});
-							return;
-						}
-						resolve(true);
-					}, (err) => {
-						Logging.log(`Error: Malformed Group ID: ${err.message}`, Route.LogLevel.ERR);
-						reject({statusCode: 400});
-					});
-			} else {
-				resolve(true);
-			}
+
+			resolve(true);
 		});
 	}
 
@@ -214,11 +199,14 @@ class SetAppOwner extends Route {
 		this.auth = Route.Constants.Auth.SUPER;
 		this.permissions = Route.Constants.Permissions.WRITE;
 
+		console.warn('Deprecated: Registered SetAppOwner');
+
 		this._app = false;
 		this._group = false;
 	}
 
 	_validate(req, res, token) {
+		console.warn('Deprecated: Call to SetAppOwner');
 		return new Promise((resolve, reject) => {
 			if (!req.body.groupId) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
