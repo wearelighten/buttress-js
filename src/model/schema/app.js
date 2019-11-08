@@ -79,11 +79,6 @@ class AppSchemaModel extends SchemaModel {
 					__default: '',
 					__allowUpdate: true,
 				},
-				_owner: {
-					__type: 'id',
-					__required: true,
-					__allowUpdate: false,
-				},
 				_token: {
 					__type: 'id',
 					__required: true,
@@ -116,7 +111,6 @@ class AppSchemaModel extends SchemaModel {
 			authLevel: body.authLevel,
 			permissions: body.permissions,
 			domain: body.domain,
-			_owner: body.ownerGroupId,
 		};
 		let _token = null;
 
