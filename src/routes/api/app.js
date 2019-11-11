@@ -353,12 +353,25 @@ class GetAppSchema extends Route {
 				return;
 			}
 
-			resolve(req.authApp.__schema);
+			// Filter the returned schema based token role
+			let schema = Schema.buildCollections(Schema.decode(req.authApp.__schema));
+
+			const denyAll = (req.roles.app && req.roles.app.endpointDisposition === 'denyAll');
+			schema = schema.filter((s) => {
+				if (!req.roles.app) return !denyAll;
+				const role = s.roles.find((r) => r.name === req.roles.app.name);
+				if (!role) return !denyAll;
+				if (role.endpointDisposition.GET === 'allow') return denyAll;
+
+				return !denyAll;
+			});
+
+			resolve(schema);
 		});
 	}
 
 	_exec(req, res, schema) {
-		return Schema.buildCollections(Schema.decode(schema));
+		return schema;
 	}
 }
 routes.push(GetAppSchema);
