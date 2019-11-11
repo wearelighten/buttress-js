@@ -148,6 +148,8 @@ class BootstrapSocket {
 				});
 			}
 		});
+
+		process.send('workerInitiated');
 	}
 
 	__onActivityReceived(data) {
@@ -198,13 +200,13 @@ class BootstrapSocket {
 	__spawnWorkers(appTokens) {
 		Logging.log(`Spawning ${this.processes} Socket Workers`);
 
-		const __spawn = (idx) => {
-			this.workers[idx] = cluster.fork();
-			this.workers[idx].send({'buttress:initAppTokens': appTokens});
-		};
-
 		for (let x = 0; x < this.processes; x++) {
-			__spawn(x);
+			this.workers[x] = cluster.fork();
+			this.workers[x].on('message', (res) => {
+				if (res === 'workerInitiated') {
+					this.workers[x].send({'buttress:initAppTokens': appTokens});
+				}
+			});
 		}
 
 		net.createServer({pauseOnConnect: true}, (connection) => {
