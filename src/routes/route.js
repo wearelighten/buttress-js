@@ -295,6 +295,43 @@ class Route {
 				return;
 			}
 
+			// Default endpoint disposition
+			const disposition = {
+				GET: 'deny',
+				PUT: 'deny',
+				POST: 'deny',
+				DELETE: 'deny',
+			};
+
+			// Fetch app roles if they exist
+			let appRoles = null;
+			if (req.authApp && req.authApp.__roles && req.authApp.__roles.roles) {
+				// This needs to be cached on startup
+				appRoles = Helpers.flattenRoles(req.authApp.__roles);
+			}
+
+			// Check endpointDisposition against app roles it exists
+			if (appRoles && req.token.role) {
+				const role = appRoles.find((r) => r.name === req.token.role);
+				Logging.logSilly(`SAUTH: MATCHING APP ROLE - ${req.token.role}`);
+
+				// Set schema role on the req object for use by route/schema
+				req.roles.app = role;
+
+				if (role && role.endpointDisposition) {
+					if (role.endpointDisposition === 'allowAll') {
+						disposition.GET = 'allow';
+						disposition.PUT = 'allow';
+						disposition.POST = 'allow';
+						disposition.DELETE = 'allow';
+					}
+				} else {
+					Logging.logSilly(`SAUTH: APP ROLE DOESN'T SPECIFY - ${req.token.role}`);
+				}
+			} else {
+				Logging.logSilly(`SAUTH: NO APP ROLES DEFINED, USING DEFAULTS`);
+			}
+
 			/*
 			 * Start of Route schema permissions
 			 */
@@ -307,43 +344,6 @@ class Route {
 				}
 
 				Logging.logSilly(`SAUTH: TOKEN ROLE - ${req.token.role}`);
-
-				// Default endpoint disposition this
-				const disposition = {
-					GET: 'deny',
-					PUT: 'deny',
-					POST: 'deny',
-					DELETE: 'deny',
-				};
-
-				// Fetch app roles if they exist
-				let appRoles = null;
-				if (req.authApp && req.authApp.__roles && req.authApp.__roles.roles) {
-					// This needs to be cached on startup
-					appRoles = Helpers.flattenRoles(req.authApp.__roles);
-				}
-
-				// Check endpointDisposition against app roles it exists
-				if (appRoles) {
-					const role = appRoles.find((r) => r.name === req.token.role);
-					Logging.logSilly(`SAUTH: MATCHING APP ROLE - ${req.token.role}`);
-
-					// Set schema role on the req object for use by route/schema
-					req.roles.app = role;
-
-					if (role && role.endpointDisposition) {
-						if (role.endpointDisposition === 'allowAll') {
-							disposition.GET = 'allow';
-							disposition.PUT = 'allow';
-							disposition.POST = 'allow';
-							disposition.DELETE = 'allow';
-						}
-					} else {
-						Logging.logSilly(`SAUTH: APP ROLE DOESN'T SPECIFY - ${req.token.role}`);
-					}
-				} else {
-					Logging.logSilly(`SAUTH: NO APP ROLES DEFINED, USING DEFAULTS`);
-				}
 
 				// If schema has endpointDisposition roles set for the role then
 				// user the defined settings instead.

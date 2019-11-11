@@ -187,7 +187,7 @@ const __validateProp = (prop, config) => {
 	case 'id':
 		if (type === 'string') {
 			try {
-				prop.value = ObjectId(prop.value); // eslint-disable-line new-cap
+				prop.value = new ObjectId(prop.value); // eslint-disable-line new-cap
 			} catch (e) {
 				valid = false;
 				return;

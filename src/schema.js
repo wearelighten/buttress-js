@@ -17,6 +17,8 @@ class Schema {
 	constructor(data) {
 		this.data = data;
 
+		this.name = data.name;
+
 		this.digest = null;
 
 		this.__flattened = null;
