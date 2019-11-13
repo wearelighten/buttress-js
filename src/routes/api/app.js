@@ -358,7 +358,7 @@ class GetAppSchema extends Route {
 
 			const denyAll = (req.roles.app && req.roles.app.endpointDisposition === 'denyAll');
 			schema = schema.filter((s) => {
-				if (!req.roles.app) return !denyAll;
+				if (!s.roles || !req.roles.app) return !denyAll;
 				const role = s.roles.find((r) => r.name === req.roles.app.name);
 				if (!role) return !denyAll;
 				if (role.endpointDisposition.GET === 'allow') return denyAll;
