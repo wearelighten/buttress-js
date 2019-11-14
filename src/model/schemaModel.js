@@ -84,7 +84,7 @@ class SchemaModel {
 						let operand = command[operator];
 
 						// Check to see if operand is a path and fetch value
-						if (operand.indexOf('.') !== -1) {
+						if (operand.indexOf && operand.indexOf('.') !== -1) {
 							let path = operand.split('.');
 							const key = path.shift();
 
