@@ -48,12 +48,11 @@
 				"test": "%BUTTRESS_MONGO_URL_TEST%"
 			},
 			"options": {
-				"reconnectTries": 17280,
-				"reconnectInterval": 5000,
 				"native_parser": true,
 				"useNewUrlParser": true,
 				"poolSize": 10,
-				"bufferMaxEntries": 0
+				"bufferMaxEntries": 0,
+				"useUnifiedTopology": true
 			}
 		},
 		"redis": {
