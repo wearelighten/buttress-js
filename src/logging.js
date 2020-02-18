@@ -14,11 +14,7 @@
  */
 
 const cluster = require('cluster');
-const proxyquire = require('proxyquire');
 const winston = require('winston');
-proxyquire('winston-logrotate', {
-	winston: winston,
-});
 const Config = require('node-env-obj')('../');
 
 /**
@@ -40,11 +36,11 @@ module.exports.Constants = {
 };
 
 let _logApp = 'app';
-let _logLabel = 'MASTER';
+let _logProcess = 'MASTER';
 const setLogApp = (app) => {
 	_logApp = app;
 	if (cluster.isWorker) {
-		_logLabel = `${cluster.worker.id}`;
+		_logProcess = `${cluster.worker.id}`;
 	}
 };
 module.exports.setLogApp = setLogApp;
@@ -55,61 +51,78 @@ module.exports.setLogApp = setLogApp;
 module.exports.init = (logApp) => {
 	setLogApp(logApp);
 
-	winston.remove(winston.transports.Console);
-	winston.add(winston.transports.Console, {
-		name: 'console',
-		colorize: 'all',
-		timestamp: true,
-		level: 'info',
-	});
-
-	winston.add(winston.transports.Rotate, {
-		name: 'debug-file',
-		json: false,
-		file: `${Config.paths.logs}/log-${_logApp}-debug.log`,
+	// winston.remove(winston.transports.Console);
+	winston.add(new winston.transports.Console({
 		level: 'debug',
-		size: '1m',
-		keep: 2,
-		colorize: 'all',
-		timestamp: true,
-	});
-	winston.add(winston.transports.Rotate, {
-		name: 'info-file',
-		json: false,
-		file: `${Config.paths.logs}/log-${_logApp}-info.log`,
-		size: '1m',
-		keep: 5,
-		colorize: 'all',
-		level: 'info',
-		timestamp: true,
-	});
-	winston.add(winston.transports.Rotate, {
-		name: 'error-file',
-		json: false,
-		file: `${Config.paths.logs}/log-${_logApp}-err.log`,
-		size: '1m',
-		keep: 10,
-		level: 'error',
-		colorize: 'none',
-		timestamp: true,
-	});
-	winston.add(winston.transports.Rotate, {
-		name: 'silly-file',
-		json: false,
-		file: `${Config.paths.logs}/log-${_logApp}-silly.log`,
-		level: 'silly',
-		size: '1m',
-		keep: 1,
-		colorize: 'all',
-		timestamp: true,
-	});
-	winston.addColors({
-		info: 'white',
-		error: 'red',
-		warn: 'yellow',
-		verbose: 'white',
-		debug: 'white',
-	});
+		format: winston.format.combine(
+			winston.format.colorize(),
+			winston.format.timestamp(),
+			winston.format.errors({stack: true}),
+			winston.format.printf((info) => {
+				if (info.stack) {
+					return `${info.timestamp} [${_logProcess}] ${info.level}: ${info.message}\n${info.stack}`;
+				}
+
+				return `${info.timestamp} [${_logProcess}] ${info.level}: ${info.message}`;
+			})
+		),
+	}));
+
+	// winston.remove(winston.transports.Console);
+	// winston.add(winston.transports.Console, {
+	// 	name: 'console',
+	// 	colorize: 'all',
+	// 	timestamp: true,
+	// 	level: 'info',
+	// });
+
+	// winston.add(winston.transports.Rotate, {
+	// 	name: 'debug-file',
+	// 	json: false,
+	// 	file: `${Config.paths.logs}/log-${_logApp}-debug.log`,
+	// 	level: 'debug',
+	// 	size: '1m',
+	// 	keep: 2,
+	// 	colorize: 'all',
+	// 	timestamp: true,
+	// });
+	// winston.add(winston.transports.Rotate, {
+	// 	name: 'info-file',
+	// 	json: false,
+	// 	file: `${Config.paths.logs}/log-${_logApp}-info.log`,
+	// 	size: '1m',
+	// 	keep: 5,
+	// 	colorize: 'all',
+	// 	level: 'info',
+	// 	timestamp: true,
+	// });
+	// winston.add(winston.transports.Rotate, {
+	// 	name: 'error-file',
+	// 	json: false,
+	// 	file: `${Config.paths.logs}/log-${_logApp}-err.log`,
+	// 	size: '1m',
+	// 	keep: 10,
+	// 	level: 'error',
+	// 	colorize: 'none',
+	// 	timestamp: true,
+	// });
+	// winston.add(winston.transports.Rotate, {
+	// 	name: 'silly-file',
+	// 	json: false,
+	// 	file: `${Config.paths.logs}/log-${_logApp}-silly.log`,
+	// 	level: 'silly',
+	// 	size: '1m',
+	// 	keep: 1,
+	// 	colorize: 'all',
+	// 	timestamp: true,
+	// });
+	// winston.addColors({
+	// 	info: 'white',
+	// 	error: 'red',
+	// 	warn: 'yellow',
+	// 	verbose: 'white',
+	// 	debug: 'white',
+	// });
 };
 
 /**
@@ -119,12 +132,10 @@ module.exports.init = (logApp) => {
  * @private
  */
 function _log(log, level) {
-	winston.log(level, `[${_logLabel}]: ${log}`);
-	// if (typeof log === 'string') {
-	//   winston.log(level, log);
-	// } else {
-	//   winston.log(level, '', log);
-	// }
+	winston.log({
+		level: level,
+		message: log,
+	});
 }
 
 /**
