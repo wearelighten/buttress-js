@@ -108,7 +108,9 @@ class BootstrapRest {
 
 	__nativeMongoConnect() {
 		const dbName = `${Config.app.code}-${Config.env}`;
-		const mongoUrl = `mongodb://${Config.mongoDb.url}/?authMechanism=DEFAULT&authSource=${dbName}`;
+		const mongoUrl = `mongodb://${Config.mongoDb.url}`;
+		Logging.logDebug(`Attempting connection to ${mongoUrl}`);
+
 		return MongoClient.connect(mongoUrl, Config.mongoDb.options)
 			.then((client) => client.db(dbName))
 			.catch(Logging.Promise.logError());
