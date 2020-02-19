@@ -335,7 +335,7 @@ module.exports.Promise.logArray = (log, level) => {
 	return (res) => {
 		_log(`${log}: ${res.length}`, level);
 		res.forEach((r) => {
-			_log(r);
+			_log(r, level);
 		});
 		return res;
 	};
