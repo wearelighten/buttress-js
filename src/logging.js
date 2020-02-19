@@ -53,7 +53,7 @@ module.exports.init = (logApp) => {
 
 	// winston.remove(winston.transports.Console);
 	winston.add(new winston.transports.Console({
-		level: 'debug',
+		level: Config.logging.level,
 		format: winston.format.combine(
 			winston.format.colorize(),
 			winston.format.timestamp(),
@@ -64,7 +64,7 @@ module.exports.init = (logApp) => {
 				}
 
 				return `${info.timestamp} [${_logProcess}] ${info.level}: ${info.message}`;
-			})
+			}),
 		),
 	}));
 
