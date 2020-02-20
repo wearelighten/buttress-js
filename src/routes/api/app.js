@@ -190,60 +190,6 @@ class DeleteApp extends Route {
 routes.push(DeleteApp);
 
 /**
- * @class SetAppOwner
- */
-class SetAppOwner extends Route {
-	constructor() {
-		super('app/:id/owner', 'SET APP OWNER');
-		this.verb = Route.Constants.Verbs.PUT;
-		this.auth = Route.Constants.Auth.SUPER;
-		this.permissions = Route.Constants.Permissions.WRITE;
-
-		console.warn('Deprecated: Registered SetAppOwner');
-
-		this._app = false;
-		this._group = false;
-	}
-
-	_validate(req, res, token) {
-		console.warn('Deprecated: Call to SetAppOwner');
-		return new Promise((resolve, reject) => {
-			if (!req.body.groupId) {
-				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
-			}
-
-			Model.Group.findById(req.body.groupId).then((group) => {
-				if (!group) {
-					this.log('ERROR: Invalid Group ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
-				}
-				this._group = group;
-			}).then(() => {
-				Model.App.findById(req.params.id).then((app) => {
-					if (!app) {
-						this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
-					}
-					this._app = app;
-					resolve(true);
-				});
-			});
-		});
-	}
-
-	_exec(req, res, validate) {
-		return new Promise((resolve, reject) => {
-			this._app.setOwner(this._group).then(() => true).then(resolve, reject);
-		});
-	}
-}
-routes.push(SetAppOwner);
-
-/**
  * @class GetAppPermissionList
  */
 class GetAppPermissionList extends Route {
