@@ -61,7 +61,7 @@ module.exports.add = (collection, __add) => {
 							return;
 						}
 
-						collection.findOne({_id: new ObjectId(insertedIds[0])}, {metadata: 0}, (err, doc) => {
+						collection.findOne({_id: new ObjectId(insertedIds[0])}, {}, (err, doc) => {
 							if (err) throw err;
 							// doc.id = doc._id;
 							// delete doc._id;

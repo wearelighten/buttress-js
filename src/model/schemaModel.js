@@ -299,7 +299,7 @@ class SchemaModel {
 		Logging.logSilly(`findById: ${this.collectionName} ${id}`);
 
 		return new Promise((resolve) => {
-			this.collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
+			this.collection.findOne({_id: new ObjectId(id)}, {}, (err, doc) => {
 				if (err) throw err;
 				resolve(doc);
 			});
@@ -359,7 +359,7 @@ class SchemaModel {
 	findAllById(ids) {
 		Logging.logSilly(`update: ${this.collectionName} ${ids}`);
 
-		return this.collection.find({_id: {$in: ids.map((id) => new ObjectId(id))}}, {metadata: 0});
+		return this.collection.find({_id: {$in: ids.map((id) => new ObjectId(id))}}, {});
 	}
 }
 
