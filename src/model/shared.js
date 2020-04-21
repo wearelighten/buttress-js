@@ -134,7 +134,13 @@ const __getPropDefault = (config) => {
 		res = config.__default === undefined ? {} : config.__default;
 		break;
 	case 'id':
-		res = config.__default === undefined ? null : config.__default;
+		if (config.__default) {
+			res = config.__default;
+		} else if (config.__default === 'new') {
+			res = new ObjectId();
+		} else {
+			res = null;
+		}
 		break;
 	case 'date':
 		if (config.__default === null) {
