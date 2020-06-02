@@ -90,12 +90,6 @@ class JSONStringifyStream extends Transform {
 			if (nonReplacerKeys.indexOf(key) !== -1) {
 				return undefined;
 			}
-			if (key === 'metadata') {
-				return value.reduce((metadata, entry) => {
-					metadata[entry.key] = JSON.parse(entry.value);
-					return metadata;
-				}, {});
-			}
 			if (Array.isArray(value)) {
 				return value.map((c) => {
 					if (c && c._id) c.id = c._id;

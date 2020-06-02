@@ -17,8 +17,7 @@ const Logging = require('./logging');
 /**
  *
  */
-
-Logging.init('rest');
+Logging.init('REST');
 
 Bootstrap.rest()
 	.then((isMaster) => {

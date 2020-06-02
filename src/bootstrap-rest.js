@@ -76,7 +76,7 @@ class BootstrapRest {
 
 	__initWorker(db) {
 		const app = express();
-		app.use(morgan('short'));
+		app.use(morgan(`:date[iso] [${cluster.worker.id}] :method :status :url :res[content-length] - :response-time ms - :remote-addr`));
 		app.enable('trust proxy', 1);
 		app.use(bodyParser.json({limit: '20mb'}));
 		app.use(bodyParser.urlencoded({extended: true}));
@@ -108,7 +108,9 @@ class BootstrapRest {
 
 	__nativeMongoConnect() {
 		const dbName = `${Config.app.code}-${Config.env}`;
-		const mongoUrl = `mongodb://${Config.mongoDb.url}/?authMechanism=DEFAULT&authSource=${dbName}`;
+		const mongoUrl = `mongodb://${Config.mongoDb.url}`;
+		Logging.logDebug(`Attempting connection to ${mongoUrl}`);
+
 		return MongoClient.connect(mongoUrl, Config.mongoDb.options)
 			.then((client) => client.db(dbName))
 			.catch(Logging.Promise.logError());

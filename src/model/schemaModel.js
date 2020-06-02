@@ -63,50 +63,49 @@ class SchemaModel {
 		return validation.length >= 1 ? validation[0] : {isValid: true};
 	}
 
+	static parseQuery(query, envFlat = {}, output = {}) {
+		for (const property in query) {
+			if (!query.hasOwnProperty(property)) continue;
+			const command = query[property];
+
+			if (property === '$or' && Array.isArray(command)) {
+				output['$or'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, {}));
+			} else if (property === '$and' && Array.isArray(command)) {
+				output['$and'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, {}));
+			} else {
+				for (const operator in command) {
+					if (!command.hasOwnProperty(operator)) continue;
+					let operand = command[operator];
+
+					// Check to see if operand is a path and fetch value
+					if (operand.indexOf && operand.indexOf('.') !== -1) {
+						let path = operand.split('.');
+						const key = path.shift();
+
+						path = path.join('.');
+
+						if (key === 'env' && envFlat[path]) {
+							operand = envFlat[path];
+						} else {
+							throw new Error(`Unable to find ${path} in schema.authFilter.env`);
+						}
+					}
+
+					if (!output[property]) {
+						output[property] = {};
+					}
+					output[property][`${operator}`] = operand;
+				}
+			}
+		}
+
+		return output;
+	}
+
 	generateRoleFilterQuery(token, roles, Model) {
 		if (!roles.schema || !roles.schema.authFilter) {
 			return Promise.resolve({});
 		}
-
-		// Parse schema authFilter.query object and apply env items.
-		const __parseQuery = (query, envFlat, output) => {
-			for (const property in query) {
-				if (!query.hasOwnProperty(property)) continue;
-				const command = query[property];
-
-				if (property === '$or' && Array.isArray(command)) {
-					output['$or'] = command.map((q) => __parseQuery(q, envFlat, {}));
-				} else if (property === '$and' && Array.isArray(command)) {
-					output['$and'] = command.map((q) => __parseQuery(q, envFlat, {}));
-				} else {
-					for (const operator in command) {
-						if (!command.hasOwnProperty(operator)) continue;
-						let operand = command[operator];
-
-						// Check to see if operand is a path and fetch value
-						if (operand.indexOf && operand.indexOf('.') !== -1) {
-							let path = operand.split('.');
-							const key = path.shift();
-
-							path = path.join('.');
-
-							if (key === 'env' && envFlat[path]) {
-								operand = envFlat[path];
-							} else {
-								throw new Error(`Unable to find ${path} in schema.authFilter.env`);
-							}
-						}
-
-						if (!output[property]) {
-							output[property] = {};
-						}
-						output[property][`$${operator}`] = operand;
-					}
-				}
-			}
-
-			return output;
-		};
 
 		// Parse schema authFilter.env object, gather information that's needed.
 		const buildEnv = (authFilter) => {
@@ -136,7 +135,7 @@ class SchemaModel {
 
 							let propertyQuery = {};
 							propertyQuery[propertyPath] = query[command];
-							propertyQuery = __parseQuery(propertyQuery, env, {});
+							propertyQuery = SchemaModel.parseQuery(propertyQuery, env, {});
 
 							const fields = {};
 							fields[propertyPath] = true;
@@ -167,7 +166,7 @@ class SchemaModel {
 			return new Promise((resolve) => {
 				const query = (schemaQuery) ? schemaQuery : {};
 
-				resolve(__parseQuery(query, env, {}));
+				resolve(SchemaModel.parseQuery(query, env, {}));
 			});
 		};
 
@@ -300,7 +299,7 @@ class SchemaModel {
 		Logging.logSilly(`findById: ${this.collectionName} ${id}`);
 
 		return new Promise((resolve) => {
-			this.collection.findOne({_id: new ObjectId(id)}, {metadata: 0}, (err, doc) => {
+			this.collection.findOne({_id: new ObjectId(id)}, {}, (err, doc) => {
 				if (err) throw err;
 				resolve(doc);
 			});
@@ -360,7 +359,7 @@ class SchemaModel {
 	findAllById(ids) {
 		Logging.logSilly(`update: ${this.collectionName} ${ids}`);
 
-		return this.collection.find({_id: {$in: ids.map((id) => new ObjectId(id))}}, {metadata: 0});
+		return this.collection.find({_id: {$in: ids.map((id) => new ObjectId(id))}}, {});
 	}
 }
 

@@ -61,7 +61,7 @@ module.exports.add = (collection, __add) => {
 							return;
 						}
 
-						collection.findOne({_id: new ObjectId(insertedIds[0])}, {metadata: 0}, (err, doc) => {
+						collection.findOne({_id: new ObjectId(insertedIds[0])}, {}, (err, doc) => {
 							if (err) throw err;
 							// doc.id = doc._id;
 							// delete doc._id;
@@ -134,7 +134,13 @@ const __getPropDefault = (config) => {
 		res = config.__default === undefined ? {} : config.__default;
 		break;
 	case 'id':
-		res = config.__default === undefined ? null : config.__default;
+		if (config.__default) {
+			res = config.__default;
+		} else if (config.__default === 'new') {
+			res = new ObjectId();
+		} else {
+			res = null;
+		}
 		break;
 	case 'date':
 		if (config.__default === null) {

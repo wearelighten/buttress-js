@@ -51,7 +51,19 @@ class GetList extends Route {
 			query = this.model.generateRoleFilterQuery(token, req.roles, Model);
 		}
 
-		return query;
+		return query
+			.then((query) => {
+				if (!query.$and) {
+					query.$and = [];
+				}
+
+				// TODO: Vaildate this input against the schema, schema properties should be tagged with what can be queried
+				if (req.body) {
+					query.$and.push(req.body);
+				}
+
+				return query;
+			});
 	}
 
 	_exec(req, res, query) {

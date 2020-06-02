@@ -2,7 +2,9 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.1.2
+### Version: 2.2.0
+*Interim build - See commit log*
+### 2.1.2
 - FIX: Promise rejection in route execution process gets caught by the next exeuction step instead of early-out
 ### 2.1.1
 - FIX: Strip API version & App Prefix from activity path property

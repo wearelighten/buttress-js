@@ -333,29 +333,6 @@ class UserSchemaModel extends SchemaModel {
 			'auth.appId': appUserId,
 		}, {});
 	}
-
-	/**
-	 * @param {string} app - name of the app for which the token is being updated
-	 * @param {Object} body - body passed through from a PUT request
-	 * @return {Promise} - returns a promise that is fulfilled when the database request is completed
-	 */
-	updateToken(app, body) {
-		const auth = this.auth.find((a) => a.app === app);
-		if (!auth) {
-			Logging.log(`Unable to find Appauth for ${app}`, Logging.Constants.LogLevel.DEBUG);
-			return Promise.resolve(false);
-		}
-
-		Logging.log(`Old Token: ${auth.token}`, Logging.Constants.LogLevel.DEBUG);
-		Logging.log(`Old Token Secret: ${auth.tokenSecret}`, Logging.Constants.LogLevel.DEBUG);
-		Logging.log(`New Token: ${body.token}`, Logging.Constants.LogLevel.DEBUG);
-		Logging.log(`New Token Secret: ${body.tokenSecret}`, Logging.Constants.LogLevel.DEBUG);
-
-		auth.token = body.token;
-		auth.tokenSecret = body.tokenSecret;
-
-		return this.save().then(() => true);
-	}
 }
 
 /**
