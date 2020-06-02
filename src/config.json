@@ -26,7 +26,7 @@
 			"title": "%BUTTRESS_APP_TITLE%",
 			"description": "Realtime datastore for software",
 			"code": "%BUTTRESS_APP_CODE%",
-			"version": "2.1.2",
+			"version": "2.2.0",
 			"protocol": "http",
 			"host": "%BUTTRESS_HOST_URL%",
 			"apiPrefix": "/api/v1"
