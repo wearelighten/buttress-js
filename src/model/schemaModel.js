@@ -14,6 +14,7 @@
 const ObjectId = require('mongodb').ObjectId;
 const Logging = require('../logging');
 const Shared = require('./shared');
+const Sugar = require('sugar');
 // const Helpers = require('../helpers');
 const shortId = require('../helpers').ShortId;
 
@@ -188,8 +189,8 @@ class SchemaModel {
 			}
 
 			if (this.schemaData.extends && this.schemaData.extends.includes('timestamps')) {
-				entity.createdAt = new Date();
-				entity.updatedAt = null;
+				entity.createdAt = Sugar.Date.create();
+				entity.updatedAt = (body.updatedAt) ? Sugar.Date.create(body.updatedAt) : null;
 			}
 
 			const validated = Shared.applyAppProperties(this.schemaData, body);
