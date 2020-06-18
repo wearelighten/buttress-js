@@ -95,7 +95,7 @@ class SchemaModel {
 					if (!output[property]) {
 						output[property] = {};
 					}
-					output[property][`${operator}`] = operand;
+					output[property][`$${operator}`] = operand;
 				}
 			}
 		}
