@@ -144,7 +144,7 @@ module.exports.Promise = {
 	arrayProp: (prop) => ((arr) => arr.map((a) => a[prop])),
 };
 
-module.exports.ShortId = (id) => {
+module.exports.shortId = (id) => {
 	const toBase = (num, base) => {
 		const symbols = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-'.split('');
 		let decimal = num;
@@ -221,7 +221,7 @@ const __getFlattenedSchema = (schema) => {
 
 		let isRoot = true;
 		for (const childProp in parent[property]) {
-			if (!parent[property].hasOwnProperty(childProp)) continue;
+			if (!{}.hasOwnProperty.call(parent[property], childProp)) continue;
 			if (/^__/.test(childProp)) {
 				if (childProp === '__schema') {
 					parent[property].__schema = __getFlattenedSchema({properties: parent[property].__schema});
@@ -246,7 +246,7 @@ const __getFlattenedSchema = (schema) => {
 	const flattened = {};
 	const path = [];
 	for (const property in schema.properties) {
-		if (!schema.properties.hasOwnProperty(property)) continue;
+		if (!{}.hasOwnProperty.call(schema.properties, property)) continue;
 		__buildFlattenedSchema(property, schema.properties, path, flattened);
 	}
 

@@ -16,7 +16,7 @@ const Logging = require('../logging');
 const Shared = require('./shared');
 const Sugar = require('sugar');
 // const Helpers = require('../helpers');
-const shortId = require('../helpers').ShortId;
+const shortId = require('../helpers').shortId;
 
 /* ********************************************************************************
  *
@@ -66,7 +66,7 @@ class SchemaModel {
 
 	static parseQuery(query, envFlat = {}, output = {}) {
 		for (const property in query) {
-			if (!query.hasOwnProperty(property)) continue;
+			if (!{}.hasOwnProperty.call(query, property)) continue;
 			const command = query[property];
 
 			if (property === '$or' && Array.isArray(command)) {
@@ -75,7 +75,7 @@ class SchemaModel {
 				output['$and'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, {}));
 			} else {
 				for (const operator in command) {
-					if (!command.hasOwnProperty(operator)) continue;
+					if (!{}.hasOwnProperty.call(command, operator)) continue;
 					let operand = command[operator];
 
 					// Check to see if operand is a path and fetch value
@@ -118,7 +118,7 @@ class SchemaModel {
 
 			if (authFilter.env) {
 				for (const property in roles.schema.authFilter.env) {
-					if (!roles.schema.authFilter.env.hasOwnProperty(property)) continue;
+					if (!{}.hasOwnProperty.call(roles.schema.authFilter.env, property)) continue;
 					const query = roles.schema.authFilter.env[property];
 
 					let propertyMap = '_id';
@@ -126,7 +126,7 @@ class SchemaModel {
 						propertyMap = query.map;
 					}
 					for (const command in query) {
-						if (!query.hasOwnProperty(command)) continue;
+						if (!{}.hasOwnProperty.call(query, command)) continue;
 
 						if (command.includes('schema.')) {
 							const commandPath = command.split('.');
@@ -147,7 +147,7 @@ class SchemaModel {
 										// Map fetched properties into a array.
 										env[property] = res.map((i) => i[propertyMap]);
 										// Hack - Flattern any sub arrays down to the single level.
-										env[property] = [].concat.apply([], env[property]);
+										env[property] = [].concat(...env[property]);
 									});
 							});
 						} else {

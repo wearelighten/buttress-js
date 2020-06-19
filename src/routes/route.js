@@ -176,7 +176,7 @@ class Route {
 	}
 
 	_addLogActivity(req, path, verb) {
-		// TODO: Activty should pass back a stripped version of the activty object. 
+		// TODO: Activty should pass back a stripped version of the activty object.
 		return Model.Activity.add({
 			activityTitle: this.activityTitle,
 			activityDescription: this.activityDescription,

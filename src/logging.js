@@ -35,10 +35,10 @@ module.exports.Constants = {
 	LogLevel: LogLevel,
 };
 
-let _logApp = 'app';
+// let _logApp = 'app';
 let _logProcess = 'MASTER';
 const setLogApp = (app) => {
-	_logApp = app;
+	// _logApp = app;
 	if (cluster.isWorker) {
 		_logProcess = `${cluster.worker.id}`;
 	}

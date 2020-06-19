@@ -68,7 +68,7 @@ function _initRoute(app, Route) {
  */
 function _initSchemaRoutes(express, app, schemaData) {
 	SchemaRoutes.forEach((Route) => {
-		const appShortId = Helpers.ShortId(app._id);
+		const appShortId = Helpers.shortId(app._id);
 		const route = new Route(schemaData, appShortId);
 		let routePath = path.join(...[
 			(app.apiPath) ? app.apiPath : appShortId,

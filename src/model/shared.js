@@ -95,7 +95,7 @@ const __getFlattenedBody = (body) => {
 		}
 
 		for (const childProp in parent[property]) {
-			if (!parent[property].hasOwnProperty(childProp)) continue;
+			if (!{}.hasOwnProperty.call(parent[property], childProp)) continue;
 			__buildFlattenedBody(childProp, parent[property], path, flattened);
 		}
 
@@ -106,7 +106,7 @@ const __getFlattenedBody = (body) => {
 	const flattened = [];
 	const path = [];
 	for (const property in body) {
-		if (!body.hasOwnProperty(property)) continue;
+		if (!{}.hasOwnProperty.call(body, property)) continue;
 		__buildFlattenedBody(property, body, path, flattened);
 	}
 
@@ -243,7 +243,7 @@ const __validate = (schema, values, parentProperty) => {
 	};
 
 	for (const property in schema) {
-		if (!schema.hasOwnProperty(property)) continue;
+		if (!{}.hasOwnProperty.call(schema, property)) continue;
 		let propVal = values.find((v) => v.path === property);
 		const config = schema[property];
 
@@ -285,7 +285,7 @@ const __validate = (schema, values, parentProperty) => {
 			}, res);
 		} else if (config.__type === 'array' && config.__itemtype) {
 			for (const idx in propVal.value) {
-				if (!propVal.value.hasOwnProperty(idx)) continue;
+				if (!{}.hasOwnProperty.call(propVal.value, idx)) continue;
 				const prop = {
 					value: propVal.value[idx],
 				};
@@ -416,7 +416,7 @@ const __populateObject = (schema, values) => {
 	const objects = {};
 
 	for (const property in schema) {
-		if (!schema.hasOwnProperty(property)) continue;
+		if (!{}.hasOwnProperty.call(schema, property)) continue;
 		let propVal = values.find((v) => v.path === property);
 		const config = schema[property];
 
@@ -699,7 +699,7 @@ const __extendPathContext = (pathContext, schema, prefix) => {
 	if (!schema) return pathContext;
 	let extended = {};
 	for (const property in schema) {
-		if (!schema.hasOwnProperty(property)) continue;
+		if (!{}.hasOwnProperty.call(schema, property)) continue;
 		const config = schema[property];
 		if (config.__allowUpdate === false) continue;
 		switch (config.__type) {

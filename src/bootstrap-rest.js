@@ -26,7 +26,7 @@ const Logging = require('./logging');
 const Schema = require('./schema');
 const MongoClient = require('mongodb').MongoClient;
 const NRP = require('node-redis-pubsub');
-const shortId = require('./helpers').ShortId;
+const shortId = require('./helpers').shortId;
 
 Error.stackTraceLimit = Infinity;
 class BootstrapRest {

@@ -16,7 +16,7 @@ const Logging = require('../logging');
 const Sugar = require('sugar');
 const Schema = require('../schema');
 const SchemaModel = require('./schemaModel');
-const shortId = require('../helpers').ShortId;
+const shortId = require('../helpers').shortId;
 
 /**
  * @param {string} model - name of the model to load
