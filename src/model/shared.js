@@ -653,6 +653,24 @@ const _doUpdate = (entity, body, pathContext, config, collection, id) => {
 
 			response = value;
 		} break;
+		case 'scalar-increment': {
+			const params = body.path.split('.');
+			params.splice(-1, 1);
+			const path = params.join('.');
+
+			ops.push({
+				updateOne: {
+					filter: {_id: new ObjectId(id)},
+					update: {
+						$inc: {
+							[path]: body.value,
+						},
+					},
+				},
+			});
+
+			response = body.value;
+		} break;
 		}
 
 		return new Promise((resolve, reject) => {
@@ -686,8 +704,11 @@ const __extendPathContext = (pathContext, schema, prefix) => {
 		if (config.__allowUpdate === false) continue;
 		switch (config.__type) {
 		default:
-		case 'object':
 		case 'number':
+			extended[`^${prefix}${property}$`] = {type: 'scalar', values: []};
+			extended[`^${prefix}${property}.__increment__$`] = {type: 'scalar-increment', values: []};
+			break;
+		case 'object':
 		case 'date':
 			extended[`^${prefix}${property}$`] = {type: 'scalar', values: []};
 			break;
