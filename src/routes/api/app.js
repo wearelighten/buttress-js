@@ -13,6 +13,7 @@
 const Route = require('../route');
 const Model = require('../../model');
 const Logging = require('../../logging');
+const Helpers = require('../../helpers');
 const Schema = require('../../schema');
 
 const routes = [];
@@ -55,14 +56,12 @@ class GetApp extends Route {
 		return new Promise((resolve, reject) => {
 			if (!req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_fields`));
 			}
 			Model.App.findById(req.params.id).populate('_token').then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 				// this.log(app._token, Route.LogLevel.DEBUG);
 				this._app = app;
@@ -94,13 +93,11 @@ class AddApp extends Route {
 		return new Promise((resolve, reject) => {
 			if (!req.body.name || !req.body.type || !req.body.authLevel) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_field`));
 			}
 			if (req.body.type === Model.App.Constants.Type.Browser && !req.body.domain) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_field`));
 			}
 
 			if (!req.body.permissions || req.body.permissions.length === 0) {
@@ -131,8 +128,7 @@ class AddApp extends Route {
 				req.body.permissions = JSON.parse(req.body.permissions);
 			} catch (e) {
 				this.log('ERROR: Badly formed JSON in permissions', Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `invalid_json`));
 			}
 
 			resolve(true);
@@ -166,14 +162,12 @@ class DeleteApp extends Route {
 		return new Promise((resolve, reject) => {
 			if (!req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_field`));
 			}
 			Model.App.findById(req.params.id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 				this._app = app;
 				resolve(true);
@@ -206,14 +200,12 @@ class GetAppPermissionList extends Route {
 		return new Promise((resolve, reject) => {
 			if (!req.params.id) {
 				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_field`));
 			}
 			Model.App.findById(req.params.id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 				this._app = app;
 				resolve(true);
@@ -252,14 +244,12 @@ class AddAppPermission extends Route {
 			Model.App.findById(req.params.id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 
 				if (!req.body.route || !req.body.permission) {
 					this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `missing_field`));
 				}
 
 				this._app = app;
@@ -290,13 +280,11 @@ class GetAppSchema extends Route {
 		return new Promise((resolve, reject) => {
 			if (!req.authApp) {
 				this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
-				reject({statusCode: 400, message: 'No authenticated app'});
-				return;
+				return reject(new Helpers.RequestError(400, `no_authenticated_app`));
 			}
 			if (!req.authApp.__schema) {
 				this.log('ERROR: No app schema defined', Route.LogLevel.ERR);
-				reject({statusCode: 400, message: 'No authenticated app schema'});
-				return;
+				return reject(new Helpers.RequestError(400, `no_authenticated_schema`));
 			}
 
 			// Filter the returned schema based token role
@@ -337,8 +325,7 @@ class UpdateAppSchema extends Route {
 		return new Promise((resolve, reject) => {
 			if (!req.authApp) {
 				this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
-				reject({statusCode: 400, message: 'No authenticated app'});
-				return;
+				return reject(new Helpers.RequestError(400, `no_authenticated_app`));
 			}
 
 			resolve(true);
@@ -367,8 +354,7 @@ class UpdateAppRoles extends Route {
 		return new Promise((resolve, reject) => {
 			if (!req.authApp) {
 				this.log('ERROR: No authenticated app', Route.LogLevel.ERR);
-				reject({statusCode: 400, message: 'No authenticated app'});
-				return;
+				return reject(new Helpers.RequestError(400, `no_authenticated_app`));
 			}
 
 			resolve(true);
@@ -399,16 +385,14 @@ class AddAppMetadata extends Route {
 			Model.App.findById(req.appDetails._id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 				try {
 					JSON.parse(req.body.value);
 				} catch (e) {
 					this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
 					this.log(req.body.value, Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_json`));
 				}
 
 				this._app = app;
@@ -442,20 +426,17 @@ class UpdateAppMetadata extends Route {
 			Model.App.findById(req.appDetails._id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 				if (app.findMetadata(req.params.key) === false) {
 					this.log('ERROR: Metadata does not exist', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `missing_metadata`));
 				}
 				try {
 					JSON.parse(req.body.value);
 				} catch (e) {
 					this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_json`));
 				}
 
 				this._app = app;
@@ -489,14 +470,12 @@ class GetAppMetadata extends Route {
 			Model.App.findById(req.appDetails._id).then((app) => {
 				if (!app) {
 					this.log('ERROR: Invalid App ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 				this._metadata = app.findMetadata(req.params.key);
 				if (this._metadata === false) {
 					this.log('WARN: App Metadata Not Found', Route.LogLevel.ERR);
-					reject({statusCode: 404});
-					return;
+					return reject(new Helpers.RequestError(400, `missing_metadata`));
 				}
 
 				resolve(true);

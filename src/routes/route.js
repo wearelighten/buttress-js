@@ -106,7 +106,7 @@ class Route {
 		return new Promise((resolve, reject) => {
 			if (!this._exec) {
 				this.log(`Error: ${this.name}: No _exec defined`, Logging.Constants.LogLevel.ERR);
-				reject({statusCode: 500});
+				reject(new Helpers.RequestError(500));
 				return;
 			}
 
@@ -238,22 +238,19 @@ class Route {
 		return new Promise((resolve, reject) => {
 			if (this.auth === Constants.Auth.NONE) {
 				this.log(`WARN: OPEN API CALL`, Logging.Constants.LogLevel.WARN);
-				resolve(req.user);
-				return;
+				return resolve(req.user);
 			}
 
 			if (!req.token) {
 				this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR);
-				reject({statusCode: 401});
-				return;
+				return reject(new Helpers.RequestError(401, 'invalid_token'));
 			}
 			this.log(req.token.value, Logging.Constants.LogLevel.SILLY);
 
 			this.log(`AUTHLEVEL: ${this.auth}`, Logging.Constants.LogLevel.VERBOSE);
 			if (req.token.authLevel < this.auth) {
 				this.log('EAUTH: INSUFFICIENT AUTHORITY', Logging.Constants.LogLevel.ERR);
-				reject({statusCode: 401});
-				return;
+				return reject(new Helpers.RequestError(401, 'insufficient_authority'));
 			}
 
 			req.roles = {
@@ -284,7 +281,7 @@ class Route {
 			if (authorised === false) {
 				this.log(token.permissions, Logging.Constants.LogLevel.ERR);
 				this.log(`EAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
-				reject({statusCode: 401});
+				return reject(new Helpers.RequestError(403, 'no_permission_for_route'));
 			}
 
 			// BYPASS schema checks for app tokens
@@ -371,7 +368,7 @@ class Route {
 
 				if (authorised === false) {
 					this.log(`SAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
-					return reject({statusCode: 403});
+					return reject(new Helpers.RequestError(403, 'no_permission_for_route'));
 				}
 			}
 

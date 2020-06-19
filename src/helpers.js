@@ -14,6 +14,15 @@ const stream = require('stream');
 const Transform = stream.Transform;
 const ObjectId = require('mongodb').ObjectId;
 
+class RequestError extends Error {
+	constructor(code, message) {
+		super(message);
+		this.code = code;
+		this.name = 'RequestError';
+	}
+}
+module.exports.RequestError = RequestError;
+
 class Timer {
 	constructor() {
 		this._start = 0;

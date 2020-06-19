@@ -53,10 +53,6 @@ function _initRoute(app, Route) {
 				}
 				Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
 				Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
-			})
-			.catch((err) => {
-				Logging.logError(err);
-				res.status(err.statusCode ? err.statusCode : 500).json({message: err.message});
 			});
 	});
 }
@@ -152,10 +148,6 @@ function _initSchemaRoutes(express, app, schemaData) {
 					res.json(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
 					Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
 					Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
-				})
-				.catch((err) => {
-					Logging.logError(err);
-					res.status(err.statusCode ? err.statusCode : 500).json({message: err.message});
 				});
 		});
 	});
@@ -186,8 +178,7 @@ function _authenticateToken(req, res, next) {
 			return new Promise((resolve, reject) => {
 				if (token === null) {
 					Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
-					res.status(401).json({message: 'invalid_token'});
-					reject({message: 'invalid_token'});
+					reject(new Helpers.RequestError(401, 'invalid_token'));
 					return;
 				}
 
@@ -210,12 +201,7 @@ function _authenticateToken(req, res, next) {
 		})
 		.then(Helpers.Promise.inject())
 		.then(next)
-		.catch((err) => {
-			Logging.logError(err);
-			res.status(503);
-			res.end();
-			return;
-		});
+		.catch(next);
 }
 
 /**
@@ -332,6 +318,18 @@ function _configCrossDomain(req, res, next) {
 	next();
 }
 
+function logErrors(err, req, res, next) {
+	if (err instanceof Helpers.RequestError) {
+		res.status(err.code).json({statusMessage: err.message, message: err.message});
+	} else {
+		res.status(500);
+	}
+
+	res.end();
+
+	next(err);
+}
+
 /**
  * @param {Object} app - express app object
  * @param {Object} io - socket io object
@@ -376,6 +374,7 @@ exports.init = (app) => {
 		.then(() => {
 			Logging.logSilly('Registered API Routes');
 			app.use('', apiRouter);
+			app.use(logErrors);
 		});
 };
 

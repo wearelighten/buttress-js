@@ -56,8 +56,7 @@ class GetUser extends Route {
 		return new Promise((resolve, reject) => {
 			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_field`));
 			}
 
 			Model.User.findById(req.params.id)
@@ -158,16 +157,14 @@ class CreateUserAuthToken extends Route {
 				!req.body.domains ||
 				!req.body.role) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_field`));
 			}
 
 			req.body.type = Model.Token.Constants.Type.USER;
 
 			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_field`));
 			}
 
 			Model.User.findById(req.params.id)
@@ -225,8 +222,7 @@ class AddUser extends Route {
 					!req.body.user.token ||
 					!req.body.user.profileImgUrl) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_field`));
 			}
 
 			if (req.body.auth) {
@@ -236,8 +232,7 @@ class AddUser extends Route {
 						!req.body.auth.permissions ||
 						!req.body.auth.domains) {
 					this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `missing_field`));
 				}
 				req.body.auth.type = Model.Token.Constants.Type.USER;
 				req.body.auth.app = req.authApp.id;
@@ -256,7 +251,7 @@ class AddUser extends Route {
 				req.body.auth.role = role;
 			} else {
 				this.log(`[${this.name}] Auth properties are required when creating a user`, Route.LogLevel.ERR);
-				reject({statusCode: 400});
+				return reject(new Helpers.RequestError(400, `missing_auth`));
 			}
 
 			resolve(true);
@@ -292,13 +287,11 @@ class UpdateUser extends Route {
 			if (!validation.isValid) {
 				if (validation.isPathValid === false) {
 					this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
-					reject({statusCode: 400, message: `USER: Update path is invalid: ${validation.invalidPath}`});
-					return;
+					return reject(new Helpers.RequestError(400, `USER: Update path is invalid: ${validation.invalidPath}`));
 				}
 				if (validation.isValueValid === false) {
 					this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
-					reject({statusCode: 400, message: `USER: Update value is invalid: ${validation.invalidValue}`});
-					return;
+					return reject(new Helpers.RequestError(400, `USER: Update value is invalid: ${validation.invalidValue}`));
 				}
 			}
 
@@ -306,8 +299,7 @@ class UpdateUser extends Route {
 				.then((exists) => {
 					if (!exists) {
 						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
+						return reject(new Helpers.RequestError(400, `invalid_id`));
 					}
 					resolve(true);
 				});
@@ -357,18 +349,18 @@ class DeleteUser extends Route {
 		return new Promise((resolve, reject) => {
 			if (!req.params.id || !ObjectId.isValid(req.params.id)) {
 				this.log(`[${this.name}] Missing required field`, Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				return reject(new Helpers.RequestError(400, `missing_field`));
 			}
+
 			Model.User.findById(req.params.id)
 				.then((user) => {
 					if (user) {
-						Logging.logDebug(`CreateUserAuthToken:findById: ${user ? user.id : user}`);
-						resolve(user);
-					} else {
-						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-						resolve({statusCode: 400});
+						Logging.logDebug(`Delete user: ${user ? user.id : user}`);
+						return resolve(user);
 					}
+
+					this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				});
 		});
 	}
