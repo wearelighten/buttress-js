@@ -200,11 +200,11 @@ function _authenticateToken(req, res, next) {
 				resolve(token);
 			});
 		})
-		.then(() => Model.App.findById(req.token._app))
+		.then(() => (req.token._app) ? Model.App.findById(req.token._app) : null)
 		.then((app) => {
 			Model.authApp = req.authApp = app;
 		})
-		.then(() => Model.User.findById(req.token._user))
+		.then(() => (req.token._user) ? Model.User.findById(req.token._user) : null)
 		.then((user) => {
 			req.authUser = user;
 		})
