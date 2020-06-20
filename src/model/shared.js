@@ -492,7 +492,14 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 			invalidValid: '',
 		};
 
-		if (!body.path) {
+		// Seperate between the full update path vs stripped suffix
+		const suffix = [
+			'.__increment__',
+		];
+		const fullPath = body.path;
+		const pathStrippedSuffix = fullPath.replace(suffix, '');
+
+		if (!fullPath) {
 			res.missingRequired = 'path';
 			return res;
 		}
@@ -506,12 +513,12 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 		let validPath = false;
 		body.contextPath = false;
 		for (const pathSpec in pathContext) {
-			if (!Object.prototype.hasOwnProperty.call(pathContext, pathSpec)) {
+			if (!{}.hasOwnProperty.call(pathContext, pathSpec)) {
 				continue;
 			}
 
 			const rex = new RegExp(pathSpec);
-			const matches = rex.exec(body.path);
+			const matches = rex.exec(fullPath);
 			if (matches) {
 				matches.splice(0, 1);
 				validPath = true;
@@ -522,7 +529,7 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 		}
 
 		if (validPath === false) {
-			res.invalidPath = `${body.path} <> ${Object.getOwnPropertyNames(pathContext)}`;
+			res.invalidPath = `${fullPath} <> ${Object.getOwnPropertyNames(pathContext)}`;
 			return res;
 		}
 
@@ -534,10 +541,10 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 			return res;
 		}
 
-		const config = flattenedSchema[body.path];
+		const config = flattenedSchema[pathStrippedSuffix];
 		if (config) {
 			if (config.__type === 'array' && config.__schema) {
-				const validation = __validate(config.__schema, __getFlattenedBody(body.value), `${body.path}.`);
+				const validation = __validate(config.__schema, __getFlattenedBody(body.value), `${pathStrippedSuffix}.`);
 				if (validation.isValid !== true) {
 					if (validation.missing.length) {
 						res.isMissingRequired = true;
@@ -551,11 +558,11 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 			} else if (config.__type === 'array' && config.__itemtype) {
 				if (!__validateProp(body, {__type: config.__itemtype})) {
 					// Logging.logWarn(`Invalid ${property}.${idx}: ${prop.value} [${typeof prop.value}] expected [${config.__itemtype}]`);
-					res.invalidValue = `${body.path}:${body.value}[${typeof body.value}] [${config.__itemtype}]`;
+					res.invalidValue = `${fullPath}:${body.value}[${typeof body.value}] [${config.__itemtype}]`;
 					return res;
 				}
 			} else if (!config.__schema && !__validateProp(body, config)) {
-				res.invalidValue = `${body.path} failed schema test`;
+				res.invalidValue = `${fullPath} failed schema test`;
 				return res;
 			}
 		}
