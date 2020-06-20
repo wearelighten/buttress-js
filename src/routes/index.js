@@ -324,6 +324,9 @@ function logErrors(err, req, res, next) {
 	if (err instanceof Helpers.RequestError) {
 		res.status(err.code).json({statusMessage: err.message, message: err.message});
 	} else {
+		if (err) {
+			Logging.logError(err);
+		}
 		res.status(500);
 	}
 
