@@ -38,7 +38,7 @@ function _initRoute(app, Route) {
 		route.path,
 	]);
 	Logging.logSilly(`REGISTER: [${route.verb.toUpperCase()}] ${routePath}`);
-	app[route.verb](routePath, (req, res) => {
+	app[route.verb](routePath, (req, res, next) => {
 		Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 		route
@@ -53,7 +53,8 @@ function _initRoute(app, Route) {
 				}
 				Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
 				Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
-			});
+			})
+			.catch(next);
 	});
 }
 
@@ -73,7 +74,7 @@ function _initSchemaRoutes(express, app, schemaData) {
 		]);
 		if (routePath.indexOf('/') !== 0) routePath = `/${routePath}`;
 		Logging.logSilly(`REGISTER: [${route.verb.toUpperCase()}] ${routePath}`);
-		express[route.verb](routePath, (req, res) => {
+		express[route.verb](routePath, (req, res, next) => {
 			Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
 
 			route
@@ -148,7 +149,8 @@ function _initSchemaRoutes(express, app, schemaData) {
 					res.json(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
 					Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
 					Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
-				});
+				})
+				.catch(next);
 		});
 	});
 }
