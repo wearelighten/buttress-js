@@ -138,8 +138,6 @@ class TokenSchemaModel extends SchemaModel {
 			string += chars[byte & mask];
 		}
 
-		Logging.log(`Created Token: ${string}`, Logging.Constants.LogLevel.VERBOSE);
-
 		return string;
 	}
 

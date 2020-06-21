@@ -101,32 +101,30 @@ class Route {
 	 * @return {Promise} - Promise is fulfilled once execution has completed
 	 */
 	exec(req, res) {
+		Logging.logTimer('Route:exec:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		this._timer = req.timer;
 
 		return new Promise((resolve, reject) => {
 			if (!this._exec) {
-				this.log(`Error: ${this.name}: No _exec defined`, Logging.Constants.LogLevel.ERR);
+				Logging.logTimer('Route:exec:end-no-exec-defined', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				reject(new Helpers.RequestError(500));
 				return;
 			}
 
-			Logging.logSilly(`EXEC [${this.name.toUpperCase()}] ${this.path}`);
-
 			this._authenticate(req, res)
-				.then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then((token) => this._validate(req, res, token))
-				.then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then((validate) => this._exec(req, res, validate))
-				.then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then((result) => this._logActivity(req, res, result))
+				.then(Logging.Promise.logTimer(`Route:exec:end`, this._timer, Logging.Constants.LogLevel.SILLY, req.id))
 				.then(resolve)
 				.catch(reject);
 		});
 	}
 
 	_logActivity(req, res, result) {
-		Logging.logSilly(`logging activity: [${this.verb}] ${this.path} (${this.auth}:${this.permissions})`);
+		Logging.logTimer('_logActivity:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		if (result instanceof Mongo.Cursor || this.verb === Constants.Verbs.GET) {
+			Logging.logTimer('_logActivity:end-cursor-get', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 			return Promise.resolve(result);
 		}
 
@@ -172,10 +170,12 @@ class Route {
 			broadcast();
 		}, 50);
 
+		Logging.logTimer('_logActivity:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		return Promise.resolve(result);
 	}
 
 	_addLogActivity(req, path, verb) {
+		Logging.logTimer('_addLogActivity:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		// TODO: Activty should pass back a stripped version of the activty object.
 		return Model.Activity.add({
 			activityTitle: this.activityTitle,
@@ -202,11 +202,12 @@ class Route {
 					params: activity.params,
 					permissions: 'write',
 				}, req, activity);
+				Logging.logTimer('_addLogActivity:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 			})
 			.catch((e) => {
 				// Logging.logError(`[${verb.toUpperCase()}] ${path}`);
 				// Logging.logError(req.body);
-				Logging.logError(e);
+				Logging.logError(e, req.id);
 			});
 	}
 
@@ -237,19 +238,20 @@ class Route {
 	_authenticate(req, res) {
 		return new Promise((resolve, reject) => {
 			if (this.auth === Constants.Auth.NONE) {
-				this.log(`WARN: OPEN API CALL`, Logging.Constants.LogLevel.WARN);
+				this.log(`WARN: OPEN API CALL`, Logging.Constants.LogLevel.WARN, req.id);
+				Logging.logTimer('_authenticate:end-open-api', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				return resolve(req.user);
 			}
 
 			if (!req.token) {
-				this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR);
+				this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR, req.id);
+				Logging.logTimer('_authenticate:end-invalid-token', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				return reject(new Helpers.RequestError(401, 'invalid_token'));
 			}
-			this.log(req.token.value, Logging.Constants.LogLevel.SILLY);
 
-			this.log(`AUTHLEVEL: ${this.auth}`, Logging.Constants.LogLevel.VERBOSE);
 			if (req.token.authLevel < this.auth) {
-				this.log('EAUTH: INSUFFICIENT AUTHORITY', Logging.Constants.LogLevel.ERR);
+				this.log(`EAUTH: INSUFFICIENT AUTHORITY ${req.token.authLevel} < ${this.auth}`, Logging.Constants.LogLevel.ERR, req.id);
+				Logging.logTimer('_authenticate:end-insufficient-authority', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				return reject(new Helpers.RequestError(401, 'insufficient_authority'));
 			}
 
@@ -267,9 +269,10 @@ class Route {
 			 * @TODO Improve the pattern matching granularity ie like Glob
 			 * @TODO Support Regex in specific ie match routes like app/:id/permission
 			 */
+			Logging.logTimer(`_authenticate:start-app-routes ${req.token.role}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+
 			let authorised = false;
 			const token = req.token;
-			Logging.logSilly(`permissions`, token.permissions);
 			for (let x = 0; x < token.permissions.length; x++) {
 				const p = token.permissions[x];
 				if (this._matchRoute(req, p.route) && this._matchPermission(p.permission)) {
@@ -279,13 +282,14 @@ class Route {
 			}
 
 			if (authorised === false) {
-				this.log(token.permissions, Logging.Constants.LogLevel.ERR);
 				this.log(`EAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
+				Logging.logTimer('_authenticate:end-no-permission-route', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				return reject(new Helpers.RequestError(403, 'no_permission_for_route'));
 			}
 
 			// BYPASS schema checks for app tokens
 			if (req.token.type === 'app') {
+				Logging.logTimer('_authenticate:end-app-token', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				resolve(req.token);
 				return;
 			}
@@ -308,7 +312,6 @@ class Route {
 			// Check endpointDisposition against app roles it exists
 			if (appRoles && req.token.role) {
 				const role = appRoles.find((r) => r.name === req.token.role);
-				Logging.logSilly(`SAUTH: MATCHING APP ROLE - ${req.token.role}`);
 
 				// Set schema role on the req object for use by route/schema
 				req.roles.app = role;
@@ -320,17 +323,16 @@ class Route {
 						disposition.POST = 'allow';
 						disposition.DELETE = 'allow';
 					}
-				} else {
-					Logging.logSilly(`SAUTH: APP ROLE DOESN'T SPECIFY - ${req.token.role}`);
 				}
-			} else {
-				Logging.logSilly(`SAUTH: NO APP ROLES DEFINED, USING DEFAULTS`);
 			}
+
+			Logging.logTimer(`_authenticate:end-app-routes ${req.token.role}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 
 			/*
 			 * Start of Route schema permissions
 			 */
 			if (this.schema) {
+				Logging.logTimer(`_authenticate:start-schema-role ${req.token.role}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				authorised = false;
 
 				// HACK - BYPASS Permissions for company / service
@@ -338,13 +340,10 @@ class Route {
 					return resolve(req.token);
 				}
 
-				Logging.logSilly(`SAUTH: TOKEN ROLE - ${req.token.role}`);
-
 				// If schema has endpointDisposition roles set for the role then
 				// user the defined settings instead.
 				if (this.schema.data.roles) {
 					const role = this.schema.data.roles.find((r) => r.name === req.token.role);
-					Logging.logSilly(`SAUTH: MATCHING SCEHMA ROLE - ${req.token.role}`);
 
 					// Set schema role on the req object for use by route/schema
 					req.roles.schema = role;
@@ -354,11 +353,7 @@ class Route {
 						if (role.endpointDisposition.PUT) disposition.PUT = role.endpointDisposition.PUT;
 						if (role.endpointDisposition.POST) disposition.POST = role.endpointDisposition.POST;
 						if (role.endpointDisposition.DELETE) disposition.DELETE = role.endpointDisposition.DELETE;
-					} else {
-						Logging.logSilly(`SAUTH: SCHEMA ROLE DOESN'T SPECIFY - ${req.token.role}`);
 					}
-				} else {
-					Logging.logSilly(`SAUTH: NO SCHEMA ROLES DEFINED, USING DEFAULTS.`);
 				}
 
 				// Check the role has permission on this endpoint
@@ -368,8 +363,11 @@ class Route {
 
 				if (authorised === false) {
 					this.log(`SAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
+					Logging.logTimer('_authenticate:end-no-permission-schema', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 					return reject(new Helpers.RequestError(403, 'no_permission_for_route'));
 				}
+
+				Logging.logTimer(`_authenticate:end-schema-role`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 			}
 
 			resolve(req.token);
@@ -392,11 +390,11 @@ class Route {
 			return true;
 		}
 
-		const userWildcard = /^user\/me.+/;
-		if (routeSpec.match(userWildcard) && req.params.id == req.authUser._id) { // eslint-disable-line eqeqeq
-			Logging.logSilly(`Matched user ${req.authUser._id} to /user/${req.params.id}`);
-			return true;
-		}
+		// const userWildcard = /^user\/me.+/;
+		// if (routeSpec.match(userWildcard) && req.params.id == req.authUser._id) {
+		// 	Logging.logSilly(`Matched user ${req.authUser._id} to /user/${req.params.id}`);
+		// 	return true;
+		// }
 
 		const wildcard = /(.+)(\/\*)/;
 		const matches = routeSpec.match(wildcard);

@@ -24,8 +24,6 @@ const Config = require('node-env-obj')('../');
 
 const SchemaRoutes = require('./schemaRoutes');
 
-const _timer = new Helpers.Timer();
-
 /**
  * @param {Object} app - express app object
  * @param {Function} Route - route object
@@ -37,13 +35,12 @@ function _initRoute(app, Route) {
 		Config.app.apiPrefix,
 		route.path,
 	]);
-	Logging.logSilly(`REGISTER: [${route.verb.toUpperCase()}] ${routePath}`);
+	Logging.logSilly(`_initRoute:register [${route.verb.toUpperCase()}] ${routePath}`);
 	app[route.verb](routePath, (req, res, next) => {
-		Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
-
 		route
 			.exec(req, res)
 			.then((result) => {
+				Logging.logTimer(`_result:start ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				if (result instanceof Mongo.Cursor) {
 					const stringifyStream = new Helpers.JSONStringifyStream();
 					res.set('Content-Type', 'application/json');
@@ -51,8 +48,8 @@ function _initRoute(app, Route) {
 				} else {
 					res.json(Helpers.prepareResult(result));
 				}
-				Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
-				Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
+				Logging.logTimer(`_result:end ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+				Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05, req.id);
 			})
 			.catch(next);
 	});
@@ -73,15 +70,13 @@ function _initSchemaRoutes(express, app, schemaData) {
 			route.path,
 		]);
 		if (routePath.indexOf('/') !== 0) routePath = `/${routePath}`;
-		Logging.logSilly(`REGISTER: [${route.verb.toUpperCase()}] ${routePath}`);
+		Logging.logSilly(`_initSchemaRoutes:register [${route.verb.toUpperCase()}] ${routePath}`);
 		express[route.verb](routePath, (req, res, next) => {
-			Logging.logTimerException(`PERF: START: ${route.path}`, req.timer, 0.005);
-
 			route
 				.exec(req, res)
 				.then((result) => {
 					const isCursor = result instanceof Mongo.Cursor;
-					Logging.logTimer(`Result is a cursor: ${isCursor}`, req.timer, Logging.Constants.LogLevel.SILLY);
+					Logging.logTimer(`_result:start cursor:${isCursor}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 
 					// Fetch app roles if they exist
 					let appRoles = null;
@@ -125,8 +120,6 @@ function _initSchemaRoutes(express, app, schemaData) {
 						return properties;
 					}, {});
 
-					Logging.logTimer(`DONE: Schema permissions`, req.timer, Logging.Constants.LogLevel.SILLY);
-
 					if (isCursor) {
 						const stringifyStream = new Helpers.JSONStringifyStream({}, (chunk) => {
 							return Shared.prepareSchemaResult(chunk, dataDisposition, filter, permissions, req.token);
@@ -134,12 +127,12 @@ function _initSchemaRoutes(express, app, schemaData) {
 
 						res.set('Content-Type', 'application/json');
 
-						Logging.logTimer(`STREAM: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
+						Logging.logTimer(`_result:start-stream ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 						const stream = result.stream();
 
 						stream.once('end', () => {
-							Logging.logTimerException(`PERF: STREAM DONE: ${route.path}`, req.timer, 0.05);
-							Logging.logTimer(`STREAM DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
+							Logging.logTimerException(`PERF: STREAM DONE: ${route.path}`, req.timer, 0.05, req.id);
+							Logging.logTimer(`_result:end-stream ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 						});
 
 						stream.pipe(stringifyStream).pipe(res);
@@ -147,8 +140,8 @@ function _initSchemaRoutes(express, app, schemaData) {
 						return;
 					}
 					res.json(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
-					Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05);
-					Logging.logTimer(`DONE: ${route.path}`, req.timer, Logging.Constants.LogLevel.VERBOSE);
+					Logging.logTimer(`_result:end ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+					Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05, req.id);
 				})
 				.catch(next);
 		});
@@ -157,6 +150,15 @@ function _initSchemaRoutes(express, app, schemaData) {
 
 let _tokens = [];
 
+function _timeRequest(req, res, next) {
+	// Just assign a arbitrary id to the request to help identify it in the logs
+	req.id = new Mongo.ObjectID();
+	req.timer = new Helpers.Timer();
+	req.timer.start();
+	Logging.logTimer(`[${req.method.toUpperCase()}] ${req.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+	next();
+}
+
 /**
  * @param {Object} req - Request object
  * @param {Object} res - Response object
@@ -164,22 +166,20 @@ let _tokens = [];
  * @private
  */
 function _authenticateToken(req, res, next) {
-	req.session = null; // potentially prevents a write
-	req.timer = _timer;
-	req.timer.start();
-	Logging.logVerbose(`AUTH [${req.method.toUpperCase()}] ${req.path}`);
-	Logging.log(`Token: ${req.query.token}`, Logging.Constants.LogLevel.SILLY);
+	Logging.logTimer(`_authenticateToken:start ${req.query.token}`,
+		req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 
 	if (!req.query.token) {
-		Logging.log('EAUTH: Missing Token', Logging.Constants.LogLevel.ERR);
+		Logging.logTimer(`_authenticateToken:end-missing-token`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		res.status(400).json({message: 'missing_token'});
 		return;
 	}
+
 	_getToken(req)
 		.then((token) => {
 			return new Promise((resolve, reject) => {
 				if (token === null) {
-					Logging.log('EAUTH: Invalid Token', Logging.Constants.LogLevel.ERR);
+					Logging.logTimer(`_authenticateToken:end-missing-token`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 					reject(new Helpers.RequestError(401, 'invalid_token'));
 					return;
 				}
@@ -201,7 +201,7 @@ function _authenticateToken(req, res, next) {
 		.then((user) => {
 			req.authUser = user;
 		})
-		.then(Helpers.Promise.inject())
+		.then(Logging.Promise.logTimer('_authenticateToken:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id))
 		.then(next)
 		.catch(next);
 }
@@ -211,25 +211,24 @@ function _authenticateToken(req, res, next) {
 	* @return {Promise} - resolves with the matching token if any
  */
 function _getToken(req) {
+	Logging.logTimer('_getToken:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 	let token = null;
 
 	if (_tokens.length > 0 && !Model.appMetadataChanged) {
 		token = _lookupToken(_tokens, req.query.token);
-		// Logging.log("Using Cached Tokens", Logging.Constants.LogLevel.DEBUG);
 		if (token) {
-			Logging.logSilly(`_getToken:Lookup: ${req.timer.interval.toFixed(3)}`);
+			Logging.logTimer('_getToken:end-cache', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 			return Promise.resolve(token);
 		}
 	}
 
 	return new Promise((resolve) => {
 		Model.Token.findAll().toArray()
-			.then(Logging.Promise.logArray('Tokens: ', Logging.Constants.LogLevel.SILLY))
 			.then((tokens) => {
-				Logging.logDebug(`_getToken:Load: ${req.timer.interval.toFixed(3)}`);
 				_tokens = tokens;
 				Model.appMetadataChanged = false;
 				token = _lookupToken(_tokens, req.query.token);
+				Logging.logTimer('_getToken:end-lookup', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				return resolve(token);
 			});
 	});
@@ -265,20 +264,24 @@ function _loadTokens() {
  * @private
  */
 function _configCrossDomain(req, res, next) {
+	Logging.logTimer('_configCrossDomain:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 	if (!req.token) {
 		res.status(401).json({message: 'Auth token is required'});
+		Logging.logTimer('_configCrossDomain:end-no-auth', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		return;
 	}
 	if (req.token.type !== Model.Token.Constants.Type.USER) {
 		res.header('Access-Control-Allow-Origin', '*');
 		res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
 		res.header('Access-Control-Allow-Headers', 'content-type');
+		Logging.logTimer('_configCrossDomain:end-app-token', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		next();
 		return;
 	}
 
 	if (!req.authUser) {
 		res.status(401).json({message: 'Auth user is required'});
+		Logging.logTimer('_configCrossDomain:end-no-auth-user', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		return;
 	}
 
@@ -299,13 +302,14 @@ function _configCrossDomain(req, res, next) {
 		return matches ? matches[1] : d;
 	});
 
-	Logging.logSilly(`origin`, origin);
-	Logging.logSilly(`domains`, domains);
+	Logging.logSilly(`_configCrossDomain:origin ${origin}`, req.id);
+	Logging.logSilly(`_configCrossDomain:domains ${domains}`, req.id);
 
 	const domainIdx = domains.indexOf(origin);
 	if (domainIdx === -1) {
 		Logging.logError(new Error(`Invalid Domain: ${origin}`));
 		res.sendStatus(403);
+		Logging.logTimer('_configCrossDomain:end-invalid-domain', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		return;
 	}
 
@@ -315,8 +319,11 @@ function _configCrossDomain(req, res, next) {
 
 	if (req.method === 'OPTIONS') {
 		res.sendStatus(200);
+		Logging.logTimer('_configCrossDomain:end-options-req', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		return;
 	}
+
+	Logging.logTimer('_configCrossDomain:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 	next();
 }
 
@@ -325,7 +332,7 @@ function logErrors(err, req, res, next) {
 		res.status(err.code).json({statusMessage: err.message, message: err.message});
 	} else {
 		if (err) {
-			Logging.logError(err);
+			Logging.logError(err, req.id);
 		}
 		res.status(500);
 	}
@@ -348,6 +355,7 @@ exports.init = (app) => {
 
 	const apiRouter = express.Router(); // eslint-disable-line new-cap
 
+	apiRouter.use(_timeRequest);
 	apiRouter.use(_authenticateToken);
 	apiRouter.use(_configCrossDomain);
 
@@ -377,7 +385,7 @@ exports.init = (app) => {
 		})
 		.then(() => _loadTokens())
 		.then(() => {
-			Logging.logSilly('Registered API Routes');
+			Logging.logSilly(`init:registered-routes`);
 			app.use('', apiRouter);
 			app.use(logErrors);
 		});

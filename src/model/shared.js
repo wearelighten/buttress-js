@@ -110,7 +110,6 @@ const __getFlattenedBody = (body) => {
 		__buildFlattenedBody(property, body, path, flattened);
 	}
 
-	Logging.log(`__getFlattenedBody: ${flattened.length} properties`, Logging.Constants.LogLevel.SILLY);
 	return flattened;
 };
 
@@ -169,13 +168,11 @@ const __validateProp = (prop, config) => {
 			const bool = prop.value === 'true' || prop.value === 'yes';
 			prop.value = bool;
 			type = typeof prop.value;
-			Logging.logSilly(`${bool} [${type}]`);
 		}
 		if (type === 'number') {
 			const bool = prop.value === 1;
 			prop.value = bool;
 			type = typeof prop.value;
-			Logging.logSilly(`${bool} [${type}]`);
 		}
 		valid = type === config.__type;
 		break;
@@ -186,7 +183,6 @@ const __validateProp = (prop, config) => {
 				prop.value = number;
 				type = typeof prop.value;
 			}
-			Logging.logSilly(`${number} [${type}]`);
 		}
 		valid = type === config.__type;
 		break;
@@ -208,7 +204,6 @@ const __validateProp = (prop, config) => {
 		if (type === 'number') {
 			prop.value = String(prop.value);
 			type = typeof prop.value;
-			Logging.logSilly(`${prop.value} [${type}]`);
 		}
 
 		valid = type === config.__type;
@@ -298,9 +293,6 @@ const __validate = (schema, values, parentProperty) => {
 			}
 		}
 	}
-
-	Logging.logSilly(`res.missing`, res.missing);
-	Logging.logSilly(`res.invalid`, res.invalid);
 
 	return res;
 };
@@ -802,16 +794,11 @@ module.exports.getAllMetadata = function(collection) {
 };
 
 module.exports.findMetadata = function(key) {
-	Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-	Logging.log(this.metadata.map((m) => ({key: m.key, value: m.value})),
-		Logging.Constants.LogLevel.DEBUG);
 	const md = this.metadata.find((m) => m.key === key);
 	return md ? {key: md.key, value: JSON.parse(md.value)} : false;
 };
 
 module.exports.rmMetadata = function(key) {
-	Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-
 	return this
 		.update({$pull: {metadata: {key: key}}})
 		.then((res) => res.nModified !== 0);

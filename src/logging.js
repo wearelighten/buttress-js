@@ -129,12 +129,13 @@ module.exports.init = (logApp) => {
  *
  * @param {string} log - log entry
  * @param {string} level - level to log at
+ * @param {string} id - id
  * @private
  */
-function _log(log, level) {
+function _log(log, level, id) {
 	winston.log({
 		level: level,
-		message: log,
+		message: (id) ? `[${id}] ${log}` : log,
 	});
 }
 
@@ -150,66 +151,74 @@ module.exports.setLogLevel = (level) => {
 /**
  * @param {string} log - Text to log
  * @param {string} level - level to log at
+ * @param {string} id - id
  */
-module.exports.log = (log, level) => {
+module.exports.log = (log, level, id=null) => {
 	level = level || LogLevel.DEFAULT;
-	_log(log, level);
+	_log(log, level, id);
 };
 
 /**
  * @param {string} log - Text to log
+ * @param {string} id - id
  */
-module.exports.logVerbose = (log) => {
-	module.exports.log(log, LogLevel.VERBOSE);
+module.exports.logVerbose = (log, id=null) => {
+	module.exports.log(log, LogLevel.VERBOSE, id);
 };
 
 /**
  * @param {string} log - Text to log
+ * @param {string} id - id
  */
-module.exports.logDebug = (log) => {
-	module.exports.log(log, LogLevel.DEBUG);
+module.exports.logDebug = (log, id=null) => {
+	module.exports.log(log, LogLevel.DEBUG, id);
 };
 
 /**
  * @param {string} log - Text to log
+ * @param {string} id - id
  */
-module.exports.logSilly = (log) => {
-	module.exports.log(log, LogLevel.SILLY);
+module.exports.logSilly = (log, id=null) => {
+	module.exports.log(log, LogLevel.SILLY, id);
 };
 
 /**
  * @param {string} warn - warning to log
+ * @param {string} id - id
  */
-module.exports.logWarn = (warn) => {
-	_log(warn, LogLevel.WARN);
+module.exports.logWarn = (warn, id=null) => {
+	_log(warn, LogLevel.WARN, id);
 };
 /**
  * @param {string} err - error object to log
+ * @param {string} id - id
  */
-module.exports.logError = (err) => {
-	_log(err.message, LogLevel.ERR);
-	_log(err.stack, LogLevel.ERR);
+module.exports.logError = (err, id=null) => {
+	_log(err.message, LogLevel.ERR, id);
+	_log(err.stack, LogLevel.ERR, id);
 };
 
 /**
  * @param {string} log - Text to log
  * @param {Object} timer - Object with an 'interval' property
  * @param {string} level - level to log at
+ * @param {string} id - id
  */
-module.exports.logTimer = (log, timer, level) => {
+module.exports.logTimer = (log, timer, level, id=null) => {
 	level = level || LogLevel.INFO;
-	_log(`${log} [${timer.interval.toFixed(6)}s]`, level);
+	_log(`[${timer.interval.toFixed(6)}s][${timer.lapTime.toFixed(6)}s] ${log}`, level, id);
 };
 
 /**
  * @param {string} log - Text to log
  * @param {Object} timer - Object with an 'interval' property
  * @param {string} time - time above which to log the exception
+ * @param {string} id - id
  */
-module.exports.logTimerException = (log, timer, time) => {
+module.exports.logTimerException = (log, timer, time, id=null) => {
 	const level = LogLevel.ERR;
 	if (timer.interval > time) {
-		_log(`${log} ${timer.interval.toFixed(3)}s`, level);
+		_log(`[${timer.interval.toFixed(6)}s][${timer.lapTime.toFixed(6)}s] ${log} ${timer.interval.toFixed(3)}s > ${time}s`, level, id);
 	}
 };
 
@@ -223,11 +232,12 @@ module.exports.Promise = {};
  * @param {string} log - Text to log
  * @param {string} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
+ * @param {string} id - id
  */
-module.exports.Promise.log = (log, level) => {
+module.exports.Promise.log = (log, level, id=null) => {
 	level = level || LogLevel.DEFAULT;
 	return (res) => {
-		_log(`${log}: ${res}`, level);
+		_log(`${log}: ${res}`, level, id);
 		return res;
 	};
 };
@@ -368,37 +378,41 @@ module.exports.Promise.logError = () => {
 /**
  * @param {string} log - Text to log
  * @return {function(*)} - returns a function for chaining into a promise
+ * @param {string} id - id
  */
-module.exports.Promise.logInfo = (log) => {
+module.exports.Promise.logInfo = (log, id=null) => {
 	const level = LogLevel.INFO;
-	return module.exports.Promise.log(log, level);
+	return module.exports.Promise.log(log, level, id);
 };
 
 /**
  * @param {string} log - Text to log
  * @return {function(*)} - returns a function for chaining into a promise
+ * @param {string} id - id
  */
-module.exports.Promise.logVerbose = (log) => {
+module.exports.Promise.logVerbose = (log, id=null) => {
 	const level = LogLevel.VERBOSE;
-	return module.exports.Promise.log(log, level);
+	return module.exports.Promise.log(log, level, id);
 };
 
 /**
  * @param {string} log - Text to log
  * @return {function(*)} - returns a function for chaining into a promise
+ * @param {string} id - id
  */
-module.exports.Promise.logDebug = (log) => {
+module.exports.Promise.logDebug = (log, id=null) => {
 	const level = LogLevel.DEBUG;
-	return module.exports.Promise.log(log, level);
+	return module.exports.Promise.log(log, level, id);
 };
 
 /**
  * @param {string} log - Text to log
  * @return {function(*)} - returns a function for chaining into a promise
+ * @param {string} id - id
  */
-module.exports.Promise.logSilly = (log) => {
+module.exports.Promise.logSilly = (log, id=null) => {
 	const level = LogLevel.SILLY;
-	return module.exports.Promise.log(log, level);
+	return module.exports.Promise.log(log, level, id);
 };
 
 /**
@@ -406,11 +420,11 @@ module.exports.Promise.logSilly = (log) => {
  * @param {Object} timer - Object with an 'interval' property
  * @param {string} level - level to log at
  * @return {function(*)} - returns a function for chaining into a promise
+ * @param {string} id - id
  */
-module.exports.Promise.logTimer = (log, timer, level) => {
-	level = level || LogLevel.INFO;
+module.exports.Promise.logTimer = (log, timer, level, id=null) => {
 	return (res) => {
-		_log(`${log} [${timer.lapTime.toFixed(6)}s] [${timer.interval.toFixed(6)}s]`, level);
+		module.exports.logTimer(log, timer, level, id);
 		return res;
 	};
 };
@@ -420,13 +434,11 @@ module.exports.Promise.logTimer = (log, timer, level) => {
  * @param {Object} timer - Object with an 'interval' property
  * @param {string} time - time above which to log the exception
  * @return {function(*)} - returns a function for chaining into a promise
+ * @param {string} id - id
  */
-module.exports.Promise.logTimerException = (log, timer, time) => {
-	const level = LogLevel.ERR;
+module.exports.Promise.logTimerException = (log, timer, time, id=null) => {
 	return (res) => {
-		if (timer.interval > time) {
-			_log(`${log} ${timer.interval.toFixed(3)}s`, level);
-		}
+		module.exports.logTimerException(log, timer, time, id);
 
 		return res;
 	};

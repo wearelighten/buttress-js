@@ -33,7 +33,8 @@ class BootstrapRest {
 	constructor() {
 		Logging.setLogLevel(Logging.Constants.LogLevel.INFO);
 
-		this.processes = os.cpus().length;
+		// this.processes = os.cpus().length;
+		this.processes = 1;
 		this.workers = [];
 
 		let restInitTask = null;

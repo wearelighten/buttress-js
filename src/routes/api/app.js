@@ -104,14 +104,12 @@ class AddApp extends Route {
 				switch (Number(req.body.authLevel)) {
 				default:
 					req.body.permissions = JSON.stringify([]);
-					Logging.logDebug('Creating default permissions');
 					break;
 				case Model.Token.Constants.AuthLevel.SUPER: {
 					const permissions = [
 						{route: '*', permission: '*'},
 					];
 					req.body.permissions = JSON.stringify(permissions);
-					Logging.logDebug('Creating default SUPER permissions');
 				} break;
 				case Model.Token.Constants.AuthLevel.ADMIN: {
 					const permissions = [
@@ -119,7 +117,6 @@ class AddApp extends Route {
 					];
 
 					req.body.permissions = JSON.stringify(permissions);
-					Logging.logDebug('Creating default ADMIN permissions');
 				} break;
 				}
 			}

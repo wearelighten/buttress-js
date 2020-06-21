@@ -54,12 +54,12 @@ class GetActivity extends Route {
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!req.params.id) {
-				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
+				this.log('ERROR: Missing required field', Route.LogLevel.ERR, req.id);
 				return reject(new Helpers.RequestError(400, `missing_required_fields`));
 			}
 			Model.Activity.findById(req.params.id).then((activity) => {
 				if (!activity) {
-					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
+					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR, req.id);
 					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 				this._activity = activity;

@@ -104,7 +104,7 @@ class GetOne extends Route {
 			this.model.findById(req.params.id)
 				.then((entity) => {
 					if (!entity) {
-						this.log(`${this.schema.name}: Invalid ID: ${req.params.id}`, Route.LogLevel.ERR);
+						this.log(`${this.schema.name}: Invalid ID: ${req.params.id}`, Route.LogLevel.ERR, req.id);
 						return reject(new Helpers.RequestError(400, 'invalid_id'));
 					}
 					resolve(entity);
@@ -149,11 +149,11 @@ class GetMany extends Route {
 		return new Promise((resolve, reject) => {
 			const _ids = req.body;
 			if (!_ids) {
-				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
+				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR, req.id);
 				return reject(new Helpers.RequestError(400, 'invalid_id'));
 			}
 			if (!_ids.length) {
-				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
+				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR, req.id);
 				return reject(new Helpers.RequestError(400, 'invalid_id'));
 			}
 			resolve(_ids);
@@ -198,22 +198,22 @@ class AddOne extends Route {
 			const validation = this.model.validate(req.body);
 			if (!validation.isValid) {
 				if (validation.missing.length > 0) {
-					this.log(`${this.schema.name}: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+					this.log(`${this.schema.name}: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR, req.id);
 					return reject(new Helpers.RequestError(400, `${this.schema.name}: Missing field: ${validation.missing[0]}`));
 				}
 				if (validation.invalid.length > 0) {
-					this.log(`${this.schema.name}: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+					this.log(`${this.schema.name}: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR, req.id);
 					return reject(new Helpers.RequestError(400, `${this.schema.name}: Invalid value: ${validation.invalid[0]}`));
 				}
 
-				this.log(`${this.schema.name}: Unhandled Error`, Route.LogLevel.ERR);
+				this.log(`${this.schema.name}: Unhandled Error`, Route.LogLevel.ERR, req.id);
 				return reject(new Helpers.RequestError(400, `${this.schema.name}: Unhandled error.`));
 			}
 
 			this.model.isDuplicate(req.body)
 				.then((res) => {
 					if (res === true) {
-						this.log(`${this.schema.name}: Duplicate entity`, Route.LogLevel.ERR);
+						this.log(`${this.schema.name}: Duplicate entity`, Route.LogLevel.ERR, req.id);
 						return reject(new Helpers.RequestError(400, `duplicate`));
 					}
 					resolve(true);
@@ -258,7 +258,7 @@ class AddMany extends Route {
 		return new Promise((resolve, reject) => {
 			const entities = req.body;
 			if (entities instanceof Array === false) {
-				this.log(`ERROR: You need to supply an array of ${this.schema.name}`, Route.LogLevel.ERR);
+				this.log(`ERROR: You need to supply an array of ${this.schema.name}`, Route.LogLevel.ERR, req.id);
 				return reject(new Helpers.RequestError(400, `array_required`));
 			}
 			// if (companies.length > 601) {
@@ -270,11 +270,11 @@ class AddMany extends Route {
 			const validation = this.model.validate(entities);
 			if (!validation.isValid) {
 				if (validation.missing.length > 0) {
-					this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
+					this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR, req.id);
 					return reject(new Helpers.RequestError(400, `${this.schema.name}: Missing field: ${validation.missing[0]}`));
 				}
 				if (validation.invalid.length > 0) {
-					this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
+					this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR, req.id);
 					return reject(new Helpers.RequestError(400, `${this.schema.name}: Invalid value: ${validation.invalid[0]}`));
 				}
 
@@ -285,8 +285,7 @@ class AddMany extends Route {
 	}
 
 	_exec(req, res, entities) {
-		return this.model.add(entities)
-			.then(Logging.Promise.logProp(`Added ${this.schema.name}`, 'length', Route.LogLevel.VERBOSE));
+		return this.model.add(entities);
 	}
 }
 routes.push(AddMany);
@@ -325,11 +324,11 @@ class UpdateOne extends Route {
 			const validation = this.model.validateUpdate(req.body);
 			if (!validation.isValid) {
 				if (validation.isPathValid === false) {
-					this.log(`${this.schema.name}: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
+					this.log(`${this.schema.name}: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR, req.id);
 					return reject(new Helpers.RequestError(400, `${this.schema.name}: Update path is invalid: ${validation.invalidPath}`));
 				}
 				if (validation.isValueValid === false) {
-					this.log(`${this.schema.name}: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
+					this.log(`${this.schema.name}: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR, req.id);
 					if (validation.isMissingRequired) {
 						return reject(new Helpers.RequestError(
 							400,
@@ -347,7 +346,7 @@ class UpdateOne extends Route {
 			this.model.exists(req.params.id)
 				.then((exists) => {
 					if (!exists) {
-						this.log('ERROR: Invalid ID', Route.LogLevel.ERR);
+						this.log('ERROR: Invalid ID', Route.LogLevel.ERR, req.id);
 						return reject(new Helpers.RequestError(400, `invalid_id`));
 					}
 					resolve(true);
@@ -394,7 +393,7 @@ class DeleteOne extends Route {
 		return this.model.findById(req.params.id)
 			.then((entity) => {
 				if (!entity) {
-					this.log(`${this.schema.name}: Invalid ID`, Route.LogLevel.ERR);
+					this.log(`${this.schema.name}: Invalid ID`, Route.LogLevel.ERR, req.id);
 					return {statusCode: 400};
 				}
 				this._entity = entity;
@@ -440,11 +439,11 @@ class DeleteMany extends Route {
 		return new Promise((resolve, reject) => {
 			const ids = req.body;
 			if (!ids) {
-				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
+				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR, req.id);
 				return reject(new Helpers.RequestError(400, `invalid_id`));
 			}
 			if (!ids.length) {
-				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR);
+				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR, req.id);
 				return reject(new Helpers.RequestError(400, `invalid_id`));
 			}
 			// if (this._ids.length > 600) {

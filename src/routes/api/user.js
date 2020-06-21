@@ -64,9 +64,6 @@ class GetUser extends Route {
 					if (_user) {
 						Model.Token.findUserAuthTokens(_user._id, req.authApp._id)
 							.then((tokens) => {
-								const hasFoundToken = (tokens && tokens.length > 0);
-								Logging.logSilly(`FindUserToken: ${hasFoundToken === true}`);
-
 								resolve({
 									id: _user._id,
 									auth: _user.auth,
@@ -107,13 +104,9 @@ class FindUser extends Route {
 		return new Promise((resolve, reject) => {
 			Model.User.getByAppId(req.params.app, req.params.id)
 				.then((_user) => {
-					Logging.logSilly(`FindUser: ${_user !== null}`);
 					if (_user) {
 						Model.Token.findUserAuthTokens(_user._id, req.authApp._id)
 							.then((tokens) => {
-								const hasFoundToken = (tokens && tokens.length > 0);
-								Logging.logSilly(`FindUserToken: ${hasFoundToken === true}`);
-
 								resolve({
 									id: _user._id,
 									auth: _user.auth,
@@ -170,12 +163,10 @@ class CreateUserAuthToken extends Route {
 			Model.User.findById(req.params.id)
 				.then((user) => {
 					if (user) {
-						Logging.logDebug(`CreateUserAuthToken:findById: ${user ? user.id : user}`);
-						resolve(user);
-					} else {
-						this.log('ERROR: Invalid User ID', Route.LogLevel.ERR);
-						resolve({statusCode: 400});
+						return resolve(user);
 					}
+
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				});
 		});
 	}
@@ -355,7 +346,6 @@ class DeleteUser extends Route {
 			Model.User.findById(req.params.id)
 				.then((user) => {
 					if (user) {
-						Logging.logDebug(`Delete user: ${user ? user.id : user}`);
 						return resolve(user);
 					}
 
