@@ -186,10 +186,6 @@ function _authenticateToken(req, res, next) {
 
 				req.token = token;
 
-				Model.Token.collection.updateOne({_id: token._id}, {$push: {
-					uses: new Date(),
-				}});
-
 				resolve(token);
 			});
 		})
