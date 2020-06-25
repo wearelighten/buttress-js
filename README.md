@@ -2,7 +2,9 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.2.1
+### Version: 2.2.2
+- FIX: No longer update token.uses when a token is used
+### 2.2.1
 - ADDED: Ability to pass updatedAt flag when creating a object
 ### 2.2.0
 *Interim build - See commit log*
