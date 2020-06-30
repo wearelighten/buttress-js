@@ -145,29 +145,29 @@ class Route {
 		// Replace API version prefix
 		path = `/${path.join('/')}`.replace(Config.app.apiPrefix, '');
 
-		const broadcast = () => {
-			if (res) {
-				const appPId = Model.App.genPublicUID(req.authApp.name, req.authApp._id);
-				this._activityBroadcastSocket({
-					title: this.activityTitle,
-					description: this.activityDescription,
-					visibility: this.activityVisibility,
-					broadcast: this.activityBroadcast,
-					path: path,
-					pathSpec: this.path,
-					params: req.params,
-					verb: this.verb,
-					permissions: this.permissions,
-				}, req, result, appPId);
-			}
-		};
-
 		setTimeout(() => {
-			// Craft activity object and add
+			let func = Promise.resolve();
+
 			if (addActivty) {
-				this._addLogActivity(req, this.path, this.verb);
+				func = this._addLogActivity(req, this.path, this.verb);
 			}
-			broadcast();
+
+			func.then(() => {
+				if (res) {
+					const appPId = Model.App.genPublicUID(req.authApp.name, req.authApp._id);
+					this._activityBroadcastSocket({
+						title: this.activityTitle,
+						description: this.activityDescription,
+						visibility: this.activityVisibility,
+						broadcast: this.activityBroadcast,
+						path: path,
+						pathSpec: this.path,
+						params: req.params,
+						verb: this.verb,
+						permissions: this.permissions,
+					}, req, result, appPId);
+				}
+			});
 		}, 50);
 
 		Logging.logTimer('_logActivity:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
@@ -189,26 +189,10 @@ class Route {
 			req: req,
 			res: {},
 		})
-			.then((activity) => {
-			// Activity doesn't get added via the API so we will just broadcast the data manually
-				this._activityBroadcastSocket({
-					title: 'Private Activity',
-					description: 'ADD ACTIVITY',
-					visibility: 'private',
-					broadcast: false,
-					path: `activity`,
-					pathSpec: 'activity',
-					verb: 'post',
-					params: activity.params,
-					permissions: 'write',
-				}, req, activity);
+			.then(() => {
 				Logging.logTimer('_addLogActivity:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 			})
-			.catch((e) => {
-				// Logging.logError(`[${verb.toUpperCase()}] ${path}`);
-				// Logging.logError(req.body);
-				Logging.logError(e, req.id);
-			});
+			.catch((e) => Logging.logError(e, req.id));
 	}
 
 	_activityBroadcastSocket(activity, req, res, appPid) {
