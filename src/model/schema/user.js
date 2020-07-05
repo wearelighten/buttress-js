@@ -158,6 +158,7 @@ class UserSchemaModel extends SchemaModel {
 		return super.add(user, {
 			_apps: [Model.authApp._id],
 		})
+			.then((cursor) => cursor.toArray().then((data) => data.slice(0, 1).shift()))
 			.then((user) => {
 				_user = user;
 				if (!auth) {
@@ -169,6 +170,7 @@ class UserSchemaModel extends SchemaModel {
 					_user: _user._id,
 				});
 			})
+			.then((cursor) => cursor.toArray().then((data) => data.slice(0, 1).shift()))
 			.then((token) => {
 				_user.tokens = [];
 

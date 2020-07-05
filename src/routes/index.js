@@ -35,23 +35,7 @@ function _initRoute(app, Route) {
 		route.path,
 	]);
 	Logging.logSilly(`_initRoute:register [${route.verb.toUpperCase()}] ${routePath}`);
-	app[route.verb](routePath, (req, res, next) => {
-		route
-			.exec(req, res)
-			.then((result) => {
-				Logging.logTimer(`_result:start ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-				if (result instanceof Mongo.Cursor) {
-					const stringifyStream = new Helpers.JSONStringifyStream();
-					res.set('Content-Type', 'application/json');
-					result.stream().pipe(stringifyStream).pipe(res);
-				} else {
-					res.json(Helpers.prepareResult(result));
-				}
-				Logging.logTimer(`_result:end ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-				Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05, req.id);
-			})
-			.catch(next);
-	});
+	app[route.verb](routePath, (req, res, next) => route.exec(req, res).catch(next));
 }
 
 /**

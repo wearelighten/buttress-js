@@ -158,7 +158,7 @@ class Route {
 			}
 		}
 
-		if (tokenRole && this.schema.data.roles) {
+		if (tokenRole && this.schema && this.schema.data.roles) {
 			const schemaRole = this.schema.data.roles.find((r) => r.name === tokenRole);
 			if (schemaRole && schemaRole.dataDisposition) {
 				if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
@@ -314,7 +314,7 @@ class Route {
 				dataDisposition.READ = 'allow';
 			}
 
-			if (this.schema.data.roles) {
+			if (this.schema && this.schema.data && this.schema.data.roles) {
 				const schemaRole = this.schema.data.roles.find((r) => r.name === role);
 				if (schemaRole && schemaRole.dataDisposition) {
 					if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
@@ -341,7 +341,7 @@ class Route {
 				description: this.activityDescription,
 				visibility: this.activityVisibility,
 				broadcast: this.activityBroadcast,
-				role: role,
+				role: (role) ? role.name : null,
 				path: path,
 				pathSpec: this.path,
 				verb: this.verb,
