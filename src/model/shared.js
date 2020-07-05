@@ -49,22 +49,21 @@ module.exports.add = (collection, __add) => {
 							},
 						};
 					});
+
 					collection.bulkWrite(ops, (err, res) => {
 						if (err) {
 							reject(err);
 							return;
 						}
 
-						const insertedIds = Sugar.Object.values(res.insertedIds);
-						if (insertedIds.length === 0 || insertedIds.length > 1) {
-							resolve(insertedIds);
+						const insertedIds = Sugar.Object.values(res.insertedIds).map((id) => new ObjectId(id));
+						if (insertedIds.length < 1) {
+							resolve([]);
 							return;
 						}
 
-						collection.findOne({_id: new ObjectId(insertedIds[0])}, {}, (err, doc) => {
+						collection.find({_id: {$in: insertedIds}}, {}, (err, doc) => {
 							if (err) throw err;
-							// doc.id = doc._id;
-							// delete doc._id;
 							resolve(doc);
 						});
 					});
