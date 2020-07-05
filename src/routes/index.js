@@ -18,7 +18,6 @@ const Logging = require('../logging');
 const Schema = require('../schema');
 const Helpers = require('../helpers');
 const Model = require('../model');
-const Shared = require('../model/shared');
 const Mongo = require('mongodb');
 const Config = require('node-env-obj')('../');
 
@@ -71,80 +70,7 @@ function _initSchemaRoutes(express, app, schemaData) {
 		]);
 		if (routePath.indexOf('/') !== 0) routePath = `/${routePath}`;
 		Logging.logSilly(`_initSchemaRoutes:register [${route.verb.toUpperCase()}] ${routePath}`);
-		express[route.verb](routePath, (req, res, next) => {
-			route
-				.exec(req, res)
-				.then((result) => {
-					const isCursor = result instanceof Mongo.Cursor;
-					Logging.logTimer(`_result:start cursor:${isCursor}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-
-					// Fetch app roles if they exist
-					let appRoles = null;
-					if (req.authApp && req.authApp.__roles && req.authApp.__roles.roles) {
-						// This needs to be cached on startup
-						appRoles = Helpers.flattenRoles(req.authApp.__roles);
-					}
-
-					let filter = null;
-					const tokenRole = (req.token.role) ? req.token.role : '';
-					const dataDisposition = {
-						READ: 'deny',
-					};
-
-					if (appRoles) {
-						const role = appRoles.find((r) => r.name === tokenRole);
-						if (role && role.dataDisposition) {
-							if (role.dataDisposition === 'allowAll') {
-								dataDisposition.READ = 'allow';
-							}
-						}
-					}
-
-					if (tokenRole && route.schema.data.roles) {
-						const schemaRole = route.schema.data.roles.find((r) => r.name === tokenRole);
-						if (schemaRole && schemaRole.dataDisposition) {
-							if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
-						}
-
-						if (schemaRole && schemaRole.filter) {
-							filter = schemaRole.filter;
-						}
-					}
-
-					const permissionProperties = route.schema.getFlatPermissionProperties();
-					const permissions = Object.keys(permissionProperties).reduce((properties, property) => {
-						const permission = permissionProperties[property].find((p) => p.role === tokenRole);
-						if (!permission) return properties;
-
-						properties[property] = permission;
-						return properties;
-					}, {});
-
-					if (isCursor) {
-						const stringifyStream = new Helpers.JSONStringifyStream({}, (chunk) => {
-							return Shared.prepareSchemaResult(chunk, dataDisposition, filter, permissions, req.token);
-						});
-
-						res.set('Content-Type', 'application/json');
-
-						Logging.logTimer(`_result:start-stream ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-						const stream = result.stream();
-
-						stream.once('end', () => {
-							Logging.logTimerException(`PERF: STREAM DONE: ${route.path}`, req.timer, 0.05, req.id);
-							Logging.logTimer(`_result:end-stream ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-						});
-
-						stream.pipe(stringifyStream).pipe(res);
-
-						return;
-					}
-					res.json(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
-					Logging.logTimer(`_result:end ${route.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-					Logging.logTimerException(`PERF: DONE: ${route.path}`, req.timer, 0.05, req.id);
-				})
-				.catch(next);
-		});
+		express[route.verb](routePath, (req, res, next) => route.exec(req, res).catch(next));
 	});
 }
 

@@ -10,10 +10,12 @@
  *
  */
 
+const Stream = require('stream');
 const Config = require('node-env-obj')('../');
 const Logging = require('../logging');
 // const Schema = require('../schema');
 const Model = require('../model');
+const Shared = require('../model/shared');
 const Mongo = require('mongodb');
 const NRP = require('node-redis-pubsub');
 const Helpers = require('../helpers');
@@ -114,22 +116,104 @@ class Route {
 			this._authenticate(req, res)
 				.then((token) => this._validate(req, res, token))
 				.then((validate) => this._exec(req, res, validate))
+				.then((result) => this._respond(req, res, result))
 				.then((result) => this._logActivity(req, res, result))
+				.then((result) => this._boardcastByAppRole(req, res, result))
 				.then(Logging.Promise.logTimer(`Route:exec:end`, this._timer, Logging.Constants.LogLevel.SILLY, req.id))
 				.then(resolve)
 				.catch(reject);
 		});
 	}
 
+	/**
+	 * Set the responce for a request
+	 * @param {Object} req
+	 * @param {Object} res
+	 * @param {*} result
+	 * @return {*} result
+	 */
+	_respond(req, res, result) {
+		const isCursor = result instanceof Mongo.Cursor;
+		Logging.logTimer(`_respond:start cursor:${isCursor}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+
+		// Fetch app roles if they exist
+		let appRoles = null;
+		if (req.authApp && req.authApp.__roles && req.authApp.__roles.roles) {
+			// This needs to be cached on startup
+			appRoles = Helpers.flattenRoles(req.authApp.__roles);
+		}
+
+		let filter = null;
+		const tokenRole = (req.token.role) ? req.token.role : '';
+		const dataDisposition = {
+			READ: 'deny',
+		};
+
+		if (appRoles) {
+			const role = appRoles.find((r) => r.name === tokenRole);
+			if (role && role.dataDisposition) {
+				if (role.dataDisposition === 'allowAll') {
+					dataDisposition.READ = 'allow';
+				}
+			}
+		}
+
+		if (tokenRole && this.schema.data.roles) {
+			const schemaRole = this.schema.data.roles.find((r) => r.name === tokenRole);
+			if (schemaRole && schemaRole.dataDisposition) {
+				if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
+			}
+
+			if (schemaRole && schemaRole.filter) {
+				filter = schemaRole.filter;
+			}
+		}
+
+		const permissionProperties = (this.schema) ? this.schema.getFlatPermissionProperties() : {};
+		const permissions = Object.keys(permissionProperties).reduce((properties, property) => {
+			const permission = permissionProperties[property].find((p) => p.role === tokenRole);
+			if (!permission) return properties;
+
+			properties[property] = permission;
+			return properties;
+		}, {});
+
+		if (isCursor) {
+			const stringifyStream = new Helpers.JSONStringifyStream({}, (chunk) => {
+				return Shared.prepareSchemaResult(chunk, dataDisposition, filter, permissions, req.token);
+			});
+
+			res.set('Content-Type', 'application/json');
+
+			Logging.logTimer(`_respond:start-stream ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+
+			const stream = result.stream();
+			stream.once('end', () => {
+				Logging.logTimerException(`PERF: STREAM DONE: ${this.path}`, req.timer, 0.05, req.id);
+				Logging.logTimer(`_respond:end-stream ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			});
+
+			stream.pipe(stringifyStream).pipe(res);
+
+			return result;
+		}
+
+		res.json(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
+
+		Logging.logTimer(`_result:end ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		Logging.logTimerException(`PERF: DONE: ${this.path}`, req.timer, 0.05, req.id);
+
+		return result;
+	}
+
 	_logActivity(req, res, result) {
 		Logging.logTimer('_logActivity:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-		if (result instanceof Mongo.Cursor || this.verb === Constants.Verbs.GET) {
-			Logging.logTimer('_logActivity:end-cursor-get', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-			return Promise.resolve(result);
+		if (this.verb === Constants.Verbs.GET) {
+			Logging.logTimer('_logActivity:end-get', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			return result;
 		}
 
 		let addActivty = true;
-		// Early out if tracking, we don't wan't to create activity for this
 		if (this.path === 'tracking') {
 			addActivty = false;
 		}
@@ -137,41 +221,13 @@ class Route {
 			addActivty = false;
 		}
 
-		let path = req.path.split('/');
-		if (path[0] === '') path.shift();
-		if (req.authApp && req.authApp.apiPath && path.indexOf(req.authApp.apiPath) === 0) {
-			path.shift();
+		// Fire and forget
+		if (addActivty) {
+			this._addLogActivity(req, this.path, this.verb);
 		}
-		// Replace API version prefix
-		path = `/${path.join('/')}`.replace(Config.app.apiPrefix, '');
-
-		setTimeout(() => {
-			let func = Promise.resolve();
-
-			if (addActivty) {
-				func = this._addLogActivity(req, this.path, this.verb);
-			}
-
-			func.then(() => {
-				if (res) {
-					const appPId = Model.App.genPublicUID(req.authApp.name, req.authApp._id);
-					this._activityBroadcastSocket({
-						title: this.activityTitle,
-						description: this.activityDescription,
-						visibility: this.activityVisibility,
-						broadcast: this.activityBroadcast,
-						path: path,
-						pathSpec: this.path,
-						params: req.params,
-						verb: this.verb,
-						permissions: this.permissions,
-					}, req, result, appPId);
-				}
-			});
-		}, 50);
 
 		Logging.logTimer('_logActivity:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-		return Promise.resolve(result);
+		return result;
 	}
 
 	_addLogActivity(req, path, verb) {
@@ -189,28 +245,125 @@ class Route {
 			req: req,
 			res: {},
 		})
-			.then(() => {
-				Logging.logTimer('_addLogActivity:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-			})
+			.then(Logging.Promise.logTimer('_addLogActivity:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id))
 			.catch((e) => Logging.logError(e, req.id));
 	}
 
-	_activityBroadcastSocket(activity, req, res, appPid) {
-		nrp.emit('activity', {
-			title: activity.title,
-			description: activity.description,
-			visibility: activity.visibility,
-			broadcast: activity.broadcast,
-			path: activity.path,
-			pathSpec: activity.pathSpec,
-			verb: activity.verb,
-			permissions: activity.permissions,
-			params: activity.params,
-			timestamp: new Date(),
-			response: Helpers.prepareResult(res),
-			user: req.authUser ? req.authUser._id : '',
-			appPId: appPid ? appPid : '',
-		});
+	/**
+	 * Handle broadcasting the result by app role
+	 * @param {Object} req
+	 * @param {Object} res
+	 * @param {*} result
+	 * @return {*} result
+	 */
+	_boardcastByAppRole(req, res, result) {
+		Logging.logTimer('_boardcastByAppRole:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		if (this.verb === Constants.Verbs.GET) {
+			Logging.logTimer('_boardcastByAppRole:end-get', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			return result;
+		}
+
+		// App role
+		let appRoles = [];
+		if (req.authApp && req.authApp.__roles && req.authApp.__roles.roles) {
+			// This needs to be cached on startup
+			appRoles = Helpers.flattenRoles(req.authApp.__roles);
+		}
+
+		let path = req.path.split('/');
+		if (path[0] === '') path.shift();
+		if (req.authApp && req.authApp.apiPath && path.indexOf(req.authApp.apiPath) === 0) {
+			path.shift();
+		}
+		// Replace API version prefix
+		path = `/${path.join('/')}`.replace(Config.app.apiPrefix, '');
+
+		if (appRoles.length < 1) {
+			this._broadcast(req, res, result, null, path);
+
+			return result;
+		}
+
+		appRoles.forEach((role) => this._broadcast(req, res, result, role, path));
+
+		Logging.logTimer('_boardcastByAppRole:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		return result;
+	}
+
+	/**
+	 * Handle result based on role and broadcast
+	 * @param {*} req
+	 * @param {*} res
+	 * @param {*} result
+	 * @param {*} role
+	 * @param {*} path
+	 */
+	_broadcast(req, res, result, role, path) {
+		Logging.logTimer('_broadcast:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		const isReadStream = result instanceof Stream.Readable;
+		const publicAppID = Model.App.genPublicUID(req.authApp.name, req.authApp._id);
+
+		let filter = null;
+		let permissions = {};
+		const dataDisposition = {
+			READ: 'deny',
+		};
+
+		if (role) {
+			if (role.dataDisposition && role.dataDisposition === 'allowAll') {
+				dataDisposition.READ = 'allow';
+			}
+
+			if (this.schema.data.roles) {
+				const schemaRole = this.schema.data.roles.find((r) => r.name === role);
+				if (schemaRole && schemaRole.dataDisposition) {
+					if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
+				}
+
+				if (schemaRole && schemaRole.filter) {
+					filter = schemaRole.filter;
+				}
+			}
+
+			const permissionProperties = (this.schema) ? this.schema.getFlatPermissionProperties() : {};
+			permissions = Object.keys(permissionProperties).reduce((properties, property) => {
+				const permission = permissionProperties[property].find((p) => p.role === role.name);
+				if (!permission) return properties;
+
+				properties[property] = permission;
+				return properties;
+			}, {});
+		}
+
+		const emit = (_result) => {
+			nrp.emit('activity', {
+				title: this.activityTitle,
+				description: this.activityDescription,
+				visibility: this.activityVisibility,
+				broadcast: this.activityBroadcast,
+				role: role,
+				path: path,
+				pathSpec: this.path,
+				verb: this.verb,
+				permissions: this.permissions,
+				params: req.params,
+				timestamp: new Date(),
+				response: _result,
+				user: req.authUser ? req.authUser._id : '',
+				appPId: publicAppID ? publicAppID : '',
+			});
+		};
+
+		if (isReadStream) {
+			result.on('data', (data) => {
+				emit(Shared.prepareSchemaResult(data, dataDisposition, filter, permissions, req.token));
+			});
+			Logging.logTimer('_broadcast:end-stream', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			return;
+		}
+
+		emit(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
+		Logging.logTimer('_broadcast:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 	}
 
 	/**
