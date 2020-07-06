@@ -324,7 +324,7 @@ class Route {
 			}
 
 			if (this.schema && this.schema.data && this.schema.data.roles) {
-				const schemaRole = this.schema.data.roles.find((r) => r.name === role);
+				const schemaRole = this.schema.data.roles.find((r) => r.name === role.name);
 				if (schemaRole && schemaRole.dataDisposition) {
 					if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
 				}
@@ -365,13 +365,13 @@ class Route {
 
 		if (isReadStream) {
 			result.on('data', (data) => {
-				emit(Shared.prepareSchemaResult(data, dataDisposition, filter, permissions, req.token));
+				emit(Shared.prepareSchemaResult(data, dataDisposition, filter, permissions));
 			});
 			Logging.logTimer('_broadcast:end-stream', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 			return;
 		}
 
-		emit(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
+		emit(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions));
 		Logging.logTimer('_broadcast:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 	}
 

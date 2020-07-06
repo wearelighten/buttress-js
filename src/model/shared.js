@@ -296,7 +296,7 @@ const __validate = (schema, values, parentProperty) => {
 	return res;
 };
 
-const __prepareSchemaResult = (result, dataDisposition, filter, permissions, token) => {
+const __prepareSchemaResult = (result, dataDisposition, filter, permissions, token = false) => {
 	const _prepare = (chunk, path) => {
 		if (!chunk) return chunk;
 
@@ -317,8 +317,11 @@ const __prepareSchemaResult = (result, dataDisposition, filter, permissions, tok
 			if (ObjectId.isValid(chunk)) {
 				return chunk;
 			}
+			chunk = Object.assign({}, chunk);
+			if (token && token.type === 'app') return chunk;
 
-			if (token.type === 'user') {
+			let filterChunk = false;
+			if (token) {
 				const tokenUser = token._user.toString();
 				let filterChunk = false;
 				if (filter) {
@@ -338,32 +341,32 @@ const __prepareSchemaResult = (result, dataDisposition, filter, permissions, tok
 						}
 					});
 				}
+			}
 
-				if (filterChunk) {
-					return null;
+			if (filterChunk) {
+				return null;
+			}
+
+			Object.keys(chunk).forEach((key) => {
+				path.push(key);
+				let readDisposition = false;
+
+				const property = path.join('.');
+				if (permissions[property]) {
+					readDisposition = permissions[property].READ === 'allow';
+				} else {
+					readDisposition = dataDisposition.READ === 'allow';
 				}
 
-				Object.keys(chunk).forEach((key) => {
-					path.push(key);
-					let readDisposition = false;
-
-					const property = path.join('.');
-					if (permissions[property]) {
-						readDisposition = permissions[property].READ === 'allow';
-					} else {
-						readDisposition = dataDisposition.READ === 'allow';
-					}
-
-					if (!readDisposition) {
-						delete chunk[key];
-						path.pop();
-						return;
-					}
-
-					chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => _prepare(c, path)) : _prepare(chunk[key], path);
+				if (!readDisposition) {
+					delete chunk[key];
 					path.pop();
-				});
-			}
+					return;
+				}
+
+				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => _prepare(c, path)) : _prepare(chunk[key], path);
+				path.pop();
+			});
 		}
 
 		return chunk;
