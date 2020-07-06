@@ -200,7 +200,7 @@ class Route {
 
 		res.json(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
 
-		Logging.logTimer(`_result:end ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		Logging.logTimer(`_respond:end ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		Logging.logTimerException(`PERF: DONE: ${this.path}`, req.timer, 0.05, req.id);
 
 		return result;
