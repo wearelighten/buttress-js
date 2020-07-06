@@ -271,6 +271,8 @@ class GetAppSchema extends Route {
 		this.verb = Route.Constants.Verbs.GET;
 		this.auth = Route.Constants.Auth.USER;
 		this.permissions = Route.Constants.Permissions.READ;
+
+		this.redactResults = false;
 	}
 
 	_validate(req, res, token) {

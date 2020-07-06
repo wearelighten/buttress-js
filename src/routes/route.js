@@ -85,10 +85,13 @@ class Route {
 		this.verb = Constants.Verbs.GET;
 		this.auth = Constants.Auth.SUPER;
 		this.permissions = Constants.Permissions.READ;
+
 		this.activityBroadcast = false;
 		this.activityVisibility = Model.Activity.Constants.Visibility.PRIVATE;
 		this.activityTitle = 'Private Activity';
 		this.activityDescription = '';
+
+		this.redactResults = true;
 
 		this.schema = null;
 		this.model = null;
@@ -180,6 +183,7 @@ class Route {
 
 		if (isCursor) {
 			const stringifyStream = new Helpers.JSONStringifyStream({}, (chunk) => {
+				if (!this.redactResults) return chunk;
 				return Shared.prepareSchemaResult(chunk, dataDisposition, filter, permissions, req.token);
 			});
 
@@ -198,7 +202,12 @@ class Route {
 			return result;
 		}
 
-		res.json(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
+		if (this.redactResults) {
+			res.json(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
+		} else {
+			res.json(result);
+		}
+
 
 		Logging.logTimer(`_respond:end ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		Logging.logTimerException(`PERF: DONE: ${this.path}`, req.timer, 0.05, req.id);
