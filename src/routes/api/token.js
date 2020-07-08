@@ -27,6 +27,8 @@ class GetTokenList extends Route {
 		this.verb = Route.Constants.Verbs.GET;
 		this.auth = Route.Constants.Auth.SUPER;
 		this.permissions = Route.Constants.Permissions.LIST;
+
+		this.redactResults = false;
 	}
 
 	_validate(req, res, token) {
@@ -49,6 +51,8 @@ class UpdateTokenRoles extends Route {
 		this.verb = Route.Constants.Verbs.PUT;
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.WRITE;
+
+		this.redactResults = false;
 	}
 
 	_validate(req, res, token) {
@@ -87,6 +91,8 @@ class DeleteAllTokens extends Route {
 		this.verb = Route.Constants.Verbs.DEL;
 		this.auth = Route.Constants.Auth.SUPER;
 		this.permissions = Route.Constants.Permissions.DELETE;
+
+		this.redactResults = false;
 	}
 
 	_validate(req, res, token) {
