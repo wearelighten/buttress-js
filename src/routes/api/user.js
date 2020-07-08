@@ -140,6 +140,8 @@ class CreateUserAuthToken extends Route {
 		this.verb = Route.Constants.Verbs.POST;
 		this.auth = Route.Constants.Auth.ADMIN;
 		this.permissions = Route.Constants.Permissions.WRITE;
+
+		this.redactResults = false;
 	}
 
 	_validate(req, res, token) {
@@ -176,6 +178,7 @@ class CreateUserAuthToken extends Route {
 			_app: new ObjectId(req.authApp._id),
 			_user: new ObjectId(user._id),
 		})
+			.then((cursor) => cursor.toArray().then((data) => data.slice(0, 1).shift()))
 			.then((t) => {
 				return {
 					value: t.value,
