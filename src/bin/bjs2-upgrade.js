@@ -92,7 +92,7 @@ class BJ2Upgrade {
 		// Queue up selected programs
 		Logging.log(`Queuing up the following upgrades: ${Object.keys(selectedPrograms).join(', ')}`);
 		for (const p in selectedPrograms) {
-			if (!selectedPrograms.hasOwnProperty(p)) continue;
+			if (!{}.hasOwnProperty.call(selectedPrograms, p)) continue;
 			tasks.push(selectedPrograms[p]);
 		}
 

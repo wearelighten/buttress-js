@@ -2,6 +2,12 @@
 Realtime datastore for software.
 
 # What's New
+### Version: 2.3.0
+- FIX: Socket activity now emits to rooms based on defined app roles
+- FIX: Calling bulk save will now return the objects like the save single api
+- REFACTOR: Activity broadcast will now try to redact data based on app role
+- REFACTOR: Silly logging messages to aid in performance
+- REFACTOR: Admin tokens now have the choice to clear all data
 ### Version: 2.2.2
 - FIX: No longer update token.uses when a token is used
 ### 2.2.1

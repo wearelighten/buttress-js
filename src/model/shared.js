@@ -49,22 +49,21 @@ module.exports.add = (collection, __add) => {
 							},
 						};
 					});
+
 					collection.bulkWrite(ops, (err, res) => {
 						if (err) {
 							reject(err);
 							return;
 						}
 
-						const insertedIds = Sugar.Object.values(res.insertedIds);
-						if (insertedIds.length === 0 || insertedIds.length > 1) {
-							resolve(insertedIds);
+						const insertedIds = Sugar.Object.values(res.insertedIds).map((id) => new ObjectId(id));
+						if (insertedIds.length < 1) {
+							resolve([]);
 							return;
 						}
 
-						collection.findOne({_id: new ObjectId(insertedIds[0])}, {}, (err, doc) => {
+						collection.find({_id: {$in: insertedIds}}, {}, (err, doc) => {
 							if (err) throw err;
-							// doc.id = doc._id;
-							// delete doc._id;
 							resolve(doc);
 						});
 					});
@@ -95,7 +94,7 @@ const __getFlattenedBody = (body) => {
 		}
 
 		for (const childProp in parent[property]) {
-			if (!parent[property].hasOwnProperty(childProp)) continue;
+			if (!{}.hasOwnProperty.call(parent[property], childProp)) continue;
 			__buildFlattenedBody(childProp, parent[property], path, flattened);
 		}
 
@@ -106,11 +105,10 @@ const __getFlattenedBody = (body) => {
 	const flattened = [];
 	const path = [];
 	for (const property in body) {
-		if (!body.hasOwnProperty(property)) continue;
+		if (!{}.hasOwnProperty.call(body, property)) continue;
 		__buildFlattenedBody(property, body, path, flattened);
 	}
 
-	Logging.log(`__getFlattenedBody: ${flattened.length} properties`, Logging.Constants.LogLevel.SILLY);
 	return flattened;
 };
 
@@ -169,13 +167,11 @@ const __validateProp = (prop, config) => {
 			const bool = prop.value === 'true' || prop.value === 'yes';
 			prop.value = bool;
 			type = typeof prop.value;
-			Logging.logSilly(`${bool} [${type}]`);
 		}
 		if (type === 'number') {
 			const bool = prop.value === 1;
 			prop.value = bool;
 			type = typeof prop.value;
-			Logging.logSilly(`${bool} [${type}]`);
 		}
 		valid = type === config.__type;
 		break;
@@ -186,7 +182,6 @@ const __validateProp = (prop, config) => {
 				prop.value = number;
 				type = typeof prop.value;
 			}
-			Logging.logSilly(`${number} [${type}]`);
 		}
 		valid = type === config.__type;
 		break;
@@ -208,7 +203,6 @@ const __validateProp = (prop, config) => {
 		if (type === 'number') {
 			prop.value = String(prop.value);
 			type = typeof prop.value;
-			Logging.logSilly(`${prop.value} [${type}]`);
 		}
 
 		valid = type === config.__type;
@@ -243,7 +237,7 @@ const __validate = (schema, values, parentProperty) => {
 	};
 
 	for (const property in schema) {
-		if (!schema.hasOwnProperty(property)) continue;
+		if (!{}.hasOwnProperty.call(schema, property)) continue;
 		let propVal = values.find((v) => v.path === property);
 		const config = schema[property];
 
@@ -285,7 +279,7 @@ const __validate = (schema, values, parentProperty) => {
 			}, res);
 		} else if (config.__type === 'array' && config.__itemtype) {
 			for (const idx in propVal.value) {
-				if (!propVal.value.hasOwnProperty(idx)) continue;
+				if (!{}.hasOwnProperty.call(propVal.value, idx)) continue;
 				const prop = {
 					value: propVal.value[idx],
 				};
@@ -299,13 +293,10 @@ const __validate = (schema, values, parentProperty) => {
 		}
 	}
 
-	Logging.logSilly(`res.missing`, res.missing);
-	Logging.logSilly(`res.invalid`, res.invalid);
-
 	return res;
 };
 
-const __prepareSchemaResult = (result, dataDisposition, filter, permissions, token) => {
+const __prepareSchemaResult = (result, dataDisposition, filter, permissions, token = false) => {
 	const _prepare = (chunk, path) => {
 		if (!chunk) return chunk;
 
@@ -326,10 +317,12 @@ const __prepareSchemaResult = (result, dataDisposition, filter, permissions, tok
 			if (ObjectId.isValid(chunk)) {
 				return chunk;
 			}
+			chunk = Object.assign({}, chunk);
+			if (token && token.type === 'app') return chunk;
 
-			if (token.type === 'user') {
+			let filterChunk = false;
+			if (token) {
 				const tokenUser = token._user.toString();
-				let filterChunk = false;
 				if (filter) {
 					Object.keys(filter).forEach((key) => {
 						const keyPath = key.split('.');
@@ -347,32 +340,32 @@ const __prepareSchemaResult = (result, dataDisposition, filter, permissions, tok
 						}
 					});
 				}
+			}
 
-				if (filterChunk) {
-					return null;
+			if (filterChunk) {
+				return null;
+			}
+
+			Object.keys(chunk).forEach((key) => {
+				path.push(key);
+				let readDisposition = false;
+
+				const property = path.join('.');
+				if (permissions[property]) {
+					readDisposition = permissions[property].READ === 'allow';
+				} else {
+					readDisposition = dataDisposition.READ === 'allow';
 				}
 
-				Object.keys(chunk).forEach((key) => {
-					path.push(key);
-					let readDisposition = false;
-
-					const property = path.join('.');
-					if (permissions[property]) {
-						readDisposition = permissions[property].READ === 'allow';
-					} else {
-						readDisposition = dataDisposition.READ === 'allow';
-					}
-
-					if (!readDisposition) {
-						delete chunk[key];
-						path.pop();
-						return;
-					}
-
-					chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => _prepare(c, path)) : _prepare(chunk[key], path);
+				if (!readDisposition) {
+					delete chunk[key];
 					path.pop();
-				});
-			}
+					return;
+				}
+
+				chunk[key] = (Array.isArray(chunk[key])) ? chunk[key].map((c) => _prepare(c, path)) : _prepare(chunk[key], path);
+				path.pop();
+			});
 		}
 
 		return chunk;
@@ -416,7 +409,7 @@ const __populateObject = (schema, values) => {
 	const objects = {};
 
 	for (const property in schema) {
-		if (!schema.hasOwnProperty(property)) continue;
+		if (!{}.hasOwnProperty.call(schema, property)) continue;
 		let propVal = values.find((v) => v.path === property);
 		const config = schema[property];
 
@@ -492,7 +485,14 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 			invalidValid: '',
 		};
 
-		if (!body.path) {
+		// Seperate between the full update path vs stripped suffix
+		const suffix = [
+			'.__increment__',
+		];
+		const fullPath = body.path;
+		const pathStrippedSuffix = fullPath.replace(suffix, '');
+
+		if (!fullPath) {
 			res.missingRequired = 'path';
 			return res;
 		}
@@ -506,12 +506,12 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 		let validPath = false;
 		body.contextPath = false;
 		for (const pathSpec in pathContext) {
-			if (!Object.prototype.hasOwnProperty.call(pathContext, pathSpec)) {
+			if (!{}.hasOwnProperty.call(pathContext, pathSpec)) {
 				continue;
 			}
 
 			const rex = new RegExp(pathSpec);
-			const matches = rex.exec(body.path);
+			const matches = rex.exec(fullPath);
 			if (matches) {
 				matches.splice(0, 1);
 				validPath = true;
@@ -522,7 +522,7 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 		}
 
 		if (validPath === false) {
-			res.invalidPath = `${body.path} <> ${Object.getOwnPropertyNames(pathContext)}`;
+			res.invalidPath = `${fullPath} <> ${Object.getOwnPropertyNames(pathContext)}`;
 			return res;
 		}
 
@@ -534,10 +534,10 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 			return res;
 		}
 
-		const config = flattenedSchema[body.path];
+		const config = flattenedSchema[pathStrippedSuffix];
 		if (config) {
 			if (config.__type === 'array' && config.__schema) {
-				const validation = __validate(config.__schema, __getFlattenedBody(body.value), `${body.path}.`);
+				const validation = __validate(config.__schema, __getFlattenedBody(body.value), `${pathStrippedSuffix}.`);
 				if (validation.isValid !== true) {
 					if (validation.missing.length) {
 						res.isMissingRequired = true;
@@ -551,11 +551,11 @@ const _doValidateUpdate = function(pathContext, flattenedSchema) {
 			} else if (config.__type === 'array' && config.__itemtype) {
 				if (!__validateProp(body, {__type: config.__itemtype})) {
 					// Logging.logWarn(`Invalid ${property}.${idx}: ${prop.value} [${typeof prop.value}] expected [${config.__itemtype}]`);
-					res.invalidValue = `${body.path}:${body.value}[${typeof body.value}] [${config.__itemtype}]`;
+					res.invalidValue = `${fullPath}:${body.value}[${typeof body.value}] [${config.__itemtype}]`;
 					return res;
 				}
 			} else if (!config.__schema && !__validateProp(body, config)) {
-				res.invalidValue = `${body.path} failed schema test`;
+				res.invalidValue = `${fullPath} failed schema test`;
 				return res;
 			}
 		}
@@ -653,6 +653,24 @@ const _doUpdate = (entity, body, pathContext, config, collection, id) => {
 
 			response = value;
 		} break;
+		case 'scalar-increment': {
+			const params = body.path.split('.');
+			params.splice(-1, 1);
+			const path = params.join('.');
+
+			ops.push({
+				updateOne: {
+					filter: {_id: new ObjectId(id)},
+					update: {
+						$inc: {
+							[path]: body.value,
+						},
+					},
+				},
+			});
+
+			response = body.value;
+		} break;
 		}
 
 		return new Promise((resolve, reject) => {
@@ -681,13 +699,16 @@ const __extendPathContext = (pathContext, schema, prefix) => {
 	if (!schema) return pathContext;
 	let extended = {};
 	for (const property in schema) {
-		if (!schema.hasOwnProperty(property)) continue;
+		if (!{}.hasOwnProperty.call(schema, property)) continue;
 		const config = schema[property];
 		if (config.__allowUpdate === false) continue;
 		switch (config.__type) {
 		default:
-		case 'object':
 		case 'number':
+			extended[`^${prefix}${property}$`] = {type: 'scalar', values: []};
+			extended[`^${prefix}${property}.__increment__$`] = {type: 'scalar-increment', values: []};
+			break;
+		case 'object':
 		case 'date':
 			extended[`^${prefix}${property}$`] = {type: 'scalar', values: []};
 			break;
@@ -774,16 +795,11 @@ module.exports.getAllMetadata = function(collection) {
 };
 
 module.exports.findMetadata = function(key) {
-	Logging.log(`findMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-	Logging.log(this.metadata.map((m) => ({key: m.key, value: m.value})),
-		Logging.Constants.LogLevel.DEBUG);
 	const md = this.metadata.find((m) => m.key === key);
 	return md ? {key: md.key, value: JSON.parse(md.value)} : false;
 };
 
 module.exports.rmMetadata = function(key) {
-	Logging.log(`rmMetadata: ${key}`, Logging.Constants.LogLevel.VERBOSE);
-
 	return this
 		.update({$pull: {metadata: {key: key}}})
 		.then((res) => res.nModified !== 0);

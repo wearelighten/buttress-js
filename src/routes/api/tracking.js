@@ -12,6 +12,7 @@
 
 const Route = require('../route');
 const Model = require('../../model');
+const Helpers = require('../../helpers');
 
 const routes = [];
 
@@ -56,18 +57,15 @@ class AddTracking extends Route {
 			if (!validation.isValid) {
 				if (validation.missing.length > 0) {
 					this.log(`ERROR: Missing field: ${validation.missing[0]}`, Route.LogLevel.ERR);
-					reject({statusCode: 400, message: `TRACKING: Missing field: ${validation.missing[0]}`});
-					return;
+					return reject(new Helpers.RequestError(400, `TRACKING: Missing field: ${validation.missing[0]}`));
 				}
 				if (validation.invalid.length > 0) {
 					this.log(`ERROR: Invalid value: ${validation.invalid[0]}`, Route.LogLevel.ERR);
-					reject({statusCode: 400, message: `TRACKING: Invalid value: ${validation.invalid[0]}`});
-					return;
+					return reject(new Helpers.RequestError(400, `TRACKING: Invalid value: ${validation.invalid[0]}`));
 				}
 
 				this.log(`ERROR: TRACKING: Unhandled Error`, Route.LogLevel.ERR);
-				reject({statusCode: 400, message: `TRACKING: Unhandled error.`});
-				return;
+				return reject(new Helpers.RequestError(400, `unknown_error`));
 			}
 
 			resolve(true);
@@ -97,13 +95,11 @@ class UpdateTracking extends Route {
 			if (!validation.isValid) {
 				if (validation.isPathValid === false) {
 					this.log(`ERROR: Update path is invalid: ${validation.invalidPath}`, Route.LogLevel.ERR);
-					reject({statusCode: 400, message: `TRACKING: Update path is invalid: ${validation.invalidPath}`});
-					return;
+					return reject(new Helpers.RequestError(400, `TRACKING: Update path is invalid: ${validation.invalidPath}`));
 				}
 				if (validation.isValueValid === false) {
 					this.log(`ERROR: Update value is invalid: ${validation.invalidValue}`, Route.LogLevel.ERR);
-					reject({statusCode: 400, message: `TRACKING: Update value is invalid: ${validation.invalidValue}`});
-					return;
+					return reject(new Helpers.RequestError(400, `TRACKING: Update value is invalid: ${validation.invalidValue}`));
 				}
 			}
 
@@ -111,8 +107,7 @@ class UpdateTracking extends Route {
 				.then((exists) => {
 					if (!exists) {
 						this.log('ERROR: Invalid Tracking ID', Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
+						return reject(new Helpers.RequestError(400, `invalid_id`));
 					}
 					resolve(true);
 				});
@@ -143,8 +138,7 @@ class DeleteTracking extends Route {
 				.then((tracking) => {
 					if (!tracking) {
 						this.log('ERROR: Invalid Tracking ID', Route.LogLevel.ERR);
-						reject({statusCode: 400});
-						return;
+						return reject(new Helpers.RequestError(400, `invalid_id`));
 					}
 					this._tracking = tracking;
 					resolve(true);

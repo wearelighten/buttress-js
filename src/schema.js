@@ -50,7 +50,7 @@ class Schema {
 		const permissions = {};
 
 		for (const property in properties) {
-			if (properties.hasOwnProperty(property)) {
+			if ({}.hasOwnProperty.call(properties, property)) {
 				if (properties[property].__permissions) {
 					permissions[property] = properties[property].__permissions;
 				}

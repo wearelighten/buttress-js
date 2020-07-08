@@ -10,10 +10,12 @@
  *
  */
 
+const Stream = require('stream');
 const Config = require('node-env-obj')('../');
 const Logging = require('../logging');
 // const Schema = require('../schema');
 const Model = require('../model');
+const Shared = require('../model/shared');
 const Mongo = require('mongodb');
 const NRP = require('node-redis-pubsub');
 const Helpers = require('../helpers');
@@ -83,10 +85,13 @@ class Route {
 		this.verb = Constants.Verbs.GET;
 		this.auth = Constants.Auth.SUPER;
 		this.permissions = Constants.Permissions.READ;
+
 		this.activityBroadcast = false;
 		this.activityVisibility = Model.Activity.Constants.Visibility.PRIVATE;
 		this.activityTitle = 'Private Activity';
 		this.activityDescription = '';
+
+		this.redactResults = true;
 
 		this.schema = null;
 		this.model = null;
@@ -101,37 +106,123 @@ class Route {
 	 * @return {Promise} - Promise is fulfilled once execution has completed
 	 */
 	exec(req, res) {
+		Logging.logTimer('Route:exec:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		this._timer = req.timer;
 
 		return new Promise((resolve, reject) => {
 			if (!this._exec) {
-				this.log(`Error: ${this.name}: No _exec defined`, Logging.Constants.LogLevel.ERR);
-				reject({statusCode: 500});
+				Logging.logTimer('Route:exec:end-no-exec-defined', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+				reject(new Helpers.RequestError(500));
 				return;
 			}
 
-			Logging.logSilly(`EXEC [${this.name.toUpperCase()}] ${this.path}`);
-
 			this._authenticate(req, res)
-				.then(Logging.Promise.logTimer(`AUTHENTICATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then((token) => this._validate(req, res, token))
-				.then(Logging.Promise.logTimer(`VALIDATED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
 				.then((validate) => this._exec(req, res, validate))
-				.then(Logging.Promise.logTimer(`EXECUTED: ${this.name}`, this._timer, Logging.Constants.LogLevel.SILLY))
+				.then((result) => this._respond(req, res, result))
 				.then((result) => this._logActivity(req, res, result))
+				.then((result) => this._boardcastByAppRole(req, res, result))
+				.then(Logging.Promise.logTimer(`Route:exec:end`, this._timer, Logging.Constants.LogLevel.SILLY, req.id))
 				.then(resolve)
 				.catch(reject);
 		});
 	}
 
+	/**
+	 * Set the responce for a request
+	 * @param {Object} req
+	 * @param {Object} res
+	 * @param {*} result
+	 * @return {*} result
+	 */
+	_respond(req, res, result) {
+		const isCursor = result instanceof Mongo.Cursor;
+		Logging.logTimer(`_respond:start cursor:${isCursor}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+
+		// Fetch app roles if they exist
+		let appRoles = null;
+		if (req.authApp && req.authApp.__roles && req.authApp.__roles.roles) {
+			// This needs to be cached on startup
+			appRoles = Helpers.flattenRoles(req.authApp.__roles);
+		}
+
+		let filter = null;
+		const tokenRole = (req.token.role) ? req.token.role : '';
+		const dataDisposition = {
+			READ: 'deny',
+		};
+
+		if (appRoles) {
+			const role = appRoles.find((r) => r.name === tokenRole);
+			if (role && role.dataDisposition) {
+				if (role.dataDisposition === 'allowAll') {
+					dataDisposition.READ = 'allow';
+				}
+			}
+		}
+
+		if (tokenRole && this.schema && this.schema.data.roles) {
+			const schemaRole = this.schema.data.roles.find((r) => r.name === tokenRole);
+			if (schemaRole && schemaRole.dataDisposition) {
+				if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
+			}
+
+			if (schemaRole && schemaRole.filter) {
+				filter = schemaRole.filter;
+			}
+		}
+
+		const permissionProperties = (this.schema) ? this.schema.getFlatPermissionProperties() : {};
+		const permissions = Object.keys(permissionProperties).reduce((properties, property) => {
+			const permission = permissionProperties[property].find((p) => p.role === tokenRole);
+			if (!permission) return properties;
+
+			properties[property] = permission;
+			return properties;
+		}, {});
+
+		if (isCursor) {
+			const stringifyStream = new Helpers.JSONStringifyStream({}, (chunk) => {
+				if (!this.redactResults) return chunk;
+				return Shared.prepareSchemaResult(chunk, dataDisposition, filter, permissions, req.token);
+			});
+
+			res.set('Content-Type', 'application/json');
+
+			Logging.logTimer(`_respond:start-stream ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+
+			const stream = result.stream();
+			stream.once('end', () => {
+				Logging.logTimerException(`PERF: STREAM DONE: ${this.path}`, req.timer, 0.05, req.id);
+				Logging.logTimer(`_respond:end-stream ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			});
+
+			stream.pipe(stringifyStream).pipe(res);
+
+			return result;
+		}
+
+		if (this.redactResults) {
+			res.json(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions, req.token));
+		} else {
+			res.json(result);
+		}
+
+
+		Logging.logTimer(`_respond:end ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		Logging.logTimerException(`PERF: DONE: ${this.path}`, req.timer, 0.05, req.id);
+
+		return result;
+	}
+
 	_logActivity(req, res, result) {
-		Logging.logSilly(`logging activity: [${this.verb}] ${this.path} (${this.auth}:${this.permissions})`);
-		if (result instanceof Mongo.Cursor || this.verb === Constants.Verbs.GET) {
-			return Promise.resolve(result);
+		Logging.logTimer('_logActivity:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		if (this.verb === Constants.Verbs.GET) {
+			Logging.logTimer('_logActivity:end-get', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			return result;
 		}
 
 		let addActivty = true;
-		// Early out if tracking, we don't wan't to create activity for this
 		if (this.path === 'tracking') {
 			addActivty = false;
 		}
@@ -139,44 +230,18 @@ class Route {
 			addActivty = false;
 		}
 
-		let path = req.path.split('/');
-		if (path[0] === '') path.shift();
-		if (req.authApp && req.authApp.apiPath && path.indexOf(req.authApp.apiPath) === 0) {
-			path.shift();
+		// Fire and forget
+		if (addActivty) {
+			this._addLogActivity(req, this.path, this.verb);
 		}
-		// Replace API version prefix
-		path = `/${path.join('/')}`.replace(Config.app.apiPrefix, '');
 
-		const broadcast = () => {
-			if (res) {
-				const appPId = Model.App.genPublicUID(req.authApp.name, req.authApp._id);
-				this._activityBroadcastSocket({
-					title: this.activityTitle,
-					description: this.activityDescription,
-					visibility: this.activityVisibility,
-					broadcast: this.activityBroadcast,
-					path: path,
-					pathSpec: this.path,
-					params: req.params,
-					verb: this.verb,
-					permissions: this.permissions,
-				}, req, result, appPId);
-			}
-		};
-
-		setTimeout(() => {
-			// Craft activity object and add
-			if (addActivty) {
-				this._addLogActivity(req, this.path, this.verb);
-			}
-			broadcast();
-		}, 50);
-
-		return Promise.resolve(result);
+		Logging.logTimer('_logActivity:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		return result;
 	}
 
 	_addLogActivity(req, path, verb) {
-		// TODO: Activty should pass back a stripped version of the activty object. 
+		Logging.logTimer('_addLogActivity:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		// TODO: Activty should pass back a stripped version of the activty object.
 		return Model.Activity.add({
 			activityTitle: this.activityTitle,
 			activityDescription: this.activityDescription,
@@ -189,43 +254,125 @@ class Route {
 			req: req,
 			res: {},
 		})
-			.then((activity) => {
-			// Activity doesn't get added via the API so we will just broadcast the data manually
-				this._activityBroadcastSocket({
-					title: 'Private Activity',
-					description: 'ADD ACTIVITY',
-					visibility: 'private',
-					broadcast: false,
-					path: `activity`,
-					pathSpec: 'activity',
-					verb: 'post',
-					params: activity.params,
-					permissions: 'write',
-				}, req, activity);
-			})
-			.catch((e) => {
-				// Logging.logError(`[${verb.toUpperCase()}] ${path}`);
-				// Logging.logError(req.body);
-				Logging.logError(e);
-			});
+			.then(Logging.Promise.logTimer('_addLogActivity:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id))
+			.catch((e) => Logging.logError(e, req.id));
 	}
 
-	_activityBroadcastSocket(activity, req, res, appPid) {
-		nrp.emit('activity', {
-			title: activity.title,
-			description: activity.description,
-			visibility: activity.visibility,
-			broadcast: activity.broadcast,
-			path: activity.path,
-			pathSpec: activity.pathSpec,
-			verb: activity.verb,
-			permissions: activity.permissions,
-			params: activity.params,
-			timestamp: new Date(),
-			response: Helpers.prepareResult(res),
-			user: req.authUser ? req.authUser._id : '',
-			appPId: appPid ? appPid : '',
-		});
+	/**
+	 * Handle broadcasting the result by app role
+	 * @param {Object} req
+	 * @param {Object} res
+	 * @param {*} result
+	 * @return {*} result
+	 */
+	_boardcastByAppRole(req, res, result) {
+		Logging.logTimer('_boardcastByAppRole:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		if (this.verb === Constants.Verbs.GET) {
+			Logging.logTimer('_boardcastByAppRole:end-get', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			return result;
+		}
+
+		// App role
+		let appRoles = [];
+		if (req.authApp && req.authApp.__roles && req.authApp.__roles.roles) {
+			// This needs to be cached on startup
+			appRoles = Helpers.flattenRoles(req.authApp.__roles);
+		}
+
+		let path = req.path.split('/');
+		if (path[0] === '') path.shift();
+		if (req.authApp && req.authApp.apiPath && path.indexOf(req.authApp.apiPath) === 0) {
+			path.shift();
+		}
+		// Replace API version prefix
+		path = `/${path.join('/')}`.replace(Config.app.apiPrefix, '');
+
+		if (appRoles.length < 1) {
+			this._broadcast(req, res, result, null, path);
+
+			return result;
+		}
+
+		appRoles.forEach((role) => this._broadcast(req, res, result, role, path));
+
+		Logging.logTimer('_boardcastByAppRole:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		return result;
+	}
+
+	/**
+	 * Handle result based on role and broadcast
+	 * @param {*} req
+	 * @param {*} res
+	 * @param {*} result
+	 * @param {*} role
+	 * @param {*} path
+	 */
+	_broadcast(req, res, result, role, path) {
+		Logging.logTimer('_broadcast:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		const isReadStream = result instanceof Stream.Readable;
+		const publicAppID = Model.App.genPublicUID(req.authApp.name, req.authApp._id);
+
+		let filter = null;
+		let permissions = {};
+		const dataDisposition = {
+			READ: 'deny',
+		};
+
+		if (role) {
+			if (role.dataDisposition && role.dataDisposition === 'allowAll') {
+				dataDisposition.READ = 'allow';
+			}
+
+			if (this.schema && this.schema.data && this.schema.data.roles) {
+				const schemaRole = this.schema.data.roles.find((r) => r.name === role.name);
+				if (schemaRole && schemaRole.dataDisposition) {
+					if (schemaRole.dataDisposition.READ) dataDisposition.READ = schemaRole.dataDisposition.READ;
+				}
+
+				if (schemaRole && schemaRole.filter) {
+					filter = schemaRole.filter;
+				}
+			}
+
+			const permissionProperties = (this.schema) ? this.schema.getFlatPermissionProperties() : {};
+			permissions = Object.keys(permissionProperties).reduce((properties, property) => {
+				const permission = permissionProperties[property].find((p) => p.role === role.name);
+				if (!permission) return properties;
+
+				properties[property] = permission;
+				return properties;
+			}, {});
+		}
+
+		const emit = (_result) => {
+			nrp.emit('activity', {
+				title: this.activityTitle,
+				description: this.activityDescription,
+				visibility: this.activityVisibility,
+				broadcast: this.activityBroadcast,
+				role: (role) ? role.name : null,
+				path: path,
+				pathSpec: this.path,
+				verb: this.verb,
+				permissions: this.permissions,
+				params: req.params,
+				timestamp: new Date(),
+				response: _result,
+				user: req.authUser ? req.authUser._id : '',
+				appPId: publicAppID ? publicAppID : '',
+			});
+		};
+
+		if (isReadStream) {
+			result.on('data', (data) => {
+				emit(Shared.prepareSchemaResult(data, dataDisposition, filter, permissions));
+			});
+			Logging.logTimer('_broadcast:end-stream', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			return;
+		}
+
+		emit(Shared.prepareSchemaResult(result, dataDisposition, filter, permissions));
+		Logging.logTimer('_broadcast:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 	}
 
 	/**
@@ -237,23 +384,21 @@ class Route {
 	_authenticate(req, res) {
 		return new Promise((resolve, reject) => {
 			if (this.auth === Constants.Auth.NONE) {
-				this.log(`WARN: OPEN API CALL`, Logging.Constants.LogLevel.WARN);
-				resolve(req.user);
-				return;
+				this.log(`WARN: OPEN API CALL`, Logging.Constants.LogLevel.WARN, req.id);
+				Logging.logTimer('_authenticate:end-open-api', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+				return resolve(req.user);
 			}
 
 			if (!req.token) {
-				this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR);
-				reject({statusCode: 401});
-				return;
+				this.log('EAUTH: INVALID TOKEN', Logging.Constants.LogLevel.ERR, req.id);
+				Logging.logTimer('_authenticate:end-invalid-token', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+				return reject(new Helpers.RequestError(401, 'invalid_token'));
 			}
-			this.log(req.token.value, Logging.Constants.LogLevel.SILLY);
 
-			this.log(`AUTHLEVEL: ${this.auth}`, Logging.Constants.LogLevel.VERBOSE);
 			if (req.token.authLevel < this.auth) {
-				this.log('EAUTH: INSUFFICIENT AUTHORITY', Logging.Constants.LogLevel.ERR);
-				reject({statusCode: 401});
-				return;
+				this.log(`EAUTH: INSUFFICIENT AUTHORITY ${req.token.authLevel} < ${this.auth}`, Logging.Constants.LogLevel.ERR, req.id);
+				Logging.logTimer('_authenticate:end-insufficient-authority', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+				return reject(new Helpers.RequestError(401, 'insufficient_authority'));
 			}
 
 			req.roles = {
@@ -270,9 +415,10 @@ class Route {
 			 * @TODO Improve the pattern matching granularity ie like Glob
 			 * @TODO Support Regex in specific ie match routes like app/:id/permission
 			 */
+			Logging.logTimer(`_authenticate:start-app-routes ${req.token.role}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+
 			let authorised = false;
 			const token = req.token;
-			Logging.logSilly(`permissions`, token.permissions);
 			for (let x = 0; x < token.permissions.length; x++) {
 				const p = token.permissions[x];
 				if (this._matchRoute(req, p.route) && this._matchPermission(p.permission)) {
@@ -282,13 +428,14 @@ class Route {
 			}
 
 			if (authorised === false) {
-				this.log(token.permissions, Logging.Constants.LogLevel.ERR);
 				this.log(`EAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
-				reject({statusCode: 401});
+				Logging.logTimer('_authenticate:end-no-permission-route', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+				return reject(new Helpers.RequestError(403, 'no_permission_for_route'));
 			}
 
 			// BYPASS schema checks for app tokens
 			if (req.token.type === 'app') {
+				Logging.logTimer('_authenticate:end-app-token', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				resolve(req.token);
 				return;
 			}
@@ -311,7 +458,6 @@ class Route {
 			// Check endpointDisposition against app roles it exists
 			if (appRoles && req.token.role) {
 				const role = appRoles.find((r) => r.name === req.token.role);
-				Logging.logSilly(`SAUTH: MATCHING APP ROLE - ${req.token.role}`);
 
 				// Set schema role on the req object for use by route/schema
 				req.roles.app = role;
@@ -323,17 +469,16 @@ class Route {
 						disposition.POST = 'allow';
 						disposition.DELETE = 'allow';
 					}
-				} else {
-					Logging.logSilly(`SAUTH: APP ROLE DOESN'T SPECIFY - ${req.token.role}`);
 				}
-			} else {
-				Logging.logSilly(`SAUTH: NO APP ROLES DEFINED, USING DEFAULTS`);
 			}
+
+			Logging.logTimer(`_authenticate:end-app-routes ${req.token.role}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 
 			/*
 			 * Start of Route schema permissions
 			 */
 			if (this.schema) {
+				Logging.logTimer(`_authenticate:start-schema-role ${req.token.role}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 				authorised = false;
 
 				// HACK - BYPASS Permissions for company / service
@@ -341,13 +486,10 @@ class Route {
 					return resolve(req.token);
 				}
 
-				Logging.logSilly(`SAUTH: TOKEN ROLE - ${req.token.role}`);
-
 				// If schema has endpointDisposition roles set for the role then
 				// user the defined settings instead.
 				if (this.schema.data.roles) {
 					const role = this.schema.data.roles.find((r) => r.name === req.token.role);
-					Logging.logSilly(`SAUTH: MATCHING SCEHMA ROLE - ${req.token.role}`);
 
 					// Set schema role on the req object for use by route/schema
 					req.roles.schema = role;
@@ -357,11 +499,7 @@ class Route {
 						if (role.endpointDisposition.PUT) disposition.PUT = role.endpointDisposition.PUT;
 						if (role.endpointDisposition.POST) disposition.POST = role.endpointDisposition.POST;
 						if (role.endpointDisposition.DELETE) disposition.DELETE = role.endpointDisposition.DELETE;
-					} else {
-						Logging.logSilly(`SAUTH: SCHEMA ROLE DOESN'T SPECIFY - ${req.token.role}`);
 					}
-				} else {
-					Logging.logSilly(`SAUTH: NO SCHEMA ROLES DEFINED, USING DEFAULTS.`);
 				}
 
 				// Check the role has permission on this endpoint
@@ -371,8 +509,11 @@ class Route {
 
 				if (authorised === false) {
 					this.log(`SAUTH: NO PERMISSION FOR ROUTE - ${this.path}`, Logging.Constants.LogLevel.ERR);
-					return reject({statusCode: 403});
+					Logging.logTimer('_authenticate:end-no-permission-schema', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+					return reject(new Helpers.RequestError(403, 'no_permission_for_route'));
 				}
+
+				Logging.logTimer(`_authenticate:end-schema-role`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 			}
 
 			resolve(req.token);
@@ -395,11 +536,11 @@ class Route {
 			return true;
 		}
 
-		const userWildcard = /^user\/me.+/;
-		if (routeSpec.match(userWildcard) && req.params.id == req.authUser._id) { // eslint-disable-line eqeqeq
-			Logging.logSilly(`Matched user ${req.authUser._id} to /user/${req.params.id}`);
-			return true;
-		}
+		// const userWildcard = /^user\/me.+/;
+		// if (routeSpec.match(userWildcard) && req.params.id == req.authUser._id) {
+		// 	Logging.logSilly(`Matched user ${req.authUser._id} to /user/${req.params.id}`);
+		// 	return true;
+		// }
 
 		const wildcard = /(.+)(\/\*)/;
 		const matches = routeSpec.match(wildcard);

@@ -158,6 +158,7 @@ class UserSchemaModel extends SchemaModel {
 		return super.add(user, {
 			_apps: [Model.authApp._id],
 		})
+			.then((cursor) => cursor.toArray().then((data) => data.slice(0, 1).shift()))
 			.then((user) => {
 				_user = user;
 				if (!auth) {
@@ -169,6 +170,7 @@ class UserSchemaModel extends SchemaModel {
 					_user: _user._id,
 				});
 			})
+			.then((cursor) => cursor.toArray().then((data) => data.slice(0, 1).shift()))
 			.then((token) => {
 				_user.tokens = [];
 
@@ -271,7 +273,7 @@ class UserSchemaModel extends SchemaModel {
 	 * @return {Promise} - resolves to an array of Apps
 	 */
 	findAll(appId, tokenAuthLevel) {
-		Logging.logSilly(`findAll: ${appId}`);
+		// Logging.logSilly(`findAll: ${appId}`);
 
 		return new Promise((resolve) => {
 			let findTask = () => super.find({_apps: appId});
@@ -307,7 +309,7 @@ class UserSchemaModel extends SchemaModel {
 	 * @return {Promise} - resolves to an array of Companies
 	 */
 	findById(id, appId) {
-		Logging.logSilly(`findById: ${this.collectionName} ${id}`);
+		// Logging.logSilly(`User:findById: ${this.collectionName} ${id}`);
 
 		return super.findById(id);
 	}
@@ -326,8 +328,6 @@ class UserSchemaModel extends SchemaModel {
 	 * @return {Promise} - resolves to an array of Apps
 	 */
 	getByAppId(appName, appUserId) {
-		Logging.log(`getByAppId: ${appName} - ${appUserId}`, Logging.Constants.LogLevel.VERBOSE);
-
 		return super.findOne({
 			'auth.app': appName,
 			'auth.appId': appUserId,

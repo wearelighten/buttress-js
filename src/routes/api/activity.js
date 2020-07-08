@@ -12,7 +12,7 @@
 
 const Route = require('../route');
 const Model = require('../../model');
-// const Helpers = require('../../helpers');
+const Helpers = require('../../helpers');
 // const Logging = require('../../logging');
 
 const routes = [];
@@ -54,15 +54,13 @@ class GetActivity extends Route {
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
 			if (!req.params.id) {
-				this.log('ERROR: Missing required field', Route.LogLevel.ERR);
-				reject({statusCode: 400});
-				return;
+				this.log('ERROR: Missing required field', Route.LogLevel.ERR, req.id);
+				return reject(new Helpers.RequestError(400, `missing_required_fields`));
 			}
 			Model.Activity.findById(req.params.id).then((activity) => {
 				if (!activity) {
-					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR, req.id);
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 				this._activity = activity;
 				resolve(true);
@@ -115,16 +113,14 @@ class AddActivityMetadata extends Route {
 			Model.Activity.findById(req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
+
 				try {
 					JSON.parse(req.body.value);
 				} catch (e) {
 					this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
-					this.log(req.body.value, Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, 'invalid_json'));
 				}
 
 				this._activity = activity;
@@ -157,20 +153,17 @@ class UpdateActivityMetadata extends Route {
 			Model.Activity.findById(req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 				if (activity.findMetadata(req.params.key) === false) {
 					this.log('ERROR: Metadata does not exist', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(404, `metadata_not_found`));
 				}
 				try {
 					JSON.parse(req.body.value);
 				} catch (e) {
 					this.log(`ERROR: ${e.message}`, Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(500, 'invalid_json'));
 				}
 
 				this._activity = activity;
@@ -203,15 +196,13 @@ class GetActivityMetadata extends Route {
 			Model.Activity.findById(req.params.id).then((activity) => {
 				if (!activity) {
 					this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
-					reject({statusCode: 400});
-					return;
+					return reject(new Helpers.RequestError(400, `invalid_id`));
 				}
 
 				this._metadata = activity.findMetadata(req.params.key);
 				if (this._metadata === false) {
 					this.log('WARN: Activity Metadata Not Found', Route.LogLevel.ERR);
-					reject({statusCode: 404});
-					return;
+					return reject(new Helpers.RequestError(404, `metadata_not_found`));
 				}
 
 				resolve(true);
@@ -244,12 +235,11 @@ class DeleteActivityMetadata extends Route {
 				.then((activity) => {
 					if (!activity) {
 						this.log('ERROR: Invalid Activity ID', Route.LogLevel.ERR);
-						reject({statusCode: 400, message: `Invalid Activity ID: ${req.params.id}`});
-						return;
+						return reject(new Helpers.RequestError(400, `invalid_id`));
 					}
 					this._activity = activity;
 					resolve(true);
-				}, (err) => reject({statusCode: 400, message: err.message}));
+				}, (err) => reject(new Helpers.RequestError(400, err.message)));
 		});
 	}
 

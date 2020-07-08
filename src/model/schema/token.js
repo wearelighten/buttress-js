@@ -132,17 +132,11 @@ class TokenSchemaModel extends SchemaModel {
 		const mask = 0x3d;
 		let string = '';
 
-		try {
-			const bytes = Crypto.randomBytes(length);
-			for (let x = 0; x < bytes.length; x++) {
-				const byte = bytes[x];
-				string += chars[byte & mask];
-			}
-		} catch (err) {
-			throw err;
+		const bytes = Crypto.randomBytes(length);
+		for (let x = 0; x < bytes.length; x++) {
+			const byte = bytes[x];
+			string += chars[byte & mask];
 		}
-
-		Logging.log(`Created Token: ${string}`, Logging.Constants.LogLevel.VERBOSE);
 
 		return string;
 	}

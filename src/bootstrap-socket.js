@@ -83,7 +83,14 @@ class BootstrapSocket {
 				});
 			})
 			.then(() => {
-			// Spawn worker processes, pass through build app objects
+				this.__namespace['stats'] = {
+					emitter: this.emitter.of(`/stats`),
+					sequence: {
+						global: 0,
+					},
+				};
+
+				// Spawn worker processes, pass through build app objects
 				this.__apps.map((app) => {
 					const token = this.__tokens.find((t) => {
 						return app._token && t._id.equals(app._token);
@@ -101,7 +108,9 @@ class BootstrapSocket {
 
 					this.__namespace[app.publicId] = {
 						emitter: this.emitter.of(`/${app.publicId}`),
-						sequence: 0,
+						sequence: {
+							global: 0,
+						},
 					};
 					Logging.logDebug(`[${app.publicId}]: Created Namespace for ${app.name}, ${(isSuper) ? 'SUPER' : ''}`);
 
@@ -127,10 +136,11 @@ class BootstrapSocket {
 		io.origins('*:*');
 		io.adapter(sioRedis(Config.redis));
 
-		io.on('connect', (socket) => {
-			Logging.logSilly(`${socket.id} Connected on global space`);
-			socket.on('disconnect', (socket) => {
-				Logging.logSilly(`${socket.id} Disconnect on global space`);
+		const stats = io.of(`/stats`);
+		stats.on('connect', (socket) => {
+			Logging.logSilly(`${socket.id} Connected on /stats`);
+			socket.on('disconnect', () => {
+				Logging.logSilly(`${socket.id} Disconnect on /stats`);
 			});
 		});
 
@@ -159,6 +169,8 @@ class BootstrapSocket {
 			throw new Error('SIO Emitter isn\'t defined');
 		}
 
+		this.__namespace['stats'].emitter.emit('activity', 1);
+
 		// Super apps?
 		this.__superApps.forEach((superPublicId) => {
 			this.__namespace[superPublicId].sequence++;
@@ -170,31 +182,39 @@ class BootstrapSocket {
 
 		// Disable broadcasting to public space
 		if (data.broadcast === false) {
-			Logging.logDebug(`[${publicId}]: [${data.verb}] ${data.path} - Early out as it isn't public.`);
+			Logging.logDebug(`[${publicId}][${data.verb}] ${data.path} - Early out as it isn't public.`);
 			return;
 		}
 
 		// Don't emit activity if activity has super app PId, as it's already been sent
 		if (this.__superApps.includes(publicId)) {
-			Logging.logDebug(`[${publicId}]: [${data.verb}] ${data.path} - Early out on super app activity`);
+			Logging.logDebug(`[${publicId}][${data.verb}] ${data.path} - Early out on super app activity`);
 			return;
 		}
 
 		// Broadcast on requested channel
 		if (!this.__namespace[publicId]) {
-			this.__namespace[publicId] = {
-				emitter: this.emitter.of(`/${publicId}`),
-				sequence: 0,
-			};
+			throw new Error('Trying to access namespace that doesn\'t exist');
 		}
 
-		Logging.logDebug(`[${publicId}]: [${data.verb}] ${data.path}`);
-
-		this.__namespace[publicId].sequence++;
-		this.__namespace[publicId].emitter.emit('db-activity', {
-			data: data,
-			sequence: this.__namespace[publicId].sequence,
-		});
+		if (data.role) {
+			if (!this.__namespace[publicId].sequence[data.role]) {
+				this.__namespace[publicId].sequence[data.role] = 0;
+			}
+			Logging.logDebug(`[${publicId}][${data.role}][${data.verb}] ${data.path}`);
+			this.__namespace[publicId].sequence[data.role]++;
+			this.__namespace[publicId].emitter.in(data.role).emit('db-activity', {
+				data: data,
+				sequence: this.__namespace[publicId].sequence[data.role],
+			});
+		} else {
+			Logging.logDebug(`[${publicId}][global]: [${data.verb}] ${data.path}`);
+			this.__namespace[publicId].sequence.global++;
+			this.__namespace[publicId].emitter.emit('db-activity', {
+				data: data,
+				sequence: this.__namespace[publicId].sequence.global,
+			});
+		}
 	}
 
 	__spawnWorkers(appTokens) {
@@ -217,7 +237,7 @@ class BootstrapSocket {
 
 	__initSocketNamespace(io, publicId, appTokens) {
 		const namespace = io.of(`/${publicId}`);
-		namespace.on('connect', (socket) => {
+		namespace.on('connection', (socket) => {
 			const userToken = socket.handshake.query.token;
 			const token = appTokens.tokens.find((t) => t.value === userToken);
 			if (!token) {
@@ -231,9 +251,15 @@ class BootstrapSocket {
 				return socket.disconnect(0);
 			}
 
-			Logging.log(`${socket.id} Connected on ${publicId}`);
+			if (token.role) {
+				socket.join(token.role);
+				Logging.log(`[${publicId}][${token.role}] Connected ${socket.id}`);
+			} else {
+				Logging.log(`[${publicId}][Global] Connected ${socket.id}`);
+			}
+
 			socket.on('disconnect', () => {
-				Logging.logSilly(`${socket.id} Disconnect on ${publicId}`);
+				Logging.logSilly(`[${publicId}] Disconnect ${socket.id}`);
 			});
 		});
 
