@@ -83,7 +83,14 @@ class BootstrapSocket {
 				});
 			})
 			.then(() => {
-			// Spawn worker processes, pass through build app objects
+				this.__namespace['stats'] = {
+					emitter: this.emitter.of(`/stats`),
+					sequence: {
+						global: 0,
+					},
+				};
+
+				// Spawn worker processes, pass through build app objects
 				this.__apps.map((app) => {
 					const token = this.__tokens.find((t) => {
 						return app._token && t._id.equals(app._token);
@@ -129,12 +136,13 @@ class BootstrapSocket {
 		io.origins('*:*');
 		io.adapter(sioRedis(Config.redis));
 
-		// io.on('connect', (socket) => {
-		// 	Logging.logSilly(`${socket.id} Connected on global space`);
-		// 	socket.on('disconnect', (socket) => {
-		// 		Logging.logSilly(`${socket.id} Disconnect on global space`);
-		// 	});
-		// });
+		const stats = io.of(`/stats`);
+		stats.on('connect', (socket) => {
+			Logging.logSilly(`${socket.id} Connected on /stats`);
+			socket.on('disconnect', () => {
+				Logging.logSilly(`${socket.id} Disconnect on /stats`);
+			});
+		});
 
 		process.on('message', (message, input) => {
 			if (message === 'buttress:connection') {
@@ -160,6 +168,8 @@ class BootstrapSocket {
 		if (!this.emitter) {
 			throw new Error('SIO Emitter isn\'t defined');
 		}
+
+		this.__namespace['stats'].emitter.emit('activity', 1);
 
 		// Super apps?
 		this.__superApps.forEach((superPublicId) => {
