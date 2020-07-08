@@ -13,16 +13,13 @@ html(lang='en')
         font-family: 'Fira Sans', sans-serif;
         text-align: center;
 
-        font-size: 18px;
+        font-size: 1.1rem;
 
         margin: 0;
         padding: 0;
 
         background: #{colorBackground};
         color: #{colorSecondary};
-      }
-      body {
-        padding-top: 1em;
       }
 
       a,
@@ -31,9 +28,24 @@ html(lang='en')
         color: #{colorAccent};
       }
 
+      .text {
+        position: absolute;
+        display: block;
+        top: 0;
+        left: 0;
+        min-height: 100vh;
+        width: 100vw;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+
+      }
       .title {
-        font-size: 4em;
-        margin: .3em 0;
+        font-size: 4rem;
+        margin: 0.4rem 0;
         color: #{colorPrimary};
       }
       .title sub {
@@ -42,12 +54,162 @@ html(lang='en')
         color: #{colorAccent};
       }
 
+      #canvas {
+        position: absolute;
+        display: block;
+        top: 0;
+        left: 0;
+      }
+
   body
-    header
-      h1.title Buttress
-        sub JS
-    section
-      p Realtime datastore for software
-    footer
-      p Proudly open source ❤️ Available on 
-        a(href="https://github.com/wearelighten/buttress-js" target="_BLANK") Github
+    .text
+      header
+        h1.title Buttress
+          sub JS
+      section
+        div Realtime datastore for software
+      footer
+        div Proudly open source ❤️ Available on 
+          a(href="https://github.com/wearelighten/buttress-js" target="_BLANK") Github
+
+    canvas#canvas
+    script(src="/socket.io/socket.io.js")
+    script.
+      class Stats {
+        constructor(id) {
+          this.canvas = document.getElementById(id),
+          this.context = this.canvas.getContext("2d");
+
+          this.width = window.innerWidth;
+          this.height = window.innerWidth;
+
+          this.paused = true;
+
+          this.time = 0;
+          this.lastTime = 0;
+          this.delta = 0;
+
+          this.particles = [];
+
+          this.paused = false;
+
+          this.init();
+        }
+
+        init() {
+          this.resize();
+          this._loop();
+
+          for (let i = 0; i < 50; i++){
+            this.addParticle();
+          }
+        }
+
+        addParticle() {
+          if (this.particles.length < 200) {
+            this.particles.push(new Particle(this.width, this.height));
+          }
+        }
+
+        _loop() {
+          window.requestAnimationFrame(() => this._loop());
+
+          this.time = performance.now();
+          this.delta = (this.time - this.lastTime);
+
+          if (!this.paused) {
+            this._update(this.delta);
+            this._render();
+          }
+
+          this.lastTime = this.time;
+        }
+
+        _update(delta) {
+          for (let i = 0; i < this.particles.length; i++) {
+            this.particles[i].update(delta);
+
+            if (this.particles[i].life < 1) {
+              this.particles.splice(i, 1);
+            }
+          }
+        }
+
+        _render() {
+          // Clear main canvas
+          this.context.clearRect(0, 0, this.width, this.height);
+
+          for (let a = 0; a < this.particles.length; a++) {
+            for (let b = 0; b < this.particles.length; b++) {
+              const distance = Math.sqrt(Math.pow(this.particles[b].x - this.particles[a].x, 2) + Math.pow(this.particles[b].x - this.particles[a].y, 2));
+              const opacity = 1 - distance / 200;
+              if (opacity > 0) {
+                this.context.lineWidth = 0.5;
+                this.context.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                this.context.beginPath();
+                this.context.moveTo(this.particles[a].x, this.particles[a].y);
+                this.context.lineTo(this.particles[b].x, this.particles[b].y);
+                this.context.closePath();
+                this.context.stroke();
+              }
+            }
+          }
+          for (let a = 0; a < this.particles.length; a++) {
+            this.particles[a].render(this.context);
+          }
+        }
+
+        resize() {
+          this.width = this.canvas.width = window.innerWidth;
+          this.height = this.canvas.height = window.innerHeight;
+        }
+      }
+
+      class Particle {
+        constructor(width, height) {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+
+          this.boundRight = width;
+          this.boundBottom = height;
+
+          this.speed = (Math.random() * 1 + 1) / 100;
+          this.directionAngle = Math.floor(Math.random() * 360);
+          this.radius = Math.random() * 2 + 2;
+
+          this.life = 100;
+          this.decay = (Math.random() * 20 + 1) / 5000;
+
+          this.vectorX = Math.cos(this.directionAngle) * this.speed;
+          this.vectorY = Math.sin(this.directionAngle) * this.speed;
+        }
+
+        update(delta) {
+          this._checkBounds();
+          this.x += this.vectorX * delta;
+          this.y += this.vectorY * delta;
+
+          this.life -= this.decay * delta;
+          this.opacity = (this.life < 1) ? 0 : this.life / 100;
+        }
+
+        render(ctx) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+          ctx.closePath();
+          ctx.fillStyle = `rgba(60,65,94, ${this.opacity})`;
+          ctx.fill();
+        }
+
+        _checkBounds() {
+          if (this.x >= this.boundRight || this.x <= 0) this.vectorX *= -1;
+          if (this.y >= this.boundBottom || this.y <= 0) this.vectorY *= -1;
+          if (this.x > this.boundRight) this.x = this.boundRight
+          if (this.y > this.boundBottom) this.y = this.boundBottom;
+          if (this.x < 0) this.x = 0;
+          if (this.y < 0) this.y = 0;
+        }
+      }
+
+      const stats = new Stats('canvas');
+      io('/stats').on('activity', () => stats.addParticle());
