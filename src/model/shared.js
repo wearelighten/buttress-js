@@ -323,7 +323,6 @@ const __prepareSchemaResult = (result, dataDisposition, filter, permissions, tok
 			let filterChunk = false;
 			if (token) {
 				const tokenUser = token._user.toString();
-				let filterChunk = false;
 				if (filter) {
 					Object.keys(filter).forEach((key) => {
 						const keyPath = key.split('.');

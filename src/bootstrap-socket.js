@@ -102,7 +102,7 @@ class BootstrapSocket {
 					this.__namespace[app.publicId] = {
 						emitter: this.emitter.of(`/${app.publicId}`),
 						sequence: {
-							global: 0
+							global: 0,
 						},
 					};
 					Logging.logDebug(`[${app.publicId}]: Created Namespace for ${app.name}, ${(isSuper) ? 'SUPER' : ''}`);

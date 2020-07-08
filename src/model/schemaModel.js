@@ -12,7 +12,7 @@
  */
 
 const ObjectId = require('mongodb').ObjectId;
-const Logging = require('../logging');
+// const Logging = require('../logging');
 const Shared = require('./shared');
 const Sugar = require('sugar');
 // const Helpers = require('../helpers');

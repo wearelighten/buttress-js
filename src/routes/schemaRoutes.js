@@ -10,7 +10,7 @@
  *
  */
 
-const Logging = require('../logging');
+// const Logging = require('../logging');
 const Route = require('./route');
 const Model = require('../model');
 const Helpers = require('../helpers');
