@@ -41,7 +41,7 @@ html(lang='en')
         align-items: center;
         justify-content: center;
         text-align: center;
-
+        text-shadow: 0px 0 8px #dfe2e2;
       }
       .title {
         font-size: 4rem;
@@ -141,8 +141,9 @@ html(lang='en')
 
           for (let a = 0; a < this.particles.length; a++) {
             for (let b = 0; b < this.particles.length; b++) {
-              const distance = Math.sqrt(Math.pow(this.particles[b].x - this.particles[a].x, 2) + Math.pow(this.particles[b].x - this.particles[a].y, 2));
-              const opacity = 1 - distance / 200;
+              if (this.particles[a] === this.particles[b]) continue;
+              const distance = Math.sqrt(Math.pow(this.particles[b].x - this.particles[a].x, 2) + Math.pow(this.particles[b].y - this.particles[a].y, 2));
+              const opacity = 1 - distance / 350;
               if (opacity > 0) {
                 this.context.lineWidth = 0.5;
                 this.context.strokeStyle = `rgba(255, 255, 255, ${opacity})`;

@@ -317,6 +317,10 @@ const __prepareSchemaResult = (result, dataDisposition, filter, permissions, tok
 			if (ObjectId.isValid(chunk)) {
 				return chunk;
 			}
+			if (chunk instanceof Date) {
+				return chunk;
+			}
+
 			chunk = Object.assign({}, chunk);
 			if (token && token.type === 'app') return chunk;
 
