@@ -12,7 +12,6 @@
  */
 
 const SchemaModel = require('../schemaModel');
-// const humanname = require('humanname');
 const Model = require('../');
 const Logging = require('../../logging');
 // const Shared = require('../shared');
