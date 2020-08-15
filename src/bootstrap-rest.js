@@ -65,9 +65,12 @@ class BootstrapRest {
 		}
 
 		const nrp = new NRP(Config.redis);
-		nrp.on('app-metadata:changed', (data) => {
-			Logging.logDebug(`App Metadata Changed: ${data.appId}, ${this.workers.length} Workers`);
-			this.workers.forEach((w) => w.send({appId: data.appId}));
+		nrp.on('app-schema:updated', (data) => {
+			Logging.logDebug(`App Schema Updated: ${data.appId}, notifying ${this.workers.length} Workers`);
+			this.workers.forEach((w) => w.send({
+				type: 'app-schema:updated',
+				appId: data.appId
+			}));
 		});
 
 		return initMasterTask
@@ -88,8 +91,10 @@ class BootstrapRest {
 		});
 
 		process.on('message', (payload) => {
-			Logging.logDebug(`App Metadata Changed: ${payload.appId}`);
-			Model.appMetadataChanged = true;
+			if (payload.type === 'app-schema:updated') {
+				Logging.logDebug(`App Schema Updated: ${payload.appId}`);
+				// Routes.update(app, payload.appId),
+			}
 		});
 
 		return Model.init(db)
