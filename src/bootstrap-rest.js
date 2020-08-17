@@ -36,6 +36,8 @@ class BootstrapRest {
 		this.processes = os.cpus().length;
 		this.workers = [];
 
+		this.routes = null;
+
 		let restInitTask = null;
 		if (cluster.isMaster) {
 			restInitTask = (db) => this.__initMaster(db);
@@ -69,7 +71,7 @@ class BootstrapRest {
 			Logging.logDebug(`App Schema Updated: ${data.appId}, notifying ${this.workers.length} Workers`);
 			this.workers.forEach((w) => w.send({
 				type: 'app-schema:updated',
-				appId: data.appId
+				appId: data.appId,
 			}));
 		});
 
@@ -93,7 +95,8 @@ class BootstrapRest {
 		process.on('message', (payload) => {
 			if (payload.type === 'app-schema:updated') {
 				Logging.logDebug(`App Schema Updated: ${payload.appId}`);
-				// Routes.update(app, payload.appId),
+				return Model.initSchema(db)
+					.then(() => this.routes.regenerateAppRoutes(payload.appId));
 			}
 		});
 
@@ -102,11 +105,10 @@ class BootstrapRest {
 				const localSchema = this._getLocalSchemas();
 				Model.App.setLocalSchema(localSchema);
 
-				return [
-					Routes.init(app),
-				];
+				this.routes = new Routes(app);
+
+				return this.routes.initRoutes();
 			})
-			.then((tasks) => Promise.all(tasks))
 			.then(() => app.listen(Config.listenPorts.rest))
 			.catch(Logging.Promise.logError());
 	}

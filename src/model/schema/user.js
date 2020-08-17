@@ -173,6 +173,8 @@ class UserSchemaModel extends SchemaModel {
 			.then((token) => {
 				_user.tokens = [];
 
+				// Bust cache
+
 				if (token) {
 					_user.tokens.push({
 						value: token.value,

@@ -123,7 +123,9 @@ class AppSchemaModel extends SchemaModel {
 		})
 			.then((token) => {
 				_token = token;
-				Logging.log(token.value);
+
+				// Bust cache
+
 				return super.add(app, {
 					_token: token._id,
 				});

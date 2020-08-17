@@ -180,6 +180,9 @@ class CreateUserAuthToken extends Route {
 		})
 			.then((cursor) => cursor.toArray().then((data) => data.slice(0, 1).shift()))
 			.then((t) => {
+
+				// Bust cache
+
 				return {
 					value: t.value,
 					role: t.role,
