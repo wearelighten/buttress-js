@@ -15,6 +15,9 @@ const Model = require('../../model');
 const Logging = require('../../logging');
 const Helpers = require('../../helpers');
 const ObjectId = require('mongodb').ObjectId;
+const Config = require('node-env-obj')('../');
+const NRP = require('node-redis-pubsub');
+const nrp = new NRP(Config.redis);
 
 const routes = [];
 
@@ -181,7 +184,7 @@ class CreateUserAuthToken extends Route {
 			.then((cursor) => cursor.toArray().then((data) => data.slice(0, 1).shift()))
 			.then((t) => {
 
-				// Bust cache
+				nrp.emit('app-routes:bust-cache', {});
 
 				return {
 					value: t.value,

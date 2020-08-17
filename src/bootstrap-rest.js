@@ -74,6 +74,12 @@ class BootstrapRest {
 				appId: data.appId,
 			}));
 		});
+		nrp.on('app-routes:bust-cache', (data) => {
+			Logging.logDebug(`App Routes: Bust token cache, notifying ${this.workers.length} Workers`);
+			this.workers.forEach((w) => w.send({
+				type: 'app-routes:bust-cache'
+			}));
+		});
 
 		return initMasterTask
 			.then(() => this.__spawnWorkers());
@@ -97,6 +103,9 @@ class BootstrapRest {
 				Logging.logDebug(`App Schema Updated: ${payload.appId}`);
 				return Model.initSchema(db)
 					.then(() => this.routes.regenerateAppRoutes(payload.appId));
+			} else if (payload.type === 'app-routes:bust-cache') {
+				Logging.logDebug(`App Routes: cache bust`);
+				this.routes.loadTokens();
 			}
 		});
 

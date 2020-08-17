@@ -124,7 +124,7 @@ class AppSchemaModel extends SchemaModel {
 			.then((token) => {
 				_token = token;
 
-				// Bust cache
+				nrp.emit('app-routes:bust-cache', {});
 
 				return super.add(app, {
 					_token: token._id,

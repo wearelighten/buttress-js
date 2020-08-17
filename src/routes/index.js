@@ -56,7 +56,7 @@ class Routes {
 
 		return Model.App.findAll().toArray()
 			.then((apps) => apps.forEach((app) => this._generateAppRoutes(app)))
-			.then(() => this._loadTokens())
+			.then(() => this.loadTokens())
 			.then(() => this.app.use((err, req, res, next) => this.logErrors(err, req, res, next)))
 			.then(() => Logging.logSilly(`init:registered-routes`));
 	}
@@ -260,7 +260,7 @@ class Routes {
 	 * @return {Promise} - resolves with tokens
 	 * @private
 	 */
-	_loadTokens() {
+	loadTokens() {
 		return Model.Token.findAll().toArray()
 			.then((tokens) => {
 				this._tokens = tokens;
