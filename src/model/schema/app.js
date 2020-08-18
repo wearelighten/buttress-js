@@ -123,7 +123,9 @@ class AppSchemaModel extends SchemaModel {
 		})
 			.then((token) => {
 				_token = token;
-				Logging.log(token.value);
+
+				nrp.emit('app-routes:bust-cache', {});
+
 				return super.add(app, {
 					_token: token._id,
 				});
@@ -153,11 +155,11 @@ class AppSchemaModel extends SchemaModel {
 		appSchema = Schema.encode(appSchema);
 		// this.__schema = appSchema;
 
-		nrp.emit('app-metadata:changed', {appId: appId});
-
 		return new Promise((resolve, reject) => {
 			this.collection.updateOne({_id: appId}, {$set: {__schema: appSchema}}, {}, (err, object) => {
 				if (err) throw new Error(err);
+
+				nrp.emit('app-schema:updated', {appId: appId});
 
 				resolve(object);
 			});

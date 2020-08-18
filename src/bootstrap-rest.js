@@ -36,6 +36,8 @@ class BootstrapRest {
 		this.processes = os.cpus().length;
 		this.workers = [];
 
+		this.routes = null;
+
 		let restInitTask = null;
 		if (cluster.isMaster) {
 			restInitTask = (db) => this.__initMaster(db);
@@ -65,9 +67,18 @@ class BootstrapRest {
 		}
 
 		const nrp = new NRP(Config.redis);
-		nrp.on('app-metadata:changed', (data) => {
-			Logging.logDebug(`App Metadata Changed: ${data.appId}, ${this.workers.length} Workers`);
-			this.workers.forEach((w) => w.send({appId: data.appId}));
+		nrp.on('app-schema:updated', (data) => {
+			Logging.logDebug(`App Schema Updated: ${data.appId}, notifying ${this.workers.length} Workers`);
+			this.workers.forEach((w) => w.send({
+				type: 'app-schema:updated',
+				appId: data.appId,
+			}));
+		});
+		nrp.on('app-routes:bust-cache', (data) => {
+			Logging.logDebug(`App Routes: Bust token cache, notifying ${this.workers.length} Workers`);
+			this.workers.forEach((w) => w.send({
+				type: 'app-routes:bust-cache',
+			}));
 		});
 
 		return initMasterTask
@@ -88,8 +99,14 @@ class BootstrapRest {
 		});
 
 		process.on('message', (payload) => {
-			Logging.logDebug(`App Metadata Changed: ${payload.appId}`);
-			Model.appMetadataChanged = true;
+			if (payload.type === 'app-schema:updated') {
+				Logging.logDebug(`App Schema Updated: ${payload.appId}`);
+				return Model.initSchema(db)
+					.then(() => this.routes.regenerateAppRoutes(payload.appId));
+			} else if (payload.type === 'app-routes:bust-cache') {
+				Logging.logDebug(`App Routes: cache bust`);
+				this.routes.loadTokens();
+			}
 		});
 
 		return Model.init(db)
@@ -97,11 +114,10 @@ class BootstrapRest {
 				const localSchema = this._getLocalSchemas();
 				Model.App.setLocalSchema(localSchema);
 
-				return [
-					Routes.init(app),
-				];
+				this.routes = new Routes(app);
+
+				return this.routes.initRoutes();
 			})
-			.then((tasks) => Promise.all(tasks))
 			.then(() => app.listen(Config.listenPorts.rest))
 			.catch(Logging.Promise.logError());
 	}

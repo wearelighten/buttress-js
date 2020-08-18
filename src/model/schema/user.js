@@ -12,11 +12,13 @@
  */
 
 const SchemaModel = require('../schemaModel');
-// const humanname = require('humanname');
 const Model = require('../');
 const Logging = require('../../logging');
 // const Shared = require('../shared');
 const ObjectId = require('mongodb').ObjectId;
+const Config = require('node-env-obj')('../');
+const NRP = require('node-redis-pubsub');
+const nrp = new NRP(Config.redis);
 
 const collectionName = 'users';
 const collection = Model.mongoDb.collection(collectionName);
@@ -173,6 +175,8 @@ class UserSchemaModel extends SchemaModel {
 			.then((cursor) => cursor.toArray().then((data) => data.slice(0, 1).shift()))
 			.then((token) => {
 				_user.tokens = [];
+
+				nrp.emit('app-routes:bust-cache', {});
 
 				if (token) {
 					_user.tokens.push({
