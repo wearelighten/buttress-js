@@ -77,7 +77,7 @@ class BootstrapRest {
 		nrp.on('app-routes:bust-cache', (data) => {
 			Logging.logDebug(`App Routes: Bust token cache, notifying ${this.workers.length} Workers`);
 			this.workers.forEach((w) => w.send({
-				type: 'app-routes:bust-cache'
+				type: 'app-routes:bust-cache',
 			}));
 		});
 

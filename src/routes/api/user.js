@@ -183,7 +183,6 @@ class CreateUserAuthToken extends Route {
 		})
 			.then((cursor) => cursor.toArray().then((data) => data.slice(0, 1).shift()))
 			.then((t) => {
-
 				nrp.emit('app-routes:bust-cache', {});
 
 				return {
