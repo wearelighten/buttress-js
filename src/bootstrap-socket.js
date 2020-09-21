@@ -86,6 +86,7 @@ class BootstrapSocket {
 				this.__namespace['stats'] = {
 					emitter: this.emitter.of(`/stats`),
 					sequence: {
+						super: 0,
 						global: 0,
 					},
 				};
@@ -109,6 +110,7 @@ class BootstrapSocket {
 					this.__namespace[app.publicId] = {
 						emitter: this.emitter.of(`/${app.publicId}`),
 						sequence: {
+							super: 0,
 							global: 0,
 						},
 					};
@@ -172,23 +174,21 @@ class BootstrapSocket {
 		this.__namespace['stats'].emitter.emit('activity', 1);
 
 		// Super apps?
-		this.__superApps.forEach((superPublicId) => {
-			this.__namespace[superPublicId].sequence++;
-			this.__namespace[superPublicId].emitter.emit('db-activity', {
-				data: data,
-				sequence: this.__namespace[superPublicId].sequence,
+		if (data.isSuper) {
+			this.__superApps.forEach((superPublicId) => {
+				this.__namespace[superPublicId].sequence['super']++;
+				this.__namespace[superPublicId].emitter.emit('db-activity', {
+					data: data,
+					sequence: this.__namespace[superPublicId].sequence['super'],
+				});
+				Logging.logDebug(`[${superPublicId}][super][${data.verb}] ${data.path}`);
 			});
-		});
+			return;
+		}
 
 		// Disable broadcasting to public space
 		if (data.broadcast === false) {
 			Logging.logDebug(`[${publicId}][${data.verb}] ${data.path} - Early out as it isn't public.`);
-			return;
-		}
-
-		// Don't emit activity if activity has super app PId, as it's already been sent
-		if (this.__superApps.includes(publicId)) {
-			Logging.logDebug(`[${publicId}][${data.verb}] ${data.path} - Early out on super app activity`);
 			return;
 		}
 
