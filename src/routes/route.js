@@ -287,13 +287,13 @@ class Route {
 		// Replace API version prefix
 		path = `/${path.join('/')}`.replace(Config.app.apiPrefix, '');
 
+		this._broadcast(req, res, result, null, path, true);
+
 		if (appRoles.length < 1) {
 			this._broadcast(req, res, result, null, path);
-
-			return result;
+		} else {
+			appRoles.forEach((role) => this._broadcast(req, res, result, role, path));
 		}
-
-		appRoles.forEach((role) => this._broadcast(req, res, result, role, path));
 
 		Logging.logTimer('_boardcastByAppRole:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		return result;
@@ -306,8 +306,9 @@ class Route {
 	 * @param {*} result
 	 * @param {*} role
 	 * @param {*} path
+	 * @param {boolean} isSuper
 	 */
-	_broadcast(req, res, result, role, path) {
+	_broadcast(req, res, result, role, path, isSuper = false) {
 		Logging.logTimer('_broadcast:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		const isReadStream = result instanceof Stream.Readable;
 		const publicAppID = Model.App.genPublicUID(req.authApp.name, req.authApp._id);
@@ -344,6 +345,10 @@ class Route {
 			}, {});
 		}
 
+		if (isSuper) {
+			dataDisposition.READ = 'allow';
+		}
+
 		const emit = (_result) => {
 			nrp.emit('activity', {
 				title: this.activityTitle,
@@ -360,6 +365,7 @@ class Route {
 				response: _result,
 				user: req.authUser ? req.authUser._id : '',
 				appPId: publicAppID ? publicAppID : '',
+				isSuper: isSuper,
 			});
 		};
 
