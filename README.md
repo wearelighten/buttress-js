@@ -2,7 +2,11 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.3.1
+### Version: 2.3.2
+- FIX: Writing to property when counting super socket activity
+- ADDED: Activity event for super tokens on each activity
+- BUMP: Bump node dependencies (mongodb, socket.io-redis)
+### 2.3.1
 - REFACTOR: App routes will now be regenerated on schema update
 - FIX: Bust the app routes token cache when a token is added
 ### 2.3.0
