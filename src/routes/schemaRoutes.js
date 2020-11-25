@@ -15,6 +15,7 @@ const Route = require('./route');
 const Model = require('../model');
 const Helpers = require('../helpers');
 const Schema = require('../schema');
+const SchemaModel = require('../model/schemaModel');
 
 const routes = [];
 
@@ -48,10 +49,52 @@ class GetList extends Route {
 	_validate(req, res, token) {
 		let query = Promise.resolve({});
 		if (token.authLevel < 3) {
-			query = this.model.generateRoleFilterQuery(token, req.roles, Model);
+			query = this.model.generateRoleFilterQuery(token, req.roles);
 		}
 
-		return query
+		return query;
+	}
+
+	_exec(req, res, query) {
+		return this.model.find(query, {}, true);
+	}
+}
+routes.push(GetList);
+
+/**
+ * @class SearchList
+ */
+class SearchList extends Route {
+	constructor(schema, appShort) {
+		super(`${schema.name}`, `SEARCH ${schema.name} LIST`);
+		this.verb = Route.Constants.Verbs.SEARCH;
+		this.auth = Route.Constants.Auth.USER;
+		this.permissions = Route.Constants.Permissions.LIST;
+
+		this.activityDescription = `SEARCH ${schema.name} LIST`;
+		this.activityBroadcast = false;
+
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
+		this.schema = new Schema(schema);
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`SearchList Route missing model ${schemaCollection}`);
+		}
+	}
+
+	_validate(req, res, token) {
+		let generateQuery = Promise.resolve({});
+		if (token.authLevel < 3) {
+			generateQuery = this.model.generateRoleFilterQuery(token, req.roles);
+		}
+
+		return generateQuery
 			.then((query) => {
 				if (!query.$and) {
 					query.$and = [];
@@ -63,14 +106,15 @@ class GetList extends Route {
 				}
 
 				return query;
-			});
+			})
+			.then((query) => SchemaModel.parseQuery(query, {}, this.model.flatSchemaData));
 	}
 
 	_exec(req, res, query) {
 		return this.model.find(query, {}, true);
 	}
 }
-routes.push(GetList);
+routes.push(SearchList);
 
 /**
  * @class GetOne
