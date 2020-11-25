@@ -101,15 +101,21 @@ class SchemaModel {
 						// TODO: Should maybe reject
 					}
 
-					if (schemaFlat[property].__type === 'id' && operand) {
-						operand = new ObjectId(operand);
+					if (schemaFlat[property]) {
+						if (schemaFlat[property].__type === 'id' && typeof operand === 'string') {
+							operand = new ObjectId(operand);
+						}
 					}
 
 					if (!output[property]) {
 						output[property] = {};
 					}
 
-					output[property][`$${operator}`] = operand;
+					if (operator.indexOf('$') !== 0) {
+						output[property][`$${operator}`] = operand;
+					} else {
+						output[property][`${operator}`] = operand;
+					}
 				}
 			}
 		}
@@ -117,7 +123,7 @@ class SchemaModel {
 		return output;
 	}
 
-	generateRoleFilterQuery(token, roles) {
+	generateRoleFilterQuery(token, roles, Model) {
 		if (!roles.schema || !roles.schema.authFilter) {
 			return Promise.resolve({});
 		}
@@ -143,6 +149,14 @@ class SchemaModel {
 					if (command.includes('schema.')) {
 						const commandPath = command.split('.');
 						commandPath.shift(); // Remove "schema"
+						const collectionName = commandPath.shift();
+						const collectionPath = `${this.appShortId}-${collectionName}`;
+						const collection = Model[collectionPath];
+
+						if (!collection) {
+							throw new Error(`Unable to find a collection named ${collectionName} while building authFilter.env`);
+						}
+
 						const propertyPath = commandPath.join('.');
 
 						let propertyQuery = {};
@@ -153,7 +167,7 @@ class SchemaModel {
 						fields[propertyPath] = true;
 
 						tasks.push(() => {
-							return this.find(propertyQuery, fields)
+							return collection.find(propertyQuery, fields)
 								.then((res) => {
 									// Map fetched properties into a array.
 									env[property] = res.map((i) => i[propertyMap]);

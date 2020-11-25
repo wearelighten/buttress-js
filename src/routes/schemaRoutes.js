@@ -49,7 +49,7 @@ class GetList extends Route {
 	_validate(req, res, token) {
 		let query = Promise.resolve({});
 		if (token.authLevel < 3) {
-			query = this.model.generateRoleFilterQuery(token, req.roles);
+			query = this.model.generateRoleFilterQuery(token, req.roles, Model);
 		}
 
 		return query;
@@ -91,7 +91,7 @@ class SearchList extends Route {
 	_validate(req, res, token) {
 		let generateQuery = Promise.resolve({});
 		if (token.authLevel < 3) {
-			generateQuery = this.model.generateRoleFilterQuery(token, req.roles);
+			generateQuery = this.model.generateRoleFilterQuery(token, req.roles, Model);
 		}
 
 		return generateQuery
