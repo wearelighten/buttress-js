@@ -15,7 +15,7 @@ const ObjectId = require('mongodb').ObjectId;
 // const Logging = require('../logging');
 const Shared = require('./shared');
 const Sugar = require('sugar');
-// const Helpers = require('../helpers');
+const Helpers = require('../helpers');
 const shortId = require('../helpers').shortId;
 
 /* ********************************************************************************
@@ -27,6 +27,8 @@ const shortId = require('../helpers').shortId;
 class SchemaModel {
 	constructor(MongoDb, schemaData, app) {
 		this.schemaData = schemaData;
+		this.flatSchemaData = Helpers.getFlattenedSchema(this.schemaData);
+
 		this.app = app || null;
 
 		this.appShortId = (app) ? shortId(app._id) : null;
@@ -64,15 +66,17 @@ class SchemaModel {
 		return validation.length >= 1 ? validation[0] : {isValid: true};
 	}
 
-	static parseQuery(query, envFlat = {}, output = {}) {
+	static parseQuery(query, envFlat = {}, schemaFlat = {}) {
+		const output = {};
+
 		for (const property in query) {
 			if (!{}.hasOwnProperty.call(query, property)) continue;
 			const command = query[property];
 
 			if (property === '$or' && Array.isArray(command)) {
-				output['$or'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, {}));
+				output['$or'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
 			} else if (property === '$and' && Array.isArray(command)) {
-				output['$and'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, {}));
+				output['$and'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
 			} else {
 				for (const operator in command) {
 					if (!{}.hasOwnProperty.call(command, operator)) continue;
@@ -92,9 +96,19 @@ class SchemaModel {
 						}
 					}
 
+					// Check the property type of what we are trying to fetch
+					if (!schemaFlat[property]) {
+						// TODO: Should maybe reject
+					}
+
+					if (schemaFlat[property].__type === 'id' && operand) {
+						operand = new ObjectId(operand);
+					}
+
 					if (!output[property]) {
 						output[property] = {};
 					}
+
 					output[property][`$${operator}`] = operand;
 				}
 			}
@@ -103,77 +117,60 @@ class SchemaModel {
 		return output;
 	}
 
-	generateRoleFilterQuery(token, roles, Model) {
+	generateRoleFilterQuery(token, roles) {
 		if (!roles.schema || !roles.schema.authFilter) {
 			return Promise.resolve({});
 		}
 
-		// Parse schema authFilter.env object, gather information that's needed.
-		const buildEnv = (authFilter) => {
-			const env = {
-				authUserId: token._user,
-			};
+		const env = {
+			authUserId: token._user,
+		};
 
-			const tasks = [];
+		const tasks = [];
 
-			if (authFilter.env) {
-				for (const property in roles.schema.authFilter.env) {
-					if (!{}.hasOwnProperty.call(roles.schema.authFilter.env, property)) continue;
-					const query = roles.schema.authFilter.env[property];
+		if (roles.schema.authFilter.env) {
+			for (const property in roles.schema.authFilter.env) {
+				if (!{}.hasOwnProperty.call(roles.schema.authFilter.env, property)) continue;
+				const query = roles.schema.authFilter.env[property];
 
-					let propertyMap = '_id';
-					if (query.map) {
-						propertyMap = query.map;
-					}
-					for (const command in query) {
-						if (!{}.hasOwnProperty.call(query, command)) continue;
+				let propertyMap = '_id';
+				if (query.map) {
+					propertyMap = query.map;
+				}
+				for (const command in query) {
+					if (!{}.hasOwnProperty.call(query, command)) continue;
 
-						if (command.includes('schema.')) {
-							const commandPath = command.split('.');
-							commandPath.shift(); // Remove "schema"
-							const collectionName = `${this.appShortId}-${commandPath.shift()}`;
-							const propertyPath = commandPath.join('.');
+					if (command.includes('schema.')) {
+						const commandPath = command.split('.');
+						commandPath.shift(); // Remove "schema"
+						const propertyPath = commandPath.join('.');
 
-							let propertyQuery = {};
-							propertyQuery[propertyPath] = query[command];
-							propertyQuery = SchemaModel.parseQuery(propertyQuery, env, {});
+						let propertyQuery = {};
+						propertyQuery[propertyPath] = query[command];
+						propertyQuery = SchemaModel.parseQuery(propertyQuery, env);
 
-							const fields = {};
-							fields[propertyPath] = true;
+						const fields = {};
+						fields[propertyPath] = true;
 
-							tasks.push(() => {
-								return Model[collectionName].find(propertyQuery, fields)
-									.then((res) => {
-										// Map fetched properties into a array.
-										env[property] = res.map((i) => i[propertyMap]);
-										// Hack - Flattern any sub arrays down to the single level.
-										env[property] = [].concat(...env[property]);
-									});
-							});
-						} else {
-							// Unknown operation
-						}
+						tasks.push(() => {
+							return this.find(propertyQuery, fields)
+								.then((res) => {
+									// Map fetched properties into a array.
+									env[property] = res.map((i) => i[propertyMap]);
+									// Hack - Flattern any sub arrays down to the single level.
+									env[property] = [].concat(...env[property]);
+								});
+						});
+					} else {
+						// Unknown operation
 					}
 				}
 			}
-
-			// The env process may need to query other collections so group them into tasks.
-			return tasks.reduce((prev, task) => prev.then(() => task()), Promise.resolve())
-				.then(() => env);
-		};
-
-		// Build the query structure with the built env object applyed to it.
-		const buildQuery = (schemaQuery, env) => {
-			return new Promise((resolve) => {
-				const query = (schemaQuery) ? schemaQuery : {};
-
-				resolve(SchemaModel.parseQuery(query, env, {}));
-			});
-		};
+		}
 
 		// Engage.
-		return buildEnv(roles.schema.authFilter)
-			.then((env) => buildQuery(roles.schema.authFilter.query, env));
+		return tasks.reduce((prev, task) => prev.then(() => task()), Promise.resolve())
+			.then(() => SchemaModel.parseQuery(roles.schema.authFilter.query, env, this.flatSchemaData));
 	}
 
 	/*
