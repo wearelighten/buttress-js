@@ -283,7 +283,7 @@ class Routes {
 		}
 		if (req.token.type !== Model.Token.Constants.Type.USER) {
 			res.header('Access-Control-Allow-Origin', '*');
-			res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+			res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,SEARCH,OPTIONS');
 			res.header('Access-Control-Allow-Headers', 'content-type');
 			Logging.logTimer('_configCrossDomain:end-app-token', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 			next();
@@ -325,7 +325,7 @@ class Routes {
 		}
 
 		res.header('Access-Control-Allow-Origin', req.header('Origin'));
-		res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+		res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,SEARCH,OPTIONS');
 		res.header('Access-Control-Allow-Headers', 'content-type');
 
 		if (req.method === 'OPTIONS') {
