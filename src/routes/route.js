@@ -109,23 +109,18 @@ class Route {
 		Logging.logTimer('Route:exec:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		this._timer = req.timer;
 
-		return new Promise((resolve, reject) => {
-			if (!this._exec) {
-				Logging.logTimer('Route:exec:end-no-exec-defined', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-				reject(new Helpers.RequestError(500));
-				return;
-			}
+		if (!this._exec) {
+			Logging.logTimer('Route:exec:end-no-exec-defined', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			return Promise.reject(new Helpers.RequestError(500));
+		}
 
-			this._authenticate(req, res)
-				.then((token) => this._validate(req, res, token))
-				.then((validate) => this._exec(req, res, validate))
-				.then((result) => this._respond(req, res, result))
-				.then((result) => this._logActivity(req, res, result))
-				.then((result) => this._boardcastByAppRole(req, res, result))
-				.then(Logging.Promise.logTimer(`Route:exec:end`, this._timer, Logging.Constants.LogLevel.SILLY, req.id))
-				.then(resolve)
-				.catch(reject);
-		});
+		return this._authenticate(req, res)
+			.then((token) => this._validate(req, res, token))
+			.then((validate) => this._exec(req, res, validate))
+			.then((result) => this._respond(req, res, result))
+			.then((result) => this._logActivity(req, res, result))
+			.then((result) => this._boardcastByAppRole(req, res, result))
+			.then(Logging.Promise.logTimer(`Route:exec:end`, this._timer, Logging.Constants.LogLevel.SILLY, req.id));
 	}
 
 	/**
