@@ -65,7 +65,13 @@ class Routes {
 	 * @return {object} - express router object
 	 */
 	_createRouter() {
-		return express.Router(); // eslint-disable-line new-cap
+		const apiRouter = express.Router(); // eslint-disable-line new-cap
+
+		apiRouter.use((...args) => this._timeRequest(...args));
+		apiRouter.use((...args) => this._authenticateToken(...args));
+		apiRouter.use((...args) => this._configCrossDomain(...args));
+
+		return apiRouter;
 	}
 
 	/**
@@ -136,13 +142,7 @@ class Routes {
 			route.path,
 		]);
 		Logging.logSilly(`_initRoute:register [${route.verb.toUpperCase()}] ${routePath}`);
-		app[route.verb](routePath, (req, res, next) => {
-			return this._timeRequest(req)
-				.then(() => this._authenticateToken(req, res, next))
-				.then(() => this._configCrossDomain(req, res, next))
-				.then(() => route.exec(req, res))
-				.catch(next);
-		});
+		app[route.verb](routePath, (req, res, next) => route.exec(req, res).catch(next));
 	}
 
 	/**
@@ -161,37 +161,26 @@ class Routes {
 			]);
 			if (routePath.indexOf('/') !== 0) routePath = `/${routePath}`;
 			Logging.logSilly(`_initSchemaRoutes:register [${route.verb.toUpperCase()}] ${routePath}`);
-			express[route.verb](routePath, (req, res, next) => {
-				return this._timeRequest(req)
-					.then(() => this._authenticateToken(req, res, next))
-					.then(() => this._configCrossDomain(req, res, next))
-					.then(() => route.exec(req, res))
-					.catch(next);
-			});
+			express[route.verb](routePath, (req, res, next) => route.exec(req, res).catch(next));
 		});
 	}
 
-	/**
-	 * Assigns an Id & a timer to a request object
-	 * @param {Object} req
-	 * @return {Promise}
-	 */
-	_timeRequest(req) {
+	_timeRequest(req, res, next) {
 		// Just assign a arbitrary id to the request to help identify it in the logs
 		req.id = new Mongo.ObjectID();
 		req.timer = new Helpers.Timer();
 		req.timer.start();
-		Logging.logTimer(`[${req.method.toUpperCase()}] ${req.path}`, req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
-		return Promise.resolve();
+		Logging.logTimer(`[${req.method.toUpperCase()}] ${req.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		next();
 	}
 
 	/**
 	 * @param {Object} req - Request object
 	 * @param {Object} res - Response object
-	 * @return {Promise}
+	 * @param {Function} next - next handler function
 	 * @private
 	 */
-	_authenticateToken(req, res) {
+	_authenticateToken(req, res, next) {
 		Logging.logTimer(`_authenticateToken:start ${req.query.token}`,
 			req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 
@@ -201,7 +190,7 @@ class Routes {
 			return;
 		}
 
-		return this._getToken(req)
+		this._getToken(req)
 			.then((token) => {
 				return new Promise((resolve, reject) => {
 					if (token === null) {
@@ -223,7 +212,9 @@ class Routes {
 			.then((user) => {
 				req.authUser = user;
 			})
-			.then(Logging.Promise.logTimer('_authenticateToken:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id));
+			.then(Logging.Promise.logTimer('_authenticateToken:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id))
+			.then(next)
+			.catch(next);
 	}
 
 	/**
@@ -280,28 +271,29 @@ class Routes {
 	 *
 	 * @param {Object} req - Request object
 	 * @param {Object} res - Response object
-	 * @return {Promise}
+	 * @param {Function} next - next handler function
 	 * @private
 	 */
-	_configCrossDomain(req, res) {
+	_configCrossDomain(req, res, next) {
 		Logging.logTimer('_configCrossDomain:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		if (!req.token) {
 			res.status(401).json({message: 'Auth token is required'});
 			Logging.logTimer('_configCrossDomain:end-no-auth', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-			return Promise.resolve();
+			return;
 		}
 		if (req.token.type !== Model.Token.Constants.Type.USER) {
 			res.header('Access-Control-Allow-Origin', '*');
 			res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,SEARCH,OPTIONS');
 			res.header('Access-Control-Allow-Headers', 'content-type');
 			Logging.logTimer('_configCrossDomain:end-app-token', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-			return Promise.resolve();
+			next();
+			return;
 		}
 
 		if (!req.authUser) {
 			res.status(401).json({message: 'Auth user is required'});
 			Logging.logTimer('_configCrossDomain:end-no-auth-user', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-			return Promise.resolve();
+			return;
 		}
 
 		const rex = /https?:\/\/(.+)$/;
@@ -329,7 +321,7 @@ class Routes {
 			Logging.logError(new Error(`Invalid Domain: ${origin}`));
 			res.sendStatus(403);
 			Logging.logTimer('_configCrossDomain:end-invalid-domain', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-			return Promise.resolve();
+			return;
 		}
 
 		res.header('Access-Control-Allow-Origin', req.header('Origin'));
@@ -339,11 +331,11 @@ class Routes {
 		if (req.method === 'OPTIONS') {
 			res.sendStatus(200);
 			Logging.logTimer('_configCrossDomain:end-options-req', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-			return Promise.resolve();
+			return;
 		}
 
 		Logging.logTimer('_configCrossDomain:end', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-		return Promise.resolve();
+		next();
 	}
 
 	logErrors(err, req, res, next) {
