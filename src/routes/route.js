@@ -108,26 +108,21 @@ class Route {
 	 * @return {Promise} - Promise is fulfilled once execution has completed
 	 */
 	exec(req, res) {
-		Logging.logTimer('Route:exec:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		Logging.logTimer('Route:exec:start', req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
 		this._timer = req.timer;
 
-		return new Promise((resolve, reject) => {
-			if (!this._exec) {
-				Logging.logTimer('Route:exec:end-no-exec-defined', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-				reject(new Helpers.RequestError(500));
-				return;
-			}
+		if (!this._exec) {
+			Logging.logTimer('Route:exec:end-no-exec-defined', req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
+			return Promise.reject(new Helpers.RequestError(500));
+		}
 
-			this._authenticate(req, res)
-				.then((token) => this._validate(req, res, token))
-				.then((validate) => this._exec(req, res, validate))
-				.then((result) => this._respond(req, res, result))
-				.then((result) => this._logActivity(req, res, result))
-				.then((result) => this._boardcastByAppRole(req, res, result))
-				.then(Logging.Promise.logTimer(`Route:exec:end`, this._timer, Logging.Constants.LogLevel.SILLY, req.id))
-				.then(resolve)
-				.catch(reject);
-		});
+		return this._authenticate(req, res)
+			.then((token) => this._validate(req, res, token))
+			.then((validate) => this._exec(req, res, validate))
+			.then((result) => this._respond(req, res, result))
+			.then((result) => this._logActivity(req, res, result))
+			.then((result) => this._boardcastByAppRole(req, res, result))
+			.then(Logging.Promise.logTimer(`Route:exec:end`, this._timer, Logging.Constants.LogLevel.DEBUG, req.id));
 	}
 
 	/**
@@ -139,7 +134,7 @@ class Route {
 	 */
 	_respond(req, res, result) {
 		const isCursor = result instanceof Mongo.Cursor;
-		Logging.logTimer(`_respond:start cursor:${isCursor}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+		Logging.logTimer(`_respond:start cursor:${isCursor}`, req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
 
 		// Fetch app roles if they exist
 		let appRoles = null;
@@ -191,12 +186,12 @@ class Route {
 
 			res.set('Content-Type', 'application/json');
 
-			Logging.logTimer(`_respond:start-stream ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			Logging.logTimer(`_respond:start-stream`, req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
 
 			const stream = result.stream();
 			stream.once('end', () => {
-				Logging.logTimerException(`PERF: STREAM DONE: ${this.path}`, req.timer, 0.05, req.id);
-				Logging.logTimer(`_respond:end-stream ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+				// Logging.logTimerException(`PERF: STREAM DONE: ${this.path}`, req.timer, 0.05, req.id);
+				Logging.logTimer(`_respond:end-stream`, req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
 			});
 
 			stream.pipe(stringifyStream).pipe(res);
@@ -211,8 +206,8 @@ class Route {
 		}
 
 
-		Logging.logTimer(`_respond:end ${this.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
-		Logging.logTimerException(`PERF: DONE: ${this.path}`, req.timer, 0.05, req.id);
+		Logging.logTimer(`_respond:end ${this.path}`, req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
+		// Logging.logTimerException(`PERF: DONE: ${this.path}`, req.timer, 0.05, req.id);
 
 		return result;
 	}
