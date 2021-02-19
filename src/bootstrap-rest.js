@@ -28,6 +28,8 @@ const MongoClient = require('mongodb').MongoClient;
 const NRP = require('node-redis-pubsub');
 const shortId = require('./helpers').shortId;
 
+morgan.token('id', (req) => req.id);
+
 Error.stackTraceLimit = Infinity;
 class BootstrapRest {
 	constructor() {
@@ -87,7 +89,7 @@ class BootstrapRest {
 
 	__initWorker(db) {
 		const app = express();
-		app.use(morgan(`:date[iso] [${cluster.worker.id}] :method :status :url :res[content-length] - :response-time ms - :remote-addr`));
+		app.use(morgan(`:date[iso] [${cluster.worker.id}] [:id] :method :status :url :res[content-length] - :response-time ms - :remote-addr`));
 		app.enable('trust proxy', 1);
 		app.use(bodyParser.json({limit: '20mb'}));
 		app.use(bodyParser.urlencoded({extended: true}));
