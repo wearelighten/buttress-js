@@ -42,6 +42,63 @@ class Routes {
 		this.app.get('/favicon.ico', (req, res, next) => res.sendStatus(404));
 		this.app.get(['/', '/index.html'], (req, res, next) => res.sendFile(path.join(__dirname, '../static/index.html')));
 
+		this.app.use((req, res, next) => {
+			req.on('close', function() {
+				Logging.logDebug(`close`, req.id);
+			});
+			req.on('end', function() {
+				Logging.logDebug(`end`, req.id);
+			});
+			req.on('error', function(err) {
+				Logging.logError(`req onError`, req.id);
+				Logging.logError(err, req.id);
+			});
+			req.on('pause', function() {
+				Logging.logDebug(`pause`, req.id);
+			});
+			req.on('resume', function() {
+				Logging.logDebug(`resume`, req.id);
+			});
+
+			req.on('timeout', function() {
+				Logging.logError(`timeout`, req.id);
+			});
+
+			if (req.socket) {
+				req.socket.on('close', (hadError) => {
+					Logging.logDebug(`socket onClose had_error:${hadError}`, req.id);
+				});
+				req.socket.on('connect', () => {
+					Logging.logDebug(`socket onConnect`, req.id);
+				});
+				req.socket.on('end', () => {
+					Logging.logDebug(`socket onEnd`, req.id);
+				});
+				req.socket.on('lookup', (err, address, family, host) => {
+					if (err) {
+						Logging.logError(`socket onLookup`, req.id);
+						Logging.logError(err, req.id);
+						return;
+					}
+
+					Logging.logDebug(`socket onLookup address:${address} family:${family} host:${host}}`, req.id);
+				});
+				req.socket.on('timeout', () => {
+					Logging.logDebug(`socket onTimeout`, req.id);
+				});
+				req.socket.on('error', (err) => {
+					Logging.logError(`socket onError`, req.id);
+					Logging.logError(err, req.id);
+				});
+			}
+
+			next();
+		});
+		this.app.use((err, req, res, next) => {
+			if (err) Logging.logError(err, req.id);
+			next();
+		});
+
 		const coreRouter = this._createRouter();
 		const providers = this._getCoreRoutes();
 		for (let x = 0; x < providers.length; x++) {
