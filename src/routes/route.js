@@ -108,6 +108,8 @@ class Route {
 	 * @return {Promise} - Promise is fulfilled once execution has completed
 	 */
 	exec(req, res) {
+		const ip = req.ip || req._remoteAddress || (req.connection && req.connection.remoteAddress) || undefined;
+		Logging.logTimer(`${req.method} ${req.originalUrl || req.url} ${ip}`, req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
 		Logging.logTimer('Route:exec:start', req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
 		this._timer = req.timer;
 
