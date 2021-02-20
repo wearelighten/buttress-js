@@ -194,8 +194,12 @@ module.exports.logWarn = (warn, id=null) => {
  * @param {string} id - id
  */
 module.exports.logError = (err, id=null) => {
-	_log(err.message, LogLevel.ERR, id);
-	_log(err.stack, LogLevel.ERR, id);
+	if (err && err.stack && err.message) {
+		_log(err.message, LogLevel.ERR, id);
+		_log(err.stack, LogLevel.ERR, id);
+	} else {
+		_log(err, LogLevel.ERR, id);
+	}
 };
 
 /**
