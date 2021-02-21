@@ -164,8 +164,8 @@ class Routes {
 	 */
 	regenerateAppRoutes(appId) {
 		Logging.logSilly(`Routes:regenerateAppRoutes regenerating routes for ${appId}`);
-		return Model.App.findAll({_id: appId}).toArray()
-			.then(([app]) => this._generateAppRoutes(app));
+		return Model.App.findById(appId)
+			.then((app) => this._generateAppRoutes(app));
 	}
 
 	/**
