@@ -2,7 +2,9 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.3.2
+### Version: 2.3.3
+- TODO
+### 2.3.2
 - FIX: Writing to property when counting super socket activity
 - ADDED: Activity event for super tokens on each activity
 - BUMP: Bump node dependencies (mongodb, socket.io-redis)

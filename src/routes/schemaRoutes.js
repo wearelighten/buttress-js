@@ -15,6 +15,8 @@ const Route = require('./route');
 const Model = require('../model');
 const Helpers = require('../helpers');
 const Schema = require('../schema');
+const SchemaModel = require('../model/schemaModel');
+const ObjectId = require('mongodb').ObjectId;
 
 const routes = [];
 
@@ -51,7 +53,49 @@ class GetList extends Route {
 			query = this.model.generateRoleFilterQuery(token, req.roles, Model);
 		}
 
-		return query
+		return query;
+	}
+
+	_exec(req, res, query) {
+		return this.model.find(query, {}, true);
+	}
+}
+routes.push(GetList);
+
+/**
+ * @class SearchList
+ */
+class SearchList extends Route {
+	constructor(schema, appShort) {
+		super(`${schema.name}`, `SEARCH ${schema.name} LIST`);
+		this.verb = Route.Constants.Verbs.SEARCH;
+		this.auth = Route.Constants.Auth.USER;
+		this.permissions = Route.Constants.Permissions.LIST;
+
+		this.activityDescription = `SEARCH ${schema.name} LIST`;
+		this.activityBroadcast = false;
+
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
+		this.schema = new Schema(schema);
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`SearchList Route missing model ${schemaCollection}`);
+		}
+	}
+
+	_validate(req, res, token) {
+		let generateQuery = Promise.resolve({});
+		if (token.authLevel < 3) {
+			generateQuery = this.model.generateRoleFilterQuery(token, req.roles, Model);
+		}
+
+		return generateQuery
 			.then((query) => {
 				if (!query.$and) {
 					query.$and = [];
@@ -63,14 +107,15 @@ class GetList extends Route {
 				}
 
 				return query;
-			});
+			})
+			.then((query) => SchemaModel.parseQuery(query, {}, this.model.flatSchemaData));
 	}
 
 	_exec(req, res, query) {
 		return this.model.find(query, {}, true);
 	}
 }
-routes.push(GetList);
+routes.push(SearchList);
 
 /**
  * @class GetOne
@@ -437,15 +482,23 @@ class DeleteMany extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			const ids = req.body;
+			let ids = req.body;
+
 			if (!ids) {
 				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR, req.id);
-				return reject(new Helpers.RequestError(400, `invalid_id`));
+				return reject(new Helpers.RequestError(400, `Requires ids`));
 			}
 			if (!ids.length) {
 				this.log(`ERROR: No ${this.schema.name} IDs provided`, Route.LogLevel.ERR, req.id);
-				return reject(new Helpers.RequestError(400, `invalid_id`));
+				return reject(new Helpers.RequestError(400, `Expecting array of ids`));
 			}
+
+			try {
+				ids = ids.map((id) => new ObjectId(id));
+			} catch (err) {
+				return reject(new Helpers.RequestError(400, `All ids must be string of 12 bytes or a string of 24 hex characters`));
+			}
+
 			// if (this._ids.length > 600) {
 			//   this.log('ERROR: No more than 300 company IDs are supported', Route.LogLevel.ERR);
 			//   reject({statusCode: 400, message: 'ERROR: No more than 300 company IDs are supported'});

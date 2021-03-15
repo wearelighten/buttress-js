@@ -70,6 +70,7 @@ const Constants = {
 		WRITE: 'write',
 		LIST: 'list',
 		DELETE: 'delete',
+		SEARCH: 'search',
 		ALL: '*',
 	},
 	Verbs: {
@@ -77,6 +78,7 @@ const Constants = {
 		POST: 'post',
 		PUT: 'put',
 		DEL: 'delete',
+		SEARCH: 'search',
 	},
 };
 
@@ -449,6 +451,7 @@ class Route {
 				PUT: 'deny',
 				POST: 'deny',
 				DELETE: 'deny',
+				SEARCH: 'deny',
 			};
 
 			// Fetch app roles if they exist
@@ -471,6 +474,7 @@ class Route {
 						disposition.PUT = 'allow';
 						disposition.POST = 'allow';
 						disposition.DELETE = 'allow';
+						disposition.SEARCH = 'allow';
 					}
 				}
 			}
@@ -502,6 +506,7 @@ class Route {
 						if (role.endpointDisposition.PUT) disposition.PUT = role.endpointDisposition.PUT;
 						if (role.endpointDisposition.POST) disposition.POST = role.endpointDisposition.POST;
 						if (role.endpointDisposition.DELETE) disposition.DELETE = role.endpointDisposition.DELETE;
+						if (role.endpointDisposition.SEARCH) disposition.SEARCH = role.endpointDisposition.SEARCH;
 					}
 				}
 

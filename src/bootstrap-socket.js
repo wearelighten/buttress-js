@@ -188,7 +188,7 @@ class BootstrapSocket {
 
 		// Disable broadcasting to public space
 		if (data.broadcast === false) {
-			Logging.logDebug(`[${publicId}][${data.verb}] ${data.path} - Early out as it isn't public.`);
+			Logging.logDebug(`[${publicId}][${data.role}][${data.verb}] ${data.path} - Early out as it isn't public.`);
 			return;
 		}
 
