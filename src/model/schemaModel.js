@@ -78,12 +78,25 @@ class SchemaModel {
 			} else if (property === '$and' && Array.isArray(command)) {
 				output['$and'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
 			} else {
-				for (const operator in command) {
+				for (let operator in command) {
 					if (!{}.hasOwnProperty.call(command, operator)) continue;
 					let operand = command[operator];
+					switch (operator) {
+					case '$not':
+						operator = '$ne';
+						break;
+
+					case '$elMatch':
+						operator = '$elemMatch';
+						break;
+
+					default:
+					}
+					// operator = (operator === '$not')? '$ne' : operator;
+					// operator = (operator === '$elMatch')? '$elemMatch' : operator;
 
 					// Check to see if operand is a path and fetch value
-					if (operand.indexOf && operand.indexOf('.') !== -1) {
+					if (operand && operand.indexOf && operand.indexOf('.') !== -1) {
 						let path = operand.split('.');
 						const key = path.shift();
 
@@ -92,7 +105,31 @@ class SchemaModel {
 						if (key === 'env' && envFlat[path]) {
 							operand = envFlat[path];
 						} else {
-							throw new Error(`Unable to find ${path} in schema.authFilter.env`);
+							// throw new Error(`Unable to find ${path} in schema.authFilter.env`);
+						}
+					}
+
+					// Check the property type of what we are trying to fetch
+					if (!schemaFlat[property]) {
+						// TODO: Should maybe reject
+					}
+
+					if (schemaFlat[property]) {
+						if (schemaFlat[property].__type === 'array' && schemaFlat[property].__schema) {
+							Object.keys(operand).forEach((op) => {
+								if (schemaFlat[property].__schema[op].__type === 'id') {
+									Object.keys(operand[op]).forEach((key) => {
+										operand[op][key] = new ObjectId(operand[op][key]);
+									});
+								}
+							});
+						}
+
+						if ((schemaFlat[property].__type === 'id' || schemaFlat[property].__itemtype === 'id') && typeof operand === 'string') {
+							operand = new ObjectId(operand);
+						}
+						if (schemaFlat[property].__type === 'id' && Array.isArray(operand)) {
+							operand = operand.map((o) => new ObjectId(o));
 						}
 					}
 
