@@ -90,10 +90,12 @@ class SchemaModel {
 						operator = '$elemMatch';
 						break;
 
+					case '$rex':
+						operator = '$regex';
+						break;
+
 					default:
 					}
-					// operator = (operator === '$not')? '$ne' : operator;
-					// operator = (operator === '$elMatch')? '$elemMatch' : operator;
 
 					// Check to see if operand is a path and fetch value
 					if (operand && operand.indexOf && operand.indexOf('.') !== -1) {
