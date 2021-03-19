@@ -127,6 +127,10 @@ class SchemaModel {
 							});
 						}
 
+						if (schemaFlat[property].__type === 'date' && typeof operand === 'string') {
+							operand = new Date(operand);
+						}
+
 						if ((schemaFlat[property].__type === 'id' || schemaFlat[property].__itemtype === 'id') && typeof operand === 'string') {
 							operand = new ObjectId(operand);
 						}
