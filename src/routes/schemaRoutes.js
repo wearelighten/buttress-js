@@ -118,6 +118,49 @@ class SearchList extends Route {
 routes.push(SearchList);
 
 /**
+ * @class getCount
+ */
+class getCount extends Route {
+	constructor(schema, appShort) {
+		super(`${schema.name}/count`, `COUNT ${schema.name} LIST`);
+		this.verb = Route.Constants.Verbs.GET;
+		this.auth = Route.Constants.Auth.USER;
+		this.permissions = Route.Constants.Permissions.COUNT;
+
+		this.activityDescription = `COUNT ${schema.name} LIST`;
+		this.activityBroadcast = false;
+
+		let schemaCollection = schema.collection;
+		if (appShort) {
+			schemaCollection = `${appShort}-${schema.collection}`;
+		}
+
+		// Fetch model
+		this.schema = new Schema(schema);
+		this.model = Model[schemaCollection];
+
+		if (!this.model) {
+			throw new Error(`getCount Route missing model ${schemaCollection}`);
+		}
+	}
+
+	_validate(req, res, token) {
+		let query = Promise.resolve({});
+		if (token.authLevel < 3) {
+			query = this.model.generateRoleFilterQuery(token, req.roles, Model);
+		}
+
+		return query;
+	}
+
+	_exec(req, res, query) {
+		console.log(query);
+		return this.model.count(query, {}, true);
+	}
+}
+routes.push(getCount);
+
+/**
  * @class GetOne
  */
 class GetOne extends Route {

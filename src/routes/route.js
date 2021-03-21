@@ -71,6 +71,7 @@ const Constants = {
 		LIST: 'list',
 		DELETE: 'delete',
 		SEARCH: 'search',
+		COUNT: 'count',
 		ALL: '*',
 	},
 	Verbs: {
