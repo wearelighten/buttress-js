@@ -2,8 +2,15 @@
 Realtime datastore for software.
 
 # What's New
-### Version: 2.3.3
-- TODO
+### **Version**: 2.3.4
+- ADDED: Count API to each schema
+- FIX: Map usage of $rex -> $regex within queries
+### 2.3.3
+**NOTE**: Breaking changes this should of been a minor or major
+- ADDED: Search API to each schema using the method SEARCH (This replaces queries being passed to getAll)
+- FIX: Unable to cross query schema via authFilter.env
+- TWEAK: Logging Improvements 
+
 ### 2.3.2
 - FIX: Writing to property when counting super socket activity
 - ADDED: Activity event for super tokens on each activity
