@@ -416,6 +416,13 @@ class SchemaModel {
 
 		return this.collection.find({_id: {$in: ids.map((id) => new ObjectId(id))}}, {});
 	}
+
+	/**
+	 * @return {Promise} - resolves to an array of Companies
+	 */
+	 count() {
+		return this.collection.count({});
+	}
 }
 
 module.exports = SchemaModel;
