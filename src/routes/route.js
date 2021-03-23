@@ -350,23 +350,27 @@ class Route {
 		}
 
 		const emit = (_result) => {
-			nrp.emit('activity', {
-				title: this.activityTitle,
-				description: this.activityDescription,
-				visibility: this.activityVisibility,
-				broadcast: this.activityBroadcast,
-				role: (role) ? role.name : null,
-				path: path,
-				pathSpec: this.path,
-				verb: this.verb,
-				permissions: this.permissions,
-				params: req.params,
-				timestamp: new Date(),
-				response: _result,
-				user: req.authUser ? req.authUser._id : '',
-				appPId: publicAppID ? publicAppID : '',
-				isSuper: isSuper,
-			});
+			if (this.activityBroadcast === true) {
+				nrp.emit('activity', {
+					title: this.activityTitle,
+					description: this.activityDescription,
+					visibility: this.activityVisibility,
+					broadcast: this.activityBroadcast,
+					role: (role) ? role.name : null,
+					path: path,
+					pathSpec: this.path,
+					verb: this.verb,
+					permissions: this.permissions,
+					params: req.params,
+					timestamp: new Date(),
+					response: _result,
+					user: req.authUser ? req.authUser._id : '',
+					appPId: publicAppID ? publicAppID : '',
+					isSuper: isSuper,
+				});
+			} else {
+				// Trigger the emit activity so we can update the stats namespace
+			}
 		};
 
 		if (isReadStream) {
