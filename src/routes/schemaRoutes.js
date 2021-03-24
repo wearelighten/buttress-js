@@ -97,6 +97,12 @@ class SearchList extends Route {
 			generateQuery = this.model.generateRoleFilterQuery(token, req.roles, Model);
 		}
 
+		const result = {
+			query: null,
+			skip: (req.body && req.body.skip) ? parseInt(req.body.skip) : 0,
+			limit: (req.body && req.body.limit) ? parseInt(req.body.limit) : 0,
+		};
+
 		return generateQuery
 			.then((query) => {
 				if (!query.$and) {
@@ -108,13 +114,22 @@ class SearchList extends Route {
 					query.$and.push(req.body);
 				}
 
-				return query;
+				if (req.body && req.body.query) {
+					query.$and.push(req.body.query);
+				} else if (req.body && !req.body.query) {
+					query.$and.push(req.body);
+				}
+
+				return SchemaModel.parseQuery(query, {}, this.model.flatSchemaData);
 			})
-			.then((query) => SchemaModel.parseQuery(query, {}, this.model.flatSchemaData));
+			.then((query) => {
+				result.query = query;
+				return result;
+			});
 	}
 
-	_exec(req, res, query) {
-		return this.model.find(query, {}, true);
+	_exec(req, res, validateResult) {
+		return this.model.find(validateResult.query, {}, true, validateResult.limit, validateResult.skip);
 	}
 }
 routes.push(SearchList);
