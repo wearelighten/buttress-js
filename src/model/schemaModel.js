@@ -73,6 +73,11 @@ class SchemaModel {
 			if (!{}.hasOwnProperty.call(query, property)) continue;
 			const command = query[property];
 
+			if (property === 'limit') {
+				output.limit = command;
+				continue;
+			}
+
 			if (property === '$or' && Array.isArray(command)) {
 				output['$or'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
 			} else if (property === '$and' && Array.isArray(command)) {
@@ -365,10 +370,15 @@ class SchemaModel {
 	 * @param {Object} query - mongoDB query
 	 * @param {Object} excludes - mongoDB query excludes
 	 * @param {Boolean} stream - should return a stream
+	 * @param {Int} limit - mongoDB query limit
 	 * @return {Promise} - resolves to an array of docs
 	 */
-	find(query, excludes = {}, stream = false) {
+	find(query, excludes = {}, stream = false, limit = null) {
 		// Logging.logSilly(`find: ${this.collectionName} ${query}`);
+
+		if (limit) {
+			return this.collection.find(query, excludes).limit(limit);
+		}
 
 		if (stream) {
 			return this.collection.find(query, excludes);

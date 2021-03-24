@@ -104,8 +104,14 @@ class SearchList extends Route {
 				}
 
 				// TODO: Vaildate this input against the schema, schema properties should be tagged with what can be queried
-				if (req.body) {
+				if (req.body && req.body.query) {
+					query.$and.push(req.body.query);
+				} else if (req.body && !req.body.query) {
 					query.$and.push(req.body);
+				}
+
+				if (req.body && req.body.limit) {
+					query.limit = req.body.limit;
 				}
 
 				return query;
@@ -114,7 +120,7 @@ class SearchList extends Route {
 	}
 
 	_exec(req, res, query) {
-		return this.model.find(query, {}, true);
+		return this.model.find(query, {}, true, query.limit);
 	}
 }
 routes.push(SearchList);
