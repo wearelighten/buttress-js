@@ -366,20 +366,27 @@ class SchemaModel {
 	 * @param {Object} query - mongoDB query
 	 * @param {Object} excludes - mongoDB query excludes
 	 * @param {Boolean} stream - should return a stream
+	 * @param {Int} limit - should return a stream
+	 * @param {Int} skip - should return a stream
 	 * @return {Promise} - resolves to an array of docs
 	 */
-	find(query, excludes = {}, stream = false) {
+	find(query, excludes = {}, stream = false, limit = 0, skip = 0) {
 		// Logging.logSilly(`find: ${this.collectionName} ${query}`);
 
+		console.log(`limit:${limit}, skip:${skip}`);
+
 		if (stream) {
-			return this.collection.find(query, excludes);
+			return this.collection.find(query, excludes).skip(skip).limit(limit);
 		}
 
 		return new Promise((resolve) => {
-			this.collection.find(query, excludes).toArray((err, doc) => {
-				if (err) throw err;
-				resolve(doc);
-			});
+			this.collection.find(query, excludes)
+				.skip(skip)
+				.limit(limit)
+				.toArray((err, doc) => {
+					if (err) throw err;
+					resolve(doc);
+				});
 		});
 	}
 
