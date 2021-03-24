@@ -71,6 +71,7 @@ class SchemaModel {
 
 		for (const property in query) {
 			if (!{}.hasOwnProperty.call(query, property)) continue;
+			if (property === '__crPath') continue;
 			const command = query[property];
 
 			if (property === '$or' && Array.isArray(command)) {
