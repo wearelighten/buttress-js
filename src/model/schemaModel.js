@@ -373,8 +373,6 @@ class SchemaModel {
 	find(query, excludes = {}, stream = false, limit = 0, skip = 0) {
 		// Logging.logSilly(`find: ${this.collectionName} ${query}`);
 
-		console.log(`limit:${limit}, skip:${skip}`);
-
 		if (stream) {
 			return this.collection.find(query, excludes).skip(skip).limit(limit);
 		}
