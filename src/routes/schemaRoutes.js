@@ -38,6 +38,8 @@ class GetList extends Route {
 			schemaCollection = `${appShort}-${schema.collection}`;
 		}
 
+		this.slowLogging = false;
+
 		// Fetch model
 		this.schema = new Schema(schema);
 		this.model = Model[schemaCollection];
