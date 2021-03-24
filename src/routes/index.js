@@ -227,6 +227,20 @@ class Routes {
 		req.id = new Mongo.ObjectID();
 		req.timer = new Helpers.Timer();
 		req.timer.start();
+
+		req.timings = {
+			authenticateToken: null,
+			configCrossDomain: null,
+			authenticate: null,
+			validate: null,
+			exec: null,
+			respond: null,
+			logActivity: null,
+			boardcastByAppRole: null,
+			close: null,
+			stream: [],
+		};
+
 		Logging.logTimer(`[${req.method.toUpperCase()}] ${req.path}`, req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		next();
 	}
@@ -238,6 +252,7 @@ class Routes {
 	 * @private
 	 */
 	_authenticateToken(req, res, next) {
+		req.timings.authenticateToken = req.timer.interval;
 		Logging.logTimer(`_authenticateToken:start ${req.query.token}`,
 			req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 
@@ -332,6 +347,7 @@ class Routes {
 	 * @private
 	 */
 	_configCrossDomain(req, res, next) {
+		req.timings.configCrossDomain = req.timer.interval;
 		Logging.logTimer('_configCrossDomain:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		if (!req.token) {
 			res.status(401).json({message: 'Auth token is required'});
