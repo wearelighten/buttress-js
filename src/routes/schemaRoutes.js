@@ -183,7 +183,6 @@ class SearchCount extends Route {
 				return SchemaModel.parseQuery(query, {}, this.model.flatSchemaData);
 			})
 			.then((query) => {
-				console.log(query);
 				result.query = query;
 				return result;
 			});
