@@ -15,7 +15,9 @@
 		"BUTTRESS_REDIS_HOST": "localhost",
 		"BUTTRESS_REST_APP": "primary",
 		"BUTTRESS_SOCKET_APP": "primary",
-		"BUTTRESS_LOGGING_LEVEL": "info"
+		"BUTTRESS_LOGGING_LEVEL": "info",
+		"BUTTRESS_LOGGING_SLOW": "TRUE",
+		"BUTTRESS_LOGGING_SLOW_TIME": 2
 	},
 	"global": {
 		"env": "%NODE_ENV%",
@@ -29,7 +31,9 @@
 			"apiPrefix": "/api/v1"
 		},
 		"logging": {
-			"level": "%BUTTRESS_LOGGING_LEVEL%"
+			"level": "%BUTTRESS_LOGGING_LEVEL%",
+			"slow": "%BUTTRESS_LOGGING_SLOW%",
+			"slowTime": "%BUTTRESS_LOGGING_SLOW_TIME%"
 		},
 		"listenPorts": {
 			"rest": "%BUTTRESS_REST_LISTEN_PORT%",

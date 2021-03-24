@@ -94,6 +94,11 @@ class Route {
 		this.activityTitle = 'Private Activity';
 		this.activityDescription = '';
 
+		this.slowLogging = Config.logging.slow === 'TRUE';
+		this.slowLoggingTime = parseFloat(Config.logging.slowTime);
+
+		this.timingChunkSample = 250;
+
 		this.redactResults = true;
 
 		this.schema = null;
@@ -120,8 +125,14 @@ class Route {
 		}
 
 		return this._authenticate(req, res)
-			.then((token) => this._validate(req, res, token))
-			.then((validate) => this._exec(req, res, validate))
+			.then((token) => {
+				req.timings.validate = req.timer.interval;
+				return this._validate(req, res, token);
+			})
+			.then((validate) => {
+				req.timings.exec = req.timer.interval;
+				return this._exec(req, res, validate);
+			})
 			.then((result) => this._respond(req, res, result))
 			.then((result) => this._logActivity(req, res, result))
 			.then((result) => this._boardcastByAppRole(req, res, result))
@@ -136,6 +147,7 @@ class Route {
 	 * @return {*} result
 	 */
 	_respond(req, res, result) {
+		req.timings.respond = req.timer.interval;
 		const isCursor = result instanceof Mongo.Cursor;
 		Logging.logTimer(`_respond:start cursor:${isCursor}`, req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
 
@@ -182,7 +194,10 @@ class Route {
 		}, {});
 
 		if (isCursor) {
+			let chunkCount = 0;
 			const stringifyStream = new Helpers.JSONStringifyStream({}, (chunk) => {
+				chunkCount++;
+				if (chunkCount % this.timingChunkSample === 0) req.timings.stream.push(req.timer.interval);
 				if (!this.redactResults) return chunk;
 				return Shared.prepareSchemaResult(chunk, dataDisposition, filter, permissions, req.token);
 			});
@@ -195,6 +210,7 @@ class Route {
 			stream.once('end', () => {
 				// Logging.logTimerException(`PERF: STREAM DONE: ${this.path}`, req.timer, 0.05, req.id);
 				Logging.logTimer(`_respond:end-stream`, req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
+				this._close(req);
 			});
 
 			stream.pipe(stringifyStream).pipe(res);
@@ -208,6 +224,7 @@ class Route {
 			res.json(result);
 		}
 
+		this._close(req);
 
 		Logging.logTimer(`_respond:end ${this.path}`, req.timer, Logging.Constants.LogLevel.DEBUG, req.id);
 		// Logging.logTimerException(`PERF: DONE: ${this.path}`, req.timer, 0.05, req.id);
@@ -216,6 +233,7 @@ class Route {
 	}
 
 	_logActivity(req, res, result) {
+		req.timings.logActivity = req.timer.interval;
 		Logging.logTimer('_logActivity:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		if (this.verb === Constants.Verbs.GET) {
 			Logging.logTimer('_logActivity:end-get', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
@@ -266,6 +284,7 @@ class Route {
 	 * @return {*} result
 	 */
 	_boardcastByAppRole(req, res, result) {
+		req.timings.boardcastByAppRole = req.timer.interval;
 		Logging.logTimer('_boardcastByAppRole:start', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 		if (this.verb === Constants.Verbs.GET) {
 			Logging.logTimer('_boardcastByAppRole:end-get', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
@@ -392,6 +411,7 @@ class Route {
 	 * @private
 	 */
 	_authenticate(req, res) {
+		req.timings.authenticate = req.timer.interval;
 		return new Promise((resolve, reject) => {
 			if (this.auth === Constants.Auth.NONE) {
 				this.log(`WARN: OPEN API CALL`, Logging.Constants.LogLevel.WARN, req.id);
@@ -587,6 +607,18 @@ class Route {
 	log(log, level) {
 		level = level || Logging.Constants.LogLevel.INFO;
 		Logging.log(log, level);
+	}
+
+	/**
+	 * Called when we expect the request to be closed
+	 * @param {object} req - The request object to be compared to
+	 * @private
+	 */
+	_close(req) {
+		req.timings.close = req.timer.interval;
+		if (this.slowLogging && req.timings.close > this.slowLoggingTime) {
+			Logging.logError(`${req.method} ${req.url} SLOW REQUEST ${JSON.stringify(req.timings)}`, req.id);
+		}
 	}
 
 	static set app(app) {
