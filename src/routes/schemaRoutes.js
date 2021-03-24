@@ -131,16 +131,16 @@ class SearchList extends Route {
 routes.push(SearchList);
 
 /**
- * @class getCount
+ * @class Count
  */
-class getCount extends Route {
+class SearchCount extends Route {
 	constructor(schema, appShort) {
-		super(`${schema.name}/count`, `COUNT ${schema.name} LIST`);
-		this.verb = Route.Constants.Verbs.GET;
+		super(`${schema.name}/count`, `COUNT ${schema.name}`);
+		this.verb = Route.Constants.Verbs.SEARCH;
 		this.auth = Route.Constants.Auth.USER;
-		this.permissions = Route.Constants.Permissions.COUNT;
+		this.permissions = Route.Constants.Permissions.SERACH;
 
-		this.activityDescription = `COUNT ${schema.name} LIST`;
+		this.activityDescription = `COUNT ${schema.name}`;
 		this.activityBroadcast = false;
 
 		let schemaCollection = schema.collection;
@@ -158,20 +158,42 @@ class getCount extends Route {
 	}
 
 	_validate(req, res, token) {
-		let query = Promise.resolve({});
+		let generateQuery = Promise.resolve({});
 		if (token.authLevel < 3) {
-			query = this.model.generateRoleFilterQuery(token, req.roles, Model);
+			generateQuery = this.model.generateRoleFilterQuery(token, req.roles, Model);
 		}
 
-		return query;
+		const result = {
+			query: {},
+		};
+
+		return generateQuery
+			.then((query) => {
+				if (!query.$and) {
+					query.$and = [];
+				}
+
+				// TODO: Vaildate this input against the schema, schema properties should be tagged with what can be queried
+				if (req.body && req.body.query) {
+					query.$and.push(req.body.query);
+				} else if (req.body && !req.body.query) {
+					query.$and.push(req.body);
+				}
+
+				return SchemaModel.parseQuery(query, {}, this.model.flatSchemaData);
+			})
+			.then((query) => {
+				console.log(query);
+				result.query = query;
+				return result;
+			});
 	}
 
-	_exec(req, res, query) {
-		console.log(query);
-		return this.model.count(query, {}, true);
+	_exec(req, res, validateResult) {
+		return this.model.count(validateResult.query);
 	}
 }
-routes.push(getCount);
+routes.push(SearchCount);
 
 /**
  * @class GetOne

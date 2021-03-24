@@ -424,10 +424,11 @@ class SchemaModel {
 	}
 
 	/**
+	 * @param {Object} query - mongoDB query
 	 * @return {Promise} - resolves to an array of Companies
 	 */
-	 count() {
-		return this.collection.count({});
+	count(query) {
+		return this.collection.countDocuments(query);
 	}
 }
 
