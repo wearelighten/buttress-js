@@ -98,9 +98,10 @@ class SearchList extends Route {
 		}
 
 		const result = {
-			query: null,
+			query: {},
 			skip: (req.body && req.body.skip) ? parseInt(req.body.skip) : 0,
 			limit: (req.body && req.body.limit) ? parseInt(req.body.limit) : 0,
+			sort: (req.body && req.body.sort) ? req.body.sort : {},
 		};
 
 		return generateQuery
@@ -112,8 +113,6 @@ class SearchList extends Route {
 				// TODO: Vaildate this input against the schema, schema properties should be tagged with what can be queried
 				if (req.body && req.body.query) {
 					query.$and.push(req.body.query);
-				} else if (req.body && !req.body.query) {
-					query.$and.push(req.body);
 				}
 
 				return SchemaModel.parseQuery(query, {}, this.model.flatSchemaData);
@@ -125,7 +124,7 @@ class SearchList extends Route {
 	}
 
 	_exec(req, res, validateResult) {
-		return this.model.find(validateResult.query, {}, true, validateResult.limit, validateResult.skip);
+		return this.model.find(validateResult.query, {}, true, validateResult.limit, validateResult.skip, validateResult.sort);
 	}
 }
 routes.push(SearchList);
