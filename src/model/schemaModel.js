@@ -74,9 +74,9 @@ class SchemaModel {
 			if (property === '__crPath') continue;
 			const command = query[property];
 
-			if (property === '$or' && Array.isArray(command)) {
+			if (property === '$or' && Array.isArray(command) && command.length > 0) {
 				output['$or'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
-			} else if (property === '$and' && Array.isArray(command)) {
+			} else if (property === '$and' && Array.isArray(command) && command.length > 0) {
 				output['$and'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
 			} else {
 				for (let operator in command) {
@@ -366,20 +366,29 @@ class SchemaModel {
 	 * @param {Object} query - mongoDB query
 	 * @param {Object} excludes - mongoDB query excludes
 	 * @param {Boolean} stream - should return a stream
+	 * @param {Int} limit - should return a stream
+	 * @param {Int} skip - should return a stream
+	 * @param {Object} sort - mongoDB sort object
 	 * @return {Promise} - resolves to an array of docs
 	 */
-	find(query, excludes = {}, stream = false) {
+	find(query, excludes = {}, stream = false, limit = 0, skip = 0, sort) {
 		// Logging.logSilly(`find: ${this.collectionName} ${query}`);
 
+		console.log('find', sort);
+
 		if (stream) {
-			return this.collection.find(query, excludes);
+			return this.collection.find(query, excludes).skip(skip).limit(limit).sort(sort);
 		}
 
 		return new Promise((resolve) => {
-			this.collection.find(query, excludes).toArray((err, doc) => {
-				if (err) throw err;
-				resolve(doc);
-			});
+			this.collection.find(query, excludes)
+				.skip(skip)
+				.limit(limit)
+				.sort(sort)
+				.toArray((err, doc) => {
+					if (err) throw err;
+					resolve(doc);
+				});
 		});
 	}
 
@@ -419,10 +428,11 @@ class SchemaModel {
 	}
 
 	/**
+	 * @param {Object} query - mongoDB query
 	 * @return {Promise} - resolves to an array of Companies
 	 */
-	 count() {
-		return this.collection.count({});
+	count(query) {
+		return this.collection.countDocuments(query);
 	}
 }
 
