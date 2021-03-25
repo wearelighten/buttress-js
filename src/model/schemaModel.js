@@ -74,9 +74,9 @@ class SchemaModel {
 			if (property === '__crPath') continue;
 			const command = query[property];
 
-			if (property === '$or' && Array.isArray(command)) {
+			if (property === '$or' && Array.isArray(command) && command.length > 0) {
 				output['$or'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
-			} else if (property === '$and' && Array.isArray(command)) {
+			} else if (property === '$and' && Array.isArray(command) && command.length > 0) {
 				output['$and'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
 			} else {
 				for (let operator in command) {
