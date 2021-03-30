@@ -142,17 +142,6 @@ class SchemaModel {
 						}
 					}
 
-					// Check the property type of what we are trying to fetch
-					if (!schemaFlat[property]) {
-						// TODO: Should maybe reject
-					}
-
-					if (schemaFlat[property]) {
-						if (schemaFlat[property].__type === 'id' && typeof operand === 'string') {
-							operand = new ObjectId(operand);
-						}
-					}
-
 					if (!output[property]) {
 						output[property] = {};
 					}
