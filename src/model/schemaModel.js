@@ -117,7 +117,9 @@ class SchemaModel {
 						// TODO: Should maybe reject
 					}
 
-					if (schemaFlat[property]) {
+					if (operator === '$elemMatch' && schemaFlat[property] && schemaFlat[property].__schema) {
+						operand = SchemaModel.parseQuery(operand, envFlat, schemaFlat[property].__schema);
+					} else if (schemaFlat[property]) {
 						if (schemaFlat[property].__type === 'array' && schemaFlat[property].__schema) {
 							Object.keys(operand).forEach((op) => {
 								if (schemaFlat[property].__schema[op].__type === 'id') {
