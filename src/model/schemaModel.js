@@ -90,8 +90,22 @@ class SchemaModel {
 					case '$elMatch':
 						operator = '$elemMatch';
 						break;
+					case '$gtDate':
+						operator = '$gt';
+						break;
+					case '$ltDate':
+						operator = '$lt';
+						break;
+					case '$gteDate':
+						operator = '$gte';
+						break;
+					case '$lteDate':
+						operator = '$lte';
+						break;
 
 					case '$rex':
+					case '$rexi':
+					case '$inProp':
 						operator = '$regex';
 						break;
 
