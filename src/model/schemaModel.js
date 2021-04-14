@@ -82,6 +82,7 @@ class SchemaModel {
 				for (let operator in command) {
 					if (!{}.hasOwnProperty.call(command, operator)) continue;
 					let operand = command[operator];
+					let operandOptions = null;
 					switch (operator) {
 					case '$not':
 						operator = '$ne';
@@ -105,11 +106,15 @@ class SchemaModel {
 
 					case '$rex':
 					case '$rexi':
+						operator = '$regex';
+						operandOptions = 'i';
+						break;
 					case '$inProp':
 						operator = '$regex';
 						break;
 
 					default:
+						// TODO: Throw an error if operator isn't supported
 					}
 
 					// Check to see if operand is a path and fetch value
@@ -158,6 +163,10 @@ class SchemaModel {
 
 					if (!output[property]) {
 						output[property] = {};
+					}
+
+					if (operandOptions) {
+						output[property][`$options`] = operandOptions;
 					}
 
 					if (operator.indexOf('$') !== 0) {
