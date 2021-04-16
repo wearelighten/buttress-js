@@ -2,7 +2,14 @@
 Realtime datastore for software.
 
 # What's New
-### **Version**: 2.3.4
+### **Version**: 2.4.0
+- ADDED: Skip, Limit, Sort params to serach and count APIs
+- FIX: Ignore blank $and / $or properties
+- FIX: Improve handling of buttress-db query operators
+- TWEAK: Removed `BUTTRESS_MONGO_URL_*env*` config options in favour of `BUTTRESS_MONGO_URL`
+- FIX: Create app will now correctly return app data with token
+- FIX: regenerateAppRoutes selecting the wrong app after schema change
+### 2.3.4
 - ADDED: Count API to each schema
 - FIX: Map usage of $rex -> $regex within queries
 ### 2.3.3
