@@ -121,15 +121,15 @@ class AppSchemaModel extends SchemaModel {
 		}, {
 			_app: new ObjectId(app.id),
 		})
+			.then((tokenCursor) => tokenCursor.next())
 			.then((token) => {
 				_token = token;
 
 				nrp.emit('app-routes:bust-cache', {});
 
-				return super.add(app, {
-					_token: token._id,
-				});
+				return super.add(app, {_token: token._id});
 			})
+			.then((appCursor) => appCursor.next())
 			.then((app) => {
 				return Promise.resolve({app: app, token: _token});
 			});

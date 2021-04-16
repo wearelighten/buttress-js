@@ -74,14 +74,15 @@ class SchemaModel {
 			if (property === '__crPath') continue;
 			const command = query[property];
 
-			if (property === '$or' && Array.isArray(command)) {
+			if (property === '$or' && Array.isArray(command) && command.length > 0) {
 				output['$or'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
-			} else if (property === '$and' && Array.isArray(command)) {
+			} else if (property === '$and' && Array.isArray(command) && command.length > 0) {
 				output['$and'] = command.map((q) => SchemaModel.parseQuery(q, envFlat, schemaFlat));
 			} else {
 				for (let operator in command) {
 					if (!{}.hasOwnProperty.call(command, operator)) continue;
 					let operand = command[operator];
+					let operandOptions = null;
 					switch (operator) {
 					case '$not':
 						operator = '$ne';
@@ -90,12 +91,30 @@ class SchemaModel {
 					case '$elMatch':
 						operator = '$elemMatch';
 						break;
+					case '$gtDate':
+						operator = '$gt';
+						break;
+					case '$ltDate':
+						operator = '$lt';
+						break;
+					case '$gteDate':
+						operator = '$gte';
+						break;
+					case '$lteDate':
+						operator = '$lte';
+						break;
 
 					case '$rex':
+					case '$rexi':
+						operator = '$regex';
+						operandOptions = 'i';
+						break;
+					case '$inProp':
 						operator = '$regex';
 						break;
 
 					default:
+						// TODO: Throw an error if operator isn't supported
 					}
 
 					// Check to see if operand is a path and fetch value
@@ -117,7 +136,9 @@ class SchemaModel {
 						// TODO: Should maybe reject
 					}
 
-					if (schemaFlat[property]) {
+					if (operator === '$elemMatch' && schemaFlat[property] && schemaFlat[property].__schema) {
+						operand = SchemaModel.parseQuery(operand, envFlat, schemaFlat[property].__schema);
+					} else if (schemaFlat[property]) {
 						if (schemaFlat[property].__type === 'array' && schemaFlat[property].__schema) {
 							Object.keys(operand).forEach((op) => {
 								if (schemaFlat[property].__schema[op].__type === 'id') {
@@ -140,19 +161,12 @@ class SchemaModel {
 						}
 					}
 
-					// Check the property type of what we are trying to fetch
-					if (!schemaFlat[property]) {
-						// TODO: Should maybe reject
-					}
-
-					if (schemaFlat[property]) {
-						if (schemaFlat[property].__type === 'id' && typeof operand === 'string') {
-							operand = new ObjectId(operand);
-						}
-					}
-
 					if (!output[property]) {
 						output[property] = {};
+					}
+
+					if (operandOptions) {
+						output[property][`$options`] = operandOptions;
 					}
 
 					if (operator.indexOf('$') !== 0) {
@@ -366,20 +380,26 @@ class SchemaModel {
 	 * @param {Object} query - mongoDB query
 	 * @param {Object} excludes - mongoDB query excludes
 	 * @param {Boolean} stream - should return a stream
+	 * @param {Int} limit - should return a stream
+	 * @param {Int} skip - should return a stream
+	 * @param {Object} sort - mongoDB sort object
 	 * @return {Promise} - resolves to an array of docs
 	 */
-	find(query, excludes = {}, stream = false) {
+	find(query, excludes = {}, stream = false, limit = 0, skip = 0, sort) {
 		// Logging.logSilly(`find: ${this.collectionName} ${query}`);
-
 		if (stream) {
-			return this.collection.find(query, excludes);
+			return this.collection.find(query, excludes).skip(skip).limit(limit).sort(sort);
 		}
 
 		return new Promise((resolve) => {
-			this.collection.find(query, excludes).toArray((err, doc) => {
-				if (err) throw err;
-				resolve(doc);
-			});
+			this.collection.find(query, excludes)
+				.skip(skip)
+				.limit(limit)
+				.sort(sort)
+				.toArray((err, doc) => {
+					if (err) throw err;
+					resolve(doc);
+				});
 		});
 	}
 
@@ -419,10 +439,11 @@ class SchemaModel {
 	}
 
 	/**
+	 * @param {Object} query - mongoDB query
 	 * @return {Promise} - resolves to an array of Companies
 	 */
-	 count() {
-		return this.collection.count({});
+	count(query) {
+		return this.collection.countDocuments(query);
 	}
 }
 
