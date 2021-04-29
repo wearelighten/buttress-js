@@ -2,7 +2,10 @@
 Realtime datastore for software.
 
 # What's New
-### **Version**: 2.4.0
+
+### **Version**: 2.4.1
+- FIX: Don't create activity logs for search requests
+### 2.4.0
 - ADDED: Skip, Limit, Sort params to serach and count APIs
 - FIX: Ignore blank $and / $or properties
 - FIX: Improve handling of buttress-db query operators
