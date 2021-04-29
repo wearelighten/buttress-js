@@ -239,6 +239,10 @@ class Route {
 			Logging.logTimer('_logActivity:end-get', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
 			return result;
 		}
+		if (this.verb === Constants.Verbs.SEARCH) {
+			Logging.logTimer('_logActivity:end-search', req.timer, Logging.Constants.LogLevel.SILLY, req.id);
+			return result;
+		}
 
 		let addActivty = true;
 		if (this.path === 'tracking') {
