@@ -69,7 +69,7 @@ class SchemaModel {
 	static parseQuery(query, envFlat = {}, schemaFlat = {}) {
 		const output = {};
 
-		for (const property in query) {
+		for (let property in query) {
 			if (!{}.hasOwnProperty.call(query, property)) continue;
 			if (property === '__crPath') continue;
 			const command = query[property];
@@ -131,17 +131,26 @@ class SchemaModel {
 						}
 					}
 
-					// Check the property type of what we are trying to fetch
-					if (!schemaFlat[property]) {
-						// TODO: Should maybe reject
+					// Convert id
+					let propSchema = null;
+					if (!schemaFlat[property] && property === 'id') {
+						// Convert id -> _id to handle querying of document root index without having to pass _id
+						property = '_id';
+						propSchema = {
+							__type: 'id',
+						};
+					} else if (schemaFlat[property]) {
+						propSchema = schemaFlat[property].__type;
+					} else {
+						// TODO: Should maybe reject query
 					}
 
-					if (operator === '$elemMatch' && schemaFlat[property] && schemaFlat[property].__schema) {
-						operand = SchemaModel.parseQuery(operand, envFlat, schemaFlat[property].__schema);
-					} else if (schemaFlat[property]) {
-						if (schemaFlat[property].__type === 'array' && schemaFlat[property].__schema) {
+					if (operator === '$elemMatch' && propSchema && propSchema.__schema) {
+						operand = SchemaModel.parseQuery(operand, envFlat, propSchema.__schema);
+					} else if (propSchema) {
+						if (propSchema.__type === 'array' && propSchema.__schema) {
 							Object.keys(operand).forEach((op) => {
-								if (schemaFlat[property].__schema[op].__type === 'id') {
+								if (propSchema.__schema[op].__type === 'id') {
 									Object.keys(operand[op]).forEach((key) => {
 										operand[op][key] = new ObjectId(operand[op][key]);
 									});
@@ -149,14 +158,14 @@ class SchemaModel {
 							});
 						}
 
-						if (schemaFlat[property].__type === 'date' && typeof operand === 'string') {
+						if (propSchema.__type === 'date' && typeof operand === 'string') {
 							operand = new Date(operand);
 						}
 
-						if ((schemaFlat[property].__type === 'id' || schemaFlat[property].__itemtype === 'id') && typeof operand === 'string') {
+						if ((propSchema.__type === 'id' || propSchema.__itemtype === 'id') && typeof operand === 'string') {
 							operand = new ObjectId(operand);
 						}
-						if (schemaFlat[property].__type === 'id' && Array.isArray(operand)) {
+						if (propSchema.__type === 'id' && Array.isArray(operand)) {
 							operand = operand.map((o) => new ObjectId(o));
 						}
 					}
