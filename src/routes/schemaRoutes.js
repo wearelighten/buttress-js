@@ -102,6 +102,7 @@ class SearchList extends Route {
 			skip: (req.body && req.body.skip) ? parseInt(req.body.skip) : 0,
 			limit: (req.body && req.body.limit) ? parseInt(req.body.limit) : 0,
 			sort: (req.body && req.body.sort) ? req.body.sort : {},
+			project: (req.body && req.body.project)? req.body.project : false,
 		};
 
 		return generateQuery
@@ -124,7 +125,7 @@ class SearchList extends Route {
 	}
 
 	_exec(req, res, validateResult) {
-		return this.model.find(validateResult.query, {}, true, validateResult.limit, validateResult.skip, validateResult.sort);
+		return this.model.find(validateResult.query, {}, true, validateResult.limit, validateResult.skip, validateResult.sort, validateResult.project);
 	}
 }
 routes.push(SearchList);
