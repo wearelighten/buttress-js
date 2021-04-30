@@ -140,7 +140,7 @@ class SchemaModel {
 							__type: 'id',
 						};
 					} else if (schemaFlat[property]) {
-						propSchema = schemaFlat[property].__type;
+						propSchema = schemaFlat[property];
 					} else {
 						// TODO: Should maybe reject query
 					}
