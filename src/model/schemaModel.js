@@ -399,7 +399,7 @@ class SchemaModel {
 		// Logging.logSilly(`find: ${this.collectionName} ${query}`);
 		if (stream) {
 			let results = this.collection.find(query, excludes).skip(skip).limit(limit).sort(sort);
-			console.log('project', project);
+
 			if (project) {
 				results = results.project(project);
 			}
