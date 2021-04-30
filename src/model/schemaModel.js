@@ -392,12 +392,19 @@ class SchemaModel {
 	 * @param {Int} limit - should return a stream
 	 * @param {Int} skip - should return a stream
 	 * @param {Object} sort - mongoDB sort object
+	 * @param {Boolean} project - mongoDB project ids
 	 * @return {Promise} - resolves to an array of docs
 	 */
-	find(query, excludes = {}, stream = false, limit = 0, skip = 0, sort) {
+	find(query, excludes = {}, stream = false, limit = 0, skip = 0, sort, project = null) {
 		// Logging.logSilly(`find: ${this.collectionName} ${query}`);
 		if (stream) {
-			return this.collection.find(query, excludes).skip(skip).limit(limit).sort(sort);
+			let results = this.collection.find(query, excludes).skip(skip).limit(limit).sort(sort);
+			console.log('project', project);
+			if (project) {
+				results = results.project(project);
+			}
+
+			return results;
 		}
 
 		return new Promise((resolve) => {
