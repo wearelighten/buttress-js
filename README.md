@@ -3,8 +3,9 @@ Realtime datastore for software.
 
 # What's New
 
-### **Latest**: 2.4.1 :tada:
-- FIX: Don't create activity logs for search requests
+### **Latest**: 2.4.2 :tada:
+- ADDED: mongo project to filter returned results for the search endpoint (#13)
+- FIX: Convert id -> _id when building query if id doesn't exist within the schema
 
 *See changelog.md for version history*
 
