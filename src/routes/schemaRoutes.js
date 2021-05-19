@@ -223,7 +223,15 @@ class GetOne extends Route {
 
 	_validate(req, res, token) {
 		return new Promise((resolve, reject) => {
-			this.model.findById(req.params.id)
+			let objectId = null;
+			try {
+				objectId = new ObjectId(req.params.id);
+			} catch (err) {
+				this.log(`${this.schema.name}: Invalid ID: ${req.params.id}`, Route.LogLevel.ERR, req.id);
+				return reject(new Helpers.RequestError(400, 'invalid_id'));
+			}
+
+			this.model.findById(objectId)
 				.then((entity) => {
 					if (!entity) {
 						this.log(`${this.schema.name}: Invalid ID: ${req.params.id}`, Route.LogLevel.ERR, req.id);
