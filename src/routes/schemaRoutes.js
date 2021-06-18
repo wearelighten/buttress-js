@@ -125,7 +125,8 @@ class SearchList extends Route {
 	}
 
 	_exec(req, res, validateResult) {
-		return this.model.find(validateResult.query, {}, true, validateResult.limit, validateResult.skip, validateResult.sort, validateResult.project);
+		return this.model.find(validateResult.query, {}, true,
+			validateResult.limit, validateResult.skip, validateResult.sort, validateResult.project);
 	}
 }
 routes.push(SearchList);

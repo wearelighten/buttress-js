@@ -14,9 +14,9 @@ const cluster = require('cluster');
 const net = require('net');
 const Express = require('express');
 const sio = require('socket.io');
-const { createClient } = require('redis');
-const { redisAdapter } = require('@socket.io/redis-adapter');
-const { Emitter } = require('@socket.io/redis-emitter');
+const {createClient} = require('redis');
+const {redisAdapter} = require('@socket.io/redis-adapter');
+const {Emitter} = require('@socket.io/redis-emitter');
 
 const Config = require('node-env-obj')('../');
 const Model = require('./model');
