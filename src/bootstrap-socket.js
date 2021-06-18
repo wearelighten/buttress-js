@@ -14,8 +14,9 @@ const cluster = require('cluster');
 const net = require('net');
 const Express = require('express');
 const sio = require('socket.io');
-const sioRedis = require('socket.io-redis');
-const sioEmitter = require('socket.io-emitter');
+const { createClient } = require('redis');
+const { redisAdapter } = require('@socket.io/redis-adapter');
+const { Emitter } = require('@socket.io/redis-emitter');
 
 const Config = require('node-env-obj')('../');
 const Model = require('./model');
@@ -56,7 +57,8 @@ class BootstrapSocket {
 	__initMaster(db) {
 		const nrp = new NRP(Config.redis);
 
-		this.emitter = sioEmitter(Config.redis);
+		const redisClient = createClient(Config.redis);
+		this.emitter = new Emitter(redisClient);
 
 		if (this.isPrimary) {
 			Logging.logDebug(`Primary Master`);
@@ -133,10 +135,20 @@ class BootstrapSocket {
 	__initWorker() {
 		const app = new Express();
 		const server = app.listen(0, 'localhost');
-		const io = sio(server);
+		const io = sio({
+			// Allow connections from sio 2 clients
+			// https://socket.io/docs/v3/migrating-from-2-x-to-3-0/#How-to-upgrade-an-existing-production-deployment
+			allowEIO3: true,
+		});
 		const namespace = [];
-		io.origins('*:*');
-		io.adapter(sioRedis(Config.redis));
+		// Disabled due to usuage of wildcard, v3 now has CORS disabled by default
+		// https://socket.io/docs/v3/migrating-from-2-x-to-3-0/index.html#CORS-handling
+		// io.origins('*:*');
+		io.attach(server);
+
+		// As of v7, the library will no longer create Redis clients on behalf of the user.
+		const redisClient = createClient(Config.redis);
+		io.adapter(redisAdapter(redisClient, redisClient.duplicate()));
 
 		const stats = io.of(`/stats`);
 		stats.on('connect', (socket) => {
@@ -172,6 +184,8 @@ class BootstrapSocket {
 		}
 
 		this.__namespace['stats'].emitter.emit('activity', 1);
+
+		Logging.logSilly(`[${publicId}][${data.role}][${data.verb}]  ${data.path}`);
 
 		// Super apps?
 		if (data.isSuper) {
