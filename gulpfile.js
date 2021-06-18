@@ -3,7 +3,6 @@
 const gulp = require('gulp');
 const eslint = require('gulp-eslint');
 const gulpClean = require('gulp-clean');
-const pug = require('gulp-pug');
 
 const Paths = {
 	SOURCE: 'src',
@@ -14,7 +13,7 @@ const Paths = {
 const Sources = {
 	JS: [`${Paths.SOURCE}/*.js`, `${Paths.SOURCE}/**/*.js`],
 	JSON: [`${Paths.SOURCE}/*.json`, `${Paths.SOURCE}/**/*.json`],
-	PUG: [`${Paths.SOURCE}/*.pug`, `${Paths.SOURCE}/**/*.pug`],
+	HTML: [`${Paths.SOURCE}/*.html`, `${Paths.SOURCE}/**/*.html`],
 };
 
 // Scripts
@@ -37,8 +36,7 @@ const scripts = (done) => {
 };
 
 const viewsStatic = () => {
-	return gulp.src(Sources.PUG, {base: Paths.SOURCE})
-		.pipe(pug())
+	return gulp.src(Sources.HTML, {base: Paths.SOURCE})
 		.pipe(gulp.dest(Paths.DEST));
 };
 const views = (done) => {
@@ -64,7 +62,7 @@ const build = (done) => {
 };
 const watch = (done) => {
 	return gulp.series('build', () => {
-		gulp.watch(Sources.PUG, gulp.series('views'));
+		gulp.watch(Sources.HTML, gulp.series('views'));
 		// Watch Scripts
 		gulp.watch(Sources.JS, gulp.series('js'));
 		// Watch Resources
